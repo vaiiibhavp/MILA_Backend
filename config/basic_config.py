@@ -38,15 +38,18 @@ class Settings(BaseSettings):
     MONGO_USER: Optional[str] =None
     MONGO_PASSWORD: Optional[str] = None
     CELERY_PREFIX: str = "fastapi"  # Default to "fastapi" or use any other default logic
-    
-    # ---- Add file storage settings ----
-    STORAGE_BACKEND: str = "LOCAL"
-    UPLOAD_DIR: str = "uploads"
-    AWS_S3_REGION: Optional[str] = None
-    AWS_ACCESS_KEY_ID: Optional[str] = None
-    AWS_SECRET_ACCESS_KEY: Optional[str] = None
-    AWS_S3_BUCKET_NAME: Optional[str] = None
-    BASE_URL: str  # <-- read from environment
+
+    ADMIN_NAME: str
+    ADMIN_EMAIL: str
+    ADMIN_PASSWORD: str
+
+    JWT_SECRET: str
+    JWT_ALGORITHM: str = "HS256"
+    RESET_TOKEN_EXPIRE_MINUTES: int = 10
+    OTP_EXPIRE_MINUTES: int = 5
+    PORT:int
+    HOST:str
+
 
     class ConfigDict:
         env_file = ".env"

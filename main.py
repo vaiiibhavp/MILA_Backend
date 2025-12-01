@@ -1,6 +1,7 @@
 import asyncio
 import os
 from fastapi import FastAPI, Request
+from api.routes import adminauth_route
 from api.routes import user_profile_api, files_api
 
 from core.utils.exceptions import CustomValidationError, custom_validation_error_handler, validation_exception_handler
@@ -18,6 +19,7 @@ import logging
 from json import JSONEncoder
 from pydantic import Field
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from config.db_seeder.AdminSeeder import seed_admin
 
 
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -183,8 +185,8 @@ async def monitor_requests(request: Request, call_next):
         logger.error(f"[ERROR] {request.method} {request.url.path} after {duration:.3f}s - {str(e)}")
         raise
 
-app.include_router(user_profile_api.router, prefix="/api/users", tags=["Users"])
-app.include_router(files_api.router, prefix="/api/files", tags=["files"])
+
+app.include_router(adminauth_route.router)
 
 
 
@@ -220,6 +222,12 @@ async def init_scheduler():
             print("[ERROR] Database initialization failed - application may not function properly")
         else:
             print("[SUCCESS] Database initialized successfully")
+
+            try:
+                await seed_admin()
+                print("[SUCCESS] Admin seeding completed")
+            except Exception as seeder_error:
+                print(f"[ERROR] Admin seeding failed: {seeder_error}")
     except Exception as e:
         print(f"[ERROR] Database initialization error: {e}")
     
@@ -279,12 +287,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         status_code=422  # Use 422 for validation errors
     )
 
-@app.exception_handler(CustomValidationError)
-async def custom_validation_error_handler(request: Request, exc: CustomValidationError):
-    return JSONResponse(
-        content=exc.as_dict(),
-        status_code=exc.status_code,
-    )
 
 # Configure comprehensive logging
 from core.utils.logging_config import setup_logging, get_logger, api_monitor
@@ -319,4 +321,12 @@ def main():
         scheduler.shutdown()
 
 if __name__ == "__main__":
-    main()
+    import uvicorn
+    from config.basic_config import settings
+
+    uvicorn.run(
+        "main:app",
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=settings.RELOAD
+    )

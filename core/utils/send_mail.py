@@ -10,10 +10,18 @@ def send_email(to_email: str, subject: str, body: str):
     msg["To"] = to_email
 
     try:
-        with smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT) as server:
-            server.starttls()
-            server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-            server.sendmail(settings.EMAIL_FROM, to_email, msg.as_string())
+        with smtplib.SMTP_SSL(settings.EMAIL_HOST, settings.EMAIL_PORT, timeout=20) as server:
+            server.set_debuglevel(1)
+            server.login(
+                settings.EMAIL_HOST_USER.strip(),
+                settings.EMAIL_HOST_PASSWORD.strip()
+            )
+            server.sendmail(
+                settings.EMAIL_FROM,
+                [to_email],
+                msg.as_string()
+            )
+
     except Exception as e:
         print(f"Error sending email: {e}")
         raise

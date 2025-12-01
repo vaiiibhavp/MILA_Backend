@@ -12,21 +12,21 @@ from typing import Optional
 # class for CustomValidationError
 class CustomValidationError(HTTPException):
     def __init__(self, message: str, data: Optional[dict] = None, status_code: int = 400):
-        self.message = message
-        self.data = data or {}
+        self.message = message if message else "Something went wrong"
+        self.data = data if isinstance(data, dict) else {}
         self.success = False
         self.status_code = status_code
-        
-        # Customize the response structure directly
-        super().__init__(status_code=status_code, detail=None)
 
-    def as_dict(self):
-        return {
-            "message": self.message,
-            "data": self.data,
-            "success": self.success,
-            "status_code": self.status_code
-        }
+        super().__init__(
+            status_code=status_code,
+            detail={
+                "message": self.message,
+                "data": self.data,
+                "success": self.success,
+                "status_code": self.status_code
+            }
+        )
+
 # Exception handler for CustomValidationError
 async def custom_validation_error_handler(request: Request, exc: CustomValidationError):
     return JSONResponse(
