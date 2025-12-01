@@ -67,17 +67,14 @@ async def admin_login_verfication(request: UserLogin, lang: str = "en"):
             refresh_token_expire=refresh_token_expire
         )   
 
-        print("the values are",values)
 
         # Step 6: Prepare user data for response
         user_data = admin.copy()
-        print("the data of the user is",user_data)
         user_data.pop("password", None)
         user_data["user_id"] = str(user_data.pop("_id"))
 
         # Convert ObjectId fields in user_data to string
         user_data = convert_objectid_to_str(user_data)
-        print("the data of the admin is",user_data)
 
         # Step 7: Get profile photo URL
         # profile_url = await get_profile_photo_url(current_user=admin)
@@ -92,7 +89,6 @@ async def admin_login_verfication(request: UserLogin, lang: str = "en"):
             "user_data": user_data,
         }
 
-        print("the response is",response_data)
         # Serialize datetime fields in response
         response_data = serialize_datetime_fields(response_data)
 
@@ -140,7 +136,6 @@ async def update_password_controller(
     """
     Update a user's password after verifying the current password.
     """
-    print("lang",lang)
     # Step 1: Find the user by email
     user = await user_collection.find_one({"email": email})
 
@@ -224,8 +219,6 @@ async def verify_forgot_pwd_otp_admin(otp: ForgotPasswordOtpVerify, lang: str = 
 
     redis_key = f"reset_token:{temp_token}"
 
-    print(f"[DEBUG] Storing token in Redis key: {redis_key}")
-    print(f"[DEBUG] Token value (email): {otp.email}")
 
     await store_in_redis(
         key=redis_key,
@@ -252,8 +245,6 @@ async def change_password_admin(request: ForgotPasswordRequest, lang: str = "en"
     redis_key = f"reset_token:{reset_token}"
     email = await get_from_redis(redis_key)
 
-    print("redis key", redis_key)
-    print("the email of the user is", email)
 
     if not email:
         raise response.raise_exception(
@@ -324,7 +315,6 @@ async def request_password_reset_admin(request: RequestResetPassword, lang: str 
 
         # Step 2: Generate the reset code
         reset_code = generate_verification_code()
-        print("the code to reset is",reset_code)
 
         # Step 3: Store the reset code in Redis with an expiration time of 15 minutes
         try:
@@ -347,9 +337,7 @@ async def request_password_reset_admin(request: RequestResetPassword, lang: str 
             )
 
             # Send email asynchronously and handle failures gracefully
-            print("sending email")
             send_password_reset_email_task.delay(admin['email'], email_subject, email_body)
-            print("email send successfully")
             
             # Step 5: Return success message
             return response.success_message(
@@ -374,7 +362,6 @@ async def logout_admin(request: LogoutRequest, lang: str = "en"):
     Logout a user by blacklisting their refresh token.
     """
 
-    print("lang",lang)
     try:
         # Verify the token
         token_data = verify_token(request.refresh_token)
