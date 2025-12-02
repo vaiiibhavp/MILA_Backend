@@ -23,14 +23,6 @@ class AuthViews:
     Authentication-related endpoints for user login, registration,
     token management, and password operations.
     """
-    #api to login admin
-    @router.post("/admin/login", response_model=dict)
-    async def admin_login(request: AdminLogin, lang: str = Query(None)):
-        """
-        Admin login endpoint. JWT token
-        """
-        lang = lang if lang in supported_langs else "en"
-        return await admin_login(request, lang)
 
     #api for refresh-token an admin and user
     @router.post("/refresh-token", response_model=Response)
