@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     ADMIN_NAME: str
     ADMIN_EMAIL: str
     ADMIN_PASSWORD: str
+    RELOAD:bool
 
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"

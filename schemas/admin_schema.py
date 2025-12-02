@@ -71,7 +71,7 @@ class ForgotPasswordOtpVerify(BaseModel):
             raise ValueError("Reset OTP cannot be empty.")
         if not v.isdigit():
             raise ValueError("Reset OTP must contain only digits.")
-        if len(v) != 6:
+        if len(v) != 4:
             raise ValueError("Reset OTP must be exactly 6 digits.")
         return v
 
@@ -124,7 +124,6 @@ class AdminAccountResponse(BaseModel):
     last_name: str
     email: EmailStr
     role: str
-    password: str
     is_verified: bool = True
 
     class Config:

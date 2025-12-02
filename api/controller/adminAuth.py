@@ -6,8 +6,7 @@ from core.utils.auth_utils import *
 
 from config.models.user_models import store_token
 from core.utils.helper import serialize_datetime_fields,convert_objectid_to_str
-from core.utils.rate_limiter import rate_limit_check
-from schemas.user_schemas import *
+from schemas.admin_schema import *
 from tasks import send_password_reset_email_task
 from config.db_config import *
 from services.translation import translate_message
@@ -17,7 +16,7 @@ from core.utils.helper import validate_pwd , validate_new_pwd , validate_confirm
 
 
 #controller for login the admin_login 
-async def admin_login_verfication(request: UserLogin, lang: str = "en"):
+async def login_controller(request: AdminLogin, lang: str = "en"):
     """
     Authenticate an admin user using email and password, generate tokens, 
     and return user data including profile photo URL.
@@ -237,7 +236,7 @@ async def verify_forgot_pwd_otp_admin(otp: ForgotPasswordOtpVerify, lang: str = 
 
 
 #controller for change_password
-async def change_password_admin(request: ForgotPasswordRequest, lang: str = "en"):
+async def change_password_controller(request: ForgotPasswordRequest, lang: str = "en"):
 
     reset_token = request.reset_token
 

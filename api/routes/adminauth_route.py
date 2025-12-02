@@ -2,7 +2,7 @@ from fastapi import Query, Request , APIRouter , Depends
 from core.utils.auth_utils import *
 from schemas.admin_schema import AdminLogin , RefreshTokenRequest  , LogoutRequest ,RequestResetPassword ,ForgotPasswordRequest,ForgotPasswordOtpVerify
 from schemas.response_schema import Response
-from api.controller.adminAuth import admin_login_verfication , refresh_token , verify_forgot_pwd_otp_admin , change_password_admin ,request_password_reset_admin , logout_admin
+from api.controller.adminAuth import *
 router = APIRouter()
 
 supported_langs = ["en", "fr"]
@@ -14,7 +14,7 @@ async def admin_login(request: AdminLogin, lang: str = Query(None)):
     Admin login endpoint. JWT token
     """
     lang = lang if lang in supported_langs else "en"
-    return await admin_login_verfication(request, lang)
+    return await login_controller(request, lang)
 
 
 # api for request-password-reset
@@ -47,7 +47,7 @@ async def change_password(request: ForgotPasswordRequest, lang: str = Query(None
     Allows the user to set a new password after successful OTP verification.
     """
     lang = lang if lang in supported_langs else "en"
-    return await change_password_admin(request, lang)
+    return await change_password_controller(request, lang)
 
 
 #api for refresh-token an admin and user
