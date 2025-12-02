@@ -12,17 +12,18 @@ from .response_mixin import CustomResponseMixin
 from schemas.tokens_schema import TokenData
 from core.utils.redis_helper import store_in_redis, get_from_redis, delete_from_redis
 from config.models.user_models import store_token
+from config.basic_config import settings
 
 load_dotenv()
 response = CustomResponseMixin()
 
 #Secret key for JWT access token and referesh token encoding and decoding
-SECRET_ACCESS_KEY = os.getenv("SECRET_ACCESS_KEY", " ")
-SECRET_REFRESH_KEY = os.getenv("SECRET_REFRESH_KEY"," ")
-ALGORITHM = "HS256"
+SECRET_ACCESS_KEY = settings.SECRET_ACCESS_KEY
+SECRET_REFRESH_KEY = settings.SECRET_REFRESH_KEY
+ALGORITHM = settings.ALGORITHM
 # ACCESS_TOKEN_EXPIRE_MINUTES = 120 # 2hr time
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
-REFRESH_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 # 7 days time
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
+REFRESH_TOKEN_EXPIRE_MINUTES = settings.REFRESH_TOKEN_EXPIRE_MINUTES
 
 if not (SECRET_ACCESS_KEY or SECRET_REFRESH_KEY):
     raise response.error_message("Cannot load JWT Secret key or Refresh key")
