@@ -36,28 +36,6 @@ class UserLogin(BaseModel):
             raise ValueError(f"Invalid role. Must be one of: {', '.join(valid_roles)}")
         return v.strip().lower()
 
-
-#AdminLogin Schema 
-class AdminLogin(BaseModel):
-    email: str = Field(..., description="User email address")
-    password: str = Field(..., description="User password")
-    is_test: Optional[bool] = False  # Defaults to False if not provided
-    
-    @field_validator("email")
-    def validate_email(cls, v):
-        """Ensure email is not empty and properly formatted."""
-        if not v or not v.strip():
-            raise ValueError("Email is required")
-        return v.strip()
-    
-    @field_validator("password")
-    def validate_password(cls, v):
-        """Ensure password is not empty."""
-        if not v or not v.strip():
-            raise ValueError("Password is required")
-        return v.strip()
-
-
 #RefreshTokenRequest Schema 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
@@ -74,9 +52,27 @@ class RequestResetPassword(BaseModel):
 
     @field_validator("email")
     def validate_email(cls, v):
-        if not v or not v.strip():
-            raise ValueError("Email is required")
-        return v.strip()
+        if " " in v:
+            raise ValueError("Email cannot contain spaces.")
+        if "@" not in v:
+            raise ValueError("Email must contain '@' symbol.")
+        try:
+            local_part, domain = v.split("@")
+        except ValueError:
+            raise ValueError("Email must contain only one '@' symbol.")
+        if not re.fullmatch(r"[A-Za-z0-9._-]+", local_part):
+            raise ValueError(
+                "Only letters, numbers, '.', '_', '-' are allowed before '@'."
+            )
+        if not re.fullmatch(r"[A-Za-z0-9.]+", domain):
+            raise ValueError(
+                "Domain part can only contain letters, numbers, and dots ('.')."
+            )
+        if "." not in domain:
+            raise ValueError("Domain must contain a dot (example: domain.com).")
+        if not re.fullmatch(r"[A-Za-z0-9]+\.[A-Za-z]{2,}", domain):
+            raise ValueError("Invalid domain format. Example: user@domain.com")
+        return v
 
 
 # Password Reset Request Schema
@@ -94,11 +90,30 @@ class ForgotPasswordOtpVerify(BaseModel):
             raise ValueError("Reset OTP must be exactly 6 digits.")
         return v
 
+
     @field_validator("email")
     def validate_email(cls, v):
-        if not v or not v.strip():
-            raise ValueError("Email is required")
-        return v.strip()
+        if " " in v:
+            raise ValueError("Email cannot contain spaces.")
+        if "@" not in v:
+            raise ValueError("Email must contain '@' symbol.")
+        try:
+            local_part, domain = v.split("@")
+        except ValueError:
+            raise ValueError("Email must contain only one '@' symbol.")
+        if not re.fullmatch(r"[A-Za-z0-9._-]+", local_part):
+            raise ValueError(
+                "Only letters, numbers, '.', '_', '-' are allowed before '@'."
+            )
+        if not re.fullmatch(r"[A-Za-z0-9.]+", domain):
+            raise ValueError(
+                "Domain part can only contain letters, numbers, and dots ('.')."
+            )
+        if "." not in domain:
+            raise ValueError("Domain must contain a dot (example: domain.com).")
+        if not re.fullmatch(r"[A-Za-z0-9]+\.[A-Za-z]{2,}", domain):
+            raise ValueError("Invalid domain format. Example: user@domain.com")
+        return v
     
 
 class Signup(BaseModel):
@@ -110,29 +125,30 @@ class Signup(BaseModel):
     @field_validator("username")
     def validate_username(cls, v):
         v = v.strip()
-
         if len(v) < 3:
             raise ValueError("Username must be at least 3 characters long.")
-        if v.isdigit():
-            raise ValueError("Username cannot be only numbers.")
-        if not re.match(r"^[a-zA-Z0-9_.]+$", v):
-            raise ValueError("Username can contain only letters, numbers, underscores and dots.")
-        if ".." in v or "__" in v:
-            raise ValueError("Username cannot contain repeated special characters like '..' or '__'.")
+        if not re.match(r"^[A-Za-z]", v):
+            raise ValueError("Username must start with a letter (A–Z or a–z).")
+        if not re.fullmatch(r"[A-Za-z0-9_]+", v):
+            raise ValueError("Username can contain only letters, numbers, and underscores (_).")
         return v
 
     @field_validator("password")
     def validate_password(cls, v):
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters.")
+        if " " in v:
+            raise ValueError("Password cannot contain spaces.")
         if not re.search(r"[A-Z]", v):
             raise ValueError("Password must include an uppercase letter.")
         if not re.search(r"[a-z]", v):
             raise ValueError("Password must include a lowercase letter.")
         if not re.search(r"[0-9]", v):
             raise ValueError("Password must include a number.")
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
+        if not re.search(r"[!@#$%^&*]", v):
             raise ValueError("Password must include a special character.")
+        if not re.fullmatch(r"[A-Za-z0-9!@#$%^&*]+", v):
+            raise ValueError("Password contains invalid characters.")
         return v
 
     @model_validator(mode="after")
@@ -161,18 +177,20 @@ class LoginRequest(BaseModel):
 
     @field_validator("password")
     def validate_password(cls, v):
-        if not v:
-            raise ValueError("Password is required")
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters.")
+        if " " in v:
+            raise ValueError("Password cannot contain spaces.")
         if not re.search(r"[A-Z]", v):
             raise ValueError("Password must include an uppercase letter.")
         if not re.search(r"[a-z]", v):
             raise ValueError("Password must include a lowercase letter.")
         if not re.search(r"[0-9]", v):
             raise ValueError("Password must include a number.")
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
+        if not re.search(r"[!@#$%^&*]", v):
             raise ValueError("Password must include a special character.")
+        if not re.fullmatch(r"[A-Za-z0-9!@#$%^&*]+", v):
+            raise ValueError("Password contains invalid characters.")
         return v
     
 class VerifyLoginOtpRequest(BaseModel):
