@@ -49,7 +49,11 @@ class Settings(BaseSettings):
     OTP_EXPIRE_MINUTES: int = 5
     PORT:int
     HOST:str
-
+    SECRET_ACCESS_KEY: str
+    SECRET_REFRESH_KEY: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_EXPIRE_MINUTES: int
+    ALGORITHM: str
 
     class ConfigDict:
         env_file = ".env"
