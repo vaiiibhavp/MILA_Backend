@@ -10,7 +10,7 @@ import asyncio
 if settings.MONGO_USER and settings.MONGO_PASSWORD:
     username = quote_plus(settings.MONGO_USER)
     password = quote_plus(settings.MONGO_PASSWORD)
-    uri = f"mongodb://{username}:{password}@{settings.MONGO_HOST}:{settings.MONGO_PORT}/{settings.MONGO_DATABASE}?authSource=mila"
+    uri = f"mongodb://{username}:{password}@{settings.MONGO_HOST}:{settings.MONGO_PORT}/{settings.MONGO_DATABASE}"
     print('db compass url dev-----------------------',uri)
 
 else:
