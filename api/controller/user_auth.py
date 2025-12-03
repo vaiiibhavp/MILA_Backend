@@ -181,6 +181,13 @@ async def signup_controller(payload: Signup):
     if existing:
         return response.error_message("Email already registered. Please log in instead.", status_code=400)
 
+    existing_username = await user_collection.find_one({"username": payload.username})
+    if existing_username:
+        return response.error_message(
+            "Username already taken. Please choose a different one.",
+            status_code=400
+        )
+    
     # Step 2: Generate OTP
     otp = generate_verification_code()
     # Step 3: Save signup data temporarily in Redis
