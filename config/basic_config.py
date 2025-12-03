@@ -56,6 +56,8 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_MINUTES: int
     ALGORITHM: str
 
+    GOOGLE_TOKEN_INFO_URL: str
+    
     class ConfigDict:
         env_file = ".env"
         extra = "ignore"

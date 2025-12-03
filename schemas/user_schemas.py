@@ -237,3 +237,6 @@ class ResetPasswordRequest(BaseModel):
         if self.new_password != self.confirm_password:
             raise ValueError("Passwords do not match.")
         return self
+    
+class GoogleLoginRequest(BaseModel):
+    id_token: str
