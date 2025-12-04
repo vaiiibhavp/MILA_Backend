@@ -6,9 +6,9 @@ subscription_plan_collection = db["subscription_plan"]
 async def seed_subscription_plan():
     # sample plans to seed
     sample_plans = [
-        {"title": "Monthly Plan", "amount": "9.90", "validity_value": 1, "validity_unit": "month"},
-        {"title": "Semi-Annual Plan", "amount": "8.90", "validity_value": 6, "validity_unit": "month"},
-        {"title": "Annual Plan", "amount": "7.90", "validity_value": 12, "validity_unit": "month"},
+        {"title": "Monthly Plan", "amount": "9.90", "validity_value": "1", "validity_unit": "month"},
+        {"title": "Semi-Annual Plan", "amount": "8.90", "validity_value": "6", "validity_unit": "month"},
+        {"title": "Annual Plan", "amount": "7.90", "validity_value": "12", "validity_unit": "month"},
     ]
 
     for plan in sample_plans:
