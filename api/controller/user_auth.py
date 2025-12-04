@@ -147,10 +147,6 @@ async def get_user_profile_details(request: Request, current_user: dict, lang: s
                 translate_message("USER_NOT_FOUND", lang=lang),
                 data=None
             )
-
-        # Convert ObjectId to str for all relevant fields
-        user_data = convert_objectid_to_str(user_data)
-
         # Remove sensitive info
         user_data.pop("password", None)
 
@@ -160,6 +156,8 @@ async def get_user_profile_details(request: Request, current_user: dict, lang: s
 
 
         user_data = serialize_datetime_fields(user_data)
+        # Convert ObjectId to str for all relevant fields
+        user_data = convert_objectid_to_str(user_data)
 
         return response.success_message(
             translate_message("USER_PROFILE_FETCHED", lang=lang),
