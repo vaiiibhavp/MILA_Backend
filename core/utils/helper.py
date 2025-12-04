@@ -85,7 +85,7 @@ def convert_objectid_to_str(obj):
     Recursively convert ObjectId fields to strings in a dict or list.
     """
     if isinstance(obj, dict):
-        return {k: convert_objectid_to_str(v) for k, v in obj.items()}
+        return [{k: convert_objectid_to_str(v) for k, v in obj.items()}]
     elif isinstance(obj, list):
         return [convert_objectid_to_str(item) for item in obj]
     elif isinstance(obj, ObjectId):

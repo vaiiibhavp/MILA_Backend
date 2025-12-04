@@ -80,6 +80,9 @@ class UserPermission:
             # Debugging: Log the user role
             user_role = user.get("role")
 
+            if not user_role:  # empty / None / "" / missing
+                user_role = payload.get("role")
+
             # Check if the user has the required role
             if user_role not in self.allowed_roles:
                 return response.raise_exception(

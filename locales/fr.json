@@ -156,7 +156,10 @@
   "UNAUTHORIZED_DELETE_FILE": "Vous n'êtes pas autorisé à supprimer ce fichier.",
   "LOCAL_DELETION_ERROR": "Erreur lors de la suppression locale",
   "FILE_DELETED_SUCCESS": "Fichier supprimé avec succès.",
-  "FILE_DELETE_FAILED": "Échec de la suppression du fichier"
+  "FILE_DELETE_FAILED": "Échec de la suppression du fichier",
+
+  "SUBSCRIPTION_PLAN_FETCHED" : "Abonnement récupéré avec succès.",
+  "ERROR_FETCHING_SUBSCRIPTION_PLAN" : "Erreur lors de la récupération du forfait d'abonnement."
 
 
 

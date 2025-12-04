@@ -1,27 +1,30 @@
-import httpx
+import jwt
 from fastapi import HTTPException
-from config.basic_config import settings
+from core.utils.response_mixin import CustomResponseMixin
 
-GOOGLE_TOKEN_INFO_URL = settings.GOOGLE_TOKEN_INFO_URL
+response = CustomResponseMixin()
 
-async def verify_google_id_token(id_token: str):
+def decode_google_id_token(id_token: str):
     """
-    Verifies the Google ID token and returns raw Google user info.
+    Decode Google ID token WITHOUT verifying signature (frontend handles verification).
     """
-    async with httpx.AsyncClient() as client:
-        google_response = await client.get(GOOGLE_TOKEN_INFO_URL + id_token)
+    try:
+        data = jwt.decode(id_token, options={"verify_signature": False})
 
-    if google_response.status_code != 200:
-        raise HTTPException(status_code=400, detail="Invalid Google ID token")
+        email = data.get("email")
+        if not email:
+            return response.error_message("Google token does not contain email", status_code=400)
 
-    data = google_response.json()
+        return {
+            "email": email,
+            "name": data.get("name"),
+            "picture": data.get("picture"),
+            "google_id": data.get("sub"),
+            "email_verified": data.get("email_verified", False)
+        }
 
-    if "email" not in data:
-        raise HTTPException(status_code=400, detail="Google token missing email")
-
-    return {  
-        "email": data["email"],
-        "name": data.get("name", ""),
-        "picture": data.get("picture"),
-        "email_verified": data.get("email_verified") == "true"
-    }
+    except Exception as e:
+        raise response.raise_exception("Invalid Google token", 
+                                       data={str(e)},
+                                       status_code=400
+        )

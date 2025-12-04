@@ -157,7 +157,10 @@
   "UNAUTHORIZED_DELETE_FILE": "You are not authorized to delete this file.",
   "LOCAL_DELETION_ERROR": "Local file deletion error",
   "FILE_DELETED_SUCCESS": "File deleted successfully.",
-  "FILE_DELETE_FAILED": "Failed to delete file"
+  "FILE_DELETE_FAILED": "Failed to delete file",
+
+  "SUBSCRIPTION_PLAN_FETCHED" : "Subscription plan fetched successfully.",
+  "ERROR_FETCHING_SUBSCRIPTION_PLAN" : "Error while fetching subscription plan."
 
 
 

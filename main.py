@@ -2,7 +2,8 @@ import asyncio
 import os
 from fastapi import FastAPI, Request
 from api.routes import adminauth_route
-from api.routes import user_profile_api, files_api, google_auth_api
+
+from api.routes import user_profile_api, files_api, subscription_plan_route,google_auth_api
 
 from core.utils.exceptions import CustomValidationError, custom_validation_error_handler, validation_exception_handler
 from fastapi.exceptions import RequestValidationError
@@ -20,6 +21,7 @@ from json import JSONEncoder
 from pydantic import Field
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from config.db_seeder.AdminSeeder import seed_admin
+from config.db_seeder.SubscriptionPlanSeeder import seed_subscription_plan
 
 
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -186,6 +188,7 @@ async def monitor_requests(request: Request, call_next):
         raise
 
 app.include_router(user_profile_api.router, prefix="/api/auth", tags=["Users"])
+app.include_router(subscription_plan_route.api_router, prefix="/api/subscription", tags=["Subscription Plans"])
 app.include_router(adminauth_route.router)
 app.include_router(google_auth_api.router, prefix="/api/google-auth")
 
@@ -225,6 +228,8 @@ async def init_scheduler():
             try:
                 await seed_admin()
                 print("[SUCCESS] Admin seeding completed")
+                await seed_subscription_plan()
+                print("[SUCCESS] Subscription Plan seeding completed")
             except Exception as seeder_error:
                 print(f"[ERROR] Admin seeding failed: {seeder_error}")
     except Exception as e:

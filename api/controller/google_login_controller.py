@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from core.utils.google_auth import verify_google_id_token
+from core.utils.google_auth import decode_google_id_token
 from config.db_config import user_collection
 from core.utils.auth_utils import generate_login_tokens
 from core.utils.response_mixin import CustomResponseMixin
@@ -10,7 +10,7 @@ response = CustomResponseMixin()
 
 async def google_login_controller(id_token: str):
     # 1. Verify Google token
-    google_info = await verify_google_id_token(id_token)
+    google_info = decode_google_id_token(id_token)
 
     email = google_info["email"]
 
@@ -26,10 +26,7 @@ async def google_login_controller(id_token: str):
             "membership_type": "free",
             "is_verified": False,
             "created_at": datetime.utcnow(),
-            "updated_at": None,
-            "two_factor_enabled": True,
-            "google_login": True,
-            "profile_photo_url": google_info.get("picture")
+            "google_login_id": google_info.get("google_id")
         }
 
         result = await user_collection.insert_one(new_user)
