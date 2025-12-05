@@ -66,10 +66,10 @@ async def refresh_token(request: RefreshTokenRequest, lang: str = "en"):
 
     return response.success_message(
         "Token refreshed successfully",
-        data={
+        data=[{
             "access_token": new_access_token,
             "refresh_token": new_refresh_token
-        }
+        }]
     )
 
 #controller for logout
@@ -163,7 +163,7 @@ async def get_user_profile_details(request: Request, current_user: dict, lang: s
 
         return response.success_message(
             translate_message("USER_PROFILE_FETCHED", lang=lang),
-            data=user_data
+            data=[user_data]
         )
 
     except Exception as e:
@@ -216,7 +216,7 @@ async def signup_controller(payload: Signup):
     await send_email(payload.email, subject, body, is_html)
 
     return response.success_message("OTP sent successfully. Please verify to continue.", 
-                                    data={"otp": otp}, status_code=200)
+                                    data=[{"otp": otp}], status_code=200)
 
 async def verify_signup_otp_controller(payload):
     email = payload.email
@@ -265,7 +265,7 @@ async def verify_signup_otp_controller(payload):
     # Success Response
     return response.success_message(
         "Email verified successfully!",
-        data={"user_id": user_id}, status_code=200
+        data=[{"user_id": user_id}], status_code=200
     )
 
 async def resend_otp_controller(payload):
@@ -294,7 +294,7 @@ async def resend_otp_controller(payload):
     await send_email(email, subject, body, is_html=True)
 
     return response.success_message("A new OTP has been sent to your email.",
-                                    data= {"otp": otp}, status_code=200)
+                                    data= [{"otp": otp}], status_code=200)
 
 async def login_controller(payload: LoginRequest):
     email = payload.email
@@ -328,9 +328,9 @@ async def login_controller(payload: LoginRequest):
 
     return response.success_message(
         "OTP sent to your email. Please verify to continue.",
-        data={
+        data=[{
             "otp_required": True,
-            "otp": otp},
+            "otp": otp}],
         status_code=200    
     )
 
@@ -354,10 +354,10 @@ async def verify_login_otp_controller(payload):
     # Remove otp after success
     await redis_client.delete(f"login:{email}:otp")
 
-    return response.success_message("Login successful", data={
+    return response.success_message("Login successful", data=[{
         "access_token": access_token,
         "refresh_token": refresh_token
-    }, status_code=200)
+    }], status_code=200)
 
 async def resend_login_otp_controller(payload):
     email = payload.email
@@ -396,7 +396,7 @@ async def send_reset_password_otp_controller(payload: ForgotPasswordRequest):
 
     await send_email(email, subject, body, is_html=True)
 
-    return response.success_message("OTP sent to your email.", data={"otp": otp}, status_code=200)
+    return response.success_message("OTP sent to your email.", data=[{"otp": otp}], status_code=200)
 
 async def verify_reset_password_otp_controller(payload):
     email = payload.email

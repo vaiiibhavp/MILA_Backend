@@ -8,7 +8,7 @@ class CustomResponseMixin:
         return JSONResponse(
             content={
                 "message": message,
-                "data": data if isinstance(data, dict) else {},
+                "data": data if isinstance(data, (dict, list)) else [],
                 "success": True,
                 "status_code": status_code,
             },
@@ -19,7 +19,7 @@ class CustomResponseMixin:
         return JSONResponse(
             content={
                 "message": message,
-                "data": data if isinstance(data, dict) else {},
+                "data": data if isinstance(data, (dict, list)) else [],
                 "success": False,
                 "status_code": status_code,
             },

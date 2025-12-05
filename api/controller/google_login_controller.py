@@ -41,8 +41,8 @@ async def google_login_controller(id_token: str):
 
     return response.success_message(
         "Login successful",
-        data={
+        data=[{
             "access_token": access_token,
             "refresh_token": refresh_token
-        }
+        }]
     )
