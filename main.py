@@ -2,7 +2,8 @@ import asyncio
 import os
 from fastapi import FastAPI, Request
 from api.routes import adminauth_route
-from api.routes import user_profile_api, files_api, subscription_plan_route
+
+from api.routes import user_profile_api, files_api, subscription_plan_route,google_auth_api
 
 from core.utils.exceptions import CustomValidationError, custom_validation_error_handler, validation_exception_handler
 from fastapi.exceptions import RequestValidationError
@@ -189,8 +190,7 @@ async def monitor_requests(request: Request, call_next):
 app.include_router(user_profile_api.router, prefix="/api/auth", tags=["Users"])
 app.include_router(subscription_plan_route.api_router, prefix="/api/subscription", tags=["Subscription Plans"])
 app.include_router(adminauth_route.router)
-
-
+app.include_router(google_auth_api.router, prefix="/api/google-auth")
 
 # Scheduler Instance
 scheduler = BackgroundScheduler()
