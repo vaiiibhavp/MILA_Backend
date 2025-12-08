@@ -58,11 +58,12 @@ class FileType(str, Enum):
     PROFILE_PHOTO = "profile_photo"
     DOCUMENT = "document"
     INVOICE = "invoice"
+    ONBOARDING_IMAGE = "onboarding_image"
+    SELFIE = "selfie"
 
 
 # ---- Files model ----
 class Files(BaseModel):
-    id: Optional[PyObjectId] = Field(default=None)
     storage_key: str
     storage_backend: str  # LOCAL or S3
     file_type: FileType

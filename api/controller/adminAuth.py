@@ -211,13 +211,13 @@ async def verify_forgot_pwd_otp_admin(otp: ForgotPasswordOtpVerify, lang: str = 
     Verify Forgot Password OTP (Forgot Password Flow)
     """
 
-    # ✅ Step 1: Validate input
+    #  Step 1: Validate input
     if not (otp.reset_otp and otp.email):
         raise response.raise_exception(
             message=translate_message("Email or OTP cannot be empty", lang)
         )
 
-    # ✅ Step 2: Fetch stored OTP
+    #  Step 2: Fetch stored OTP
     stored_code = await get_from_redis(f"password_reset:{otp.email}")
 
     if not stored_code:
@@ -294,7 +294,7 @@ async def change_password_controller(request: ForgotPasswordRequest, lang: str =
         {"$set": {"password": hashed_password, "updated_at": datetime.utcnow()}}
     )
 
-    # ✅ Clean Redis
+    #  Clean Redis
     await delete_from_redis(f"reset_token:{reset_token}")
     await delete_from_redis(f"password_reset:{email}")
 
@@ -311,7 +311,7 @@ async def request_password_reset_admin(request: RequestResetPassword, lang: str 
         If the user exists, an OTP or reset link will be sent to their registered email.
         """
 
-        # ✅ Validate email is not empty
+        #  Validate email is not empty
         if not request.email or not request.email.strip():
             return response.error_message(
                 translate_message("Email is required", lang),

@@ -57,7 +57,7 @@ async def save_file(file_obj: UploadFile, file_name: str, user_id: str, file_typ
                 await out_file.write(content)
 
             # Public URL: always forward slashes for frontend
-            public_url = f"{BASE_URL}uploads/{file_type}/{user_id}/{timestamp}.{ext}"
+            public_url = f"{BASE_URL}/uploads/{file_type}/{user_id}/{timestamp}.{ext}"
             return public_url, storage_key, "LOCAL"
 
         elif STORAGE_BACKEND == "S3":
@@ -96,7 +96,7 @@ async def generate_file_url(storage_key: str, backend: str):
     Generate fetch URL for an existing file.
     """
     if backend == "LOCAL":
-        return f"{BASE_URL}{storage_key}"
+        return f"{BASE_URL}/uploads/{storage_key}"
 
     elif backend == "S3":
         s3_client = boto3.client(
