@@ -161,7 +161,7 @@ async def get_user_profile_details(request: Request, current_user: dict, lang: s
 
         return response.success_message(
             translate_message("USER_PROFILE_FETCHED", lang=lang),
-            data=[user_data]
+            data=user_data
         )
 
     except Exception as e:

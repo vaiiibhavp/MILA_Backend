@@ -242,3 +242,8 @@ class GoogleLoginRequest(BaseModel):
     email: EmailStr
     name: Optional[str] = None
     google_id: str
+
+class AppleLoginRequest(BaseModel):
+    email: EmailStr
+    name: Optional[str] = None
+    apple_id: str
