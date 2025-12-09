@@ -5,6 +5,7 @@ from pymongo import ReturnDocument
 from config.db_config import onboarding_collection , file_collection
 from datetime import datetime, date
 from api.controller.files_controller import *
+from core.utils.helper import *
 from enum import Enum
 from pymongo import ReturnDocument
 
@@ -13,54 +14,6 @@ def calculate_age(dob: date) -> int:
     return today.year - dob.year - (
         (today.month, today.day) < (dob.month, dob.day)
     )
-
-
-def serialize(data):
-    """
-    Convert a MongoDB document into a clean JSON-serializable dictionary.
-
-    Purpose:
-    ----------
-    MongoDB stores document identifiers under `_id` using `ObjectId`,
-    which is not JSON serializable. This utility function standardizes the
-    document format before sending it to the client by converting `_id` to a
-    string-based `id` field and removing internal fields.
-
-    Workflow:
-    ----------
-    1. Handle empty input:
-       - If the document is None or empty → return {} instead of failing.
-
-    2. Convert `_id` → `id`:
-       - If `_id` exists:
-           * Convert `_id` (ObjectId) to a string.
-           * Assign it to a new field: `id`.
-           * Remove the original `_id` field.
-
-    3. Handle repeated serialization:
-       - If `_id` was already removed and `id` exists:
-         Convert `id` to string again to ensure consistent formatting.
-
-    4. Remove internal fields:
-       - Removes `user_id` from output so it is never exposed to the frontend
-         even though it remains stored internally in MongoDB.
-
-    """
-    if not data:
-        return {}
-
-    if "_id" in data:
-        data["_id"] = str(data["_id"])
-        data["id"] = data["_id"]
-        del data["_id"]
-
-    elif "id" in data:
-        data["id"] = str(data["id"])
-
-    if "user_id" in data:
-        del data["user_id"]
-
-    return data
 
 
 async def get_onboarding(user_id: str):
@@ -93,7 +46,7 @@ async def get_onboarding(user_id: str):
     }
     """
     data = await onboarding_collection.find_one({"user_id": user_id})
-    return serialize(data) if data else None
+    return convert_objectid_to_str(data) if data else None
 
 
 async def save_onboarding_step(user_id: str, payload: dict):
@@ -154,7 +107,7 @@ async def save_onboarding_step(user_id: str, payload: dict):
         return_document=ReturnDocument.AFTER,
     )
 
-    return serialize(result)
+    return convert_objectid_to_str(result)
 
 async def complete_onboarding(user_id: str):
     result = await onboarding_collection.find_one_and_update(
@@ -163,7 +116,7 @@ async def complete_onboarding(user_id: str):
         return_document=ReturnDocument.AFTER,
     )
 
-    return serialize(result)
+    return convert_objectid_to_str(result)
 
 async def format_onboarding_response(onboarding_doc):
     """
@@ -207,6 +160,10 @@ async def format_onboarding_response(onboarding_doc):
         - Replace image ID list with structured data
         - Replace selfie_image ID with object   
     """
+
+    if isinstance(onboarding_doc, list) and len(onboarding_doc) == 1 and isinstance(onboarding_doc[0], dict):
+        onboarding_doc = onboarding_doc[0]
+
     images_out = []
 
     for fid in onboarding_doc.get("images", []):
@@ -241,7 +198,10 @@ async def format_onboarding_response(onboarding_doc):
                 )
             }
 
-    response = serialize(onboarding_doc)
+    response = convert_objectid_to_str(onboarding_doc)
+
+    if isinstance(response, list) and len(response) == 1 and isinstance(response[0], dict):
+        response = response[0]
 
     response["images"] = images_out
     response["selfie_image"] = selfie_out
