@@ -58,13 +58,10 @@ async def get_current_user(
             options={"verify_exp": True}
         )
     except JWTError as e:
-        print("JWT ERROR:", str(e))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token"
         )
-
-    print(" JWT PAYLOAD:", payload)
 
     user_id = payload.get("user_id")
 
