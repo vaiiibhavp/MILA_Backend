@@ -41,6 +41,7 @@ async def fetch_onboarding(
             * Remove internal fields like user_id
             * Attach timestamps and other onboarding fields
     """
+    lang = current_user.get("language", "en")
     user_id = str(current_user.get("_id"))
 
     if not user_id:
@@ -48,11 +49,19 @@ async def fetch_onboarding(
 
     data = await get_onboarding(user_id)
     if not data:
-        raise HTTPException(404, "Onboarding not started")
+        return response.raise_exception(
+            message=translate_message("ONBOARDING_NOT_FOUND", lang),
+            status_code=404
+        )
 
     formatted = await format_onboarding_response(data)
 
-    return formatted
+    formatted = serialize_datetime_fields(formatted)
+
+    return response.success_message(
+        translate_message("ONBOARDING_FETCHED", lang),
+        data=formatted
+    )
 
 
 
