@@ -87,7 +87,7 @@ class UserCreate(BaseModel):
     profile_photo_id: Optional[PyObjectId] = None  # Reference to Files
     two_factor_enabled: bool = Field(default=True)
     tokens : Optional[int] = None
-    subscription_plan_id : Optional[str] = None
+    membership_trans_id : Optional[str] = None
  
     def update_user(self, updated_data: dict):
         """Method to update user and set the updated_at field."""
