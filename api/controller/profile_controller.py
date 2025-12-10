@@ -6,6 +6,8 @@ from core.utils.response_mixin import CustomResponseMixin
 from core.utils.age_calculation import calculate_age
 from api.controller.files_controller import save_file, generate_file_url
 from datetime import date, datetime
+from services.translation import translate_message
+from core.utils.helper import serialize_datetime_fields
 
 response = CustomResponseMixin()
 
@@ -18,12 +20,11 @@ async def get_user_profile_controller(current_user: dict, lang: str = "en"):
         {"_id": ObjectId(current_user["_id"])}
     )
     if not user:
-        return response.error_message("User not found", status_code=404)
+        return response.error_message(translate_message("User not found", lang=lang), data=[], status_code=404)
 
     onboarding = await onboarding_collection.find_one(
         {"user_id": str(user["_id"])}
     )
-    print("onboarded user: ", onboarding)
     age = None
     if onboarding and onboarding.get("birthdate"):
         age = calculate_age(onboarding["birthdate"])
@@ -45,9 +46,7 @@ async def get_user_profile_controller(current_user: dict, lang: str = "en"):
 
     tokens = onboarding.get("tokens", 0) if onboarding else 0
 
-    return response.success_message(
-        "Profile fetched successfully",
-        data=[{
+    profile_data = [{
             "name": user.get("username"),
             "age": age,
             "email": user.get("email"),
@@ -80,11 +79,17 @@ async def get_user_profile_controller(current_user: dict, lang: str = "en"):
                 "change_language": True,
                 "logout": True
             }
-        }],
+        }]
+
+    profile_data = serialize_datetime_fields(profile_data)
+
+    return response.success_message(
+        translate_message("Profile fetched successfully", lang=lang),
+        data=profile_data,
         status_code=200
     )
 
-async def upload_public_gallery_controller(images, current_user):
+async def upload_public_gallery_controller(images, current_user, lang: str = "en"):
     """
     Public Gallery Rules:
     - Multiple images allowed
@@ -93,12 +98,13 @@ async def upload_public_gallery_controller(images, current_user):
     """
 
     if not images:
-        return response.error_message("No images provided", 400)
+        return response.error_message(translate_message("No images provided", lang=lang), data=[], status_code=400)
 
     if len(images) > 5:
         return response.error_message(
-            "Maximum 5 public gallery images allowed",
-            400
+            translate_message("Maximum 5 public gallery images allowed", lang=lang),
+            data=[],
+            status_code=400
         )
 
     public_items = []
@@ -112,7 +118,6 @@ async def upload_public_gallery_controller(images, current_user):
         )
 
         public_items.append({
-            "image_url": public_url,
             "storage_key": storage_key,
             "backend": backend,
             "uploaded_at": datetime.utcnow()
@@ -129,13 +134,18 @@ async def upload_public_gallery_controller(images, current_user):
             "$set": {"updated_at": datetime.utcnow()}
         }
     )
+    response_data = serialize_datetime_fields({
+            "count": len(public_items),
+            "items": public_items
+        })
+
     return response.success_message(
-        "Public gallery images uploaded successfully",
-        data={"count": len(public_items)},
+        translate_message("Public gallery images uploaded successfully", lang=lang),
+        data=[response_data],
         status_code=200
     )
 
-async def upload_private_gallery_controller(image, price, current_user):
+async def upload_private_gallery_controller(image, price, current_user, lang: str= "en"):
     """
     Private Gallery Rules (UPDATED):
     - Single image per upload
@@ -146,8 +156,9 @@ async def upload_private_gallery_controller(image, price, current_user):
 
     if price <= 0:
         return response.error_message(
-            "Price must be greater than zero",
-            400
+            translate_message("Price must be greater than zero", lang=lang),
+            data=[],
+            status_code=400
         )
 
     onboarding = await onboarding_collection.find_one(
@@ -162,8 +173,9 @@ async def upload_private_gallery_controller(image, price, current_user):
 
     if existing_count >= max_limit:
         return response.error_message(
-            f"Private gallery limit reached. Upgrade to premium to add more photos.",
-            403 if membership == "free" else 400
+            translate_message(f"Private gallery limit reached. Upgrade to premium to add more photos.", lang=lang),
+            data=[],
+            status_code=403 if membership == "free" else 400,
         )
 
     public_url, storage_key, backend = await save_file(
@@ -174,7 +186,6 @@ async def upload_private_gallery_controller(image, price, current_user):
     )
 
     private_item = {
-        "image_url": public_url,
         "price": price,
         "storage_key": storage_key,
         "backend": backend,
@@ -189,16 +200,18 @@ async def upload_private_gallery_controller(image, price, current_user):
         }
     )
 
+    response_data = serialize_datetime_fields({
+        **private_item,
+        "remaining_slots": max_limit - (existing_count + 1)
+    })
+
     return response.success_message(
-        "Private gallery image uploaded successfully",
-        data={
-            **private_item,
-            "remaining_slots": max_limit - (existing_count + 1)
-        },
+        translate_message("Private gallery image uploaded successfully", lang=lang),
+        data=[response_data],
         status_code=200
     )
 
-async def get_public_gallery_controller(current_user):
+async def get_public_gallery_controller(current_user, lang: str = "en"):
     onboarding = await onboarding_collection.find_one(
         {"user_id": str(current_user["_id"])},
         {"public_gallery": 1}
@@ -219,15 +232,15 @@ async def get_public_gallery_controller(current_user):
         })
 
     return response.success_message(
-        "Public gallery fetched successfully",
-        data={
+        translate_message("Public gallery fetched successfully", lang=lang),
+        data=[{
             "count": len(result),
             "items": result
-        },
+        }],
         status_code=200
     )
 
-async def get_private_gallery_controller(current_user):
+async def get_private_gallery_controller(current_user, lang: str = "en"):
     onboarding = await onboarding_collection.find_one(
         {"user_id": str(current_user["_id"])},
         {"private_gallery": 1}
@@ -252,14 +265,14 @@ async def get_private_gallery_controller(current_user):
         })
 
     return response.success_message(
-        "Private gallery fetched successfully",
-        data={
+        translate_message("Private gallery fetched successfully", lang=lang),
+        data=[{
             "count": len(result),
             "limit": max_limit,
             "membership": membership,
             "remaining_slots": max_limit - len(result),
             "items": result
-        },
+        }],
         status_code=200
     )
 

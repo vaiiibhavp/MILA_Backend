@@ -17,27 +17,30 @@ async def get_user_profile(
     """
     Get logged-in user's profile details
     """
-    print("Current user: ", current_user)
     return await get_user_profile_controller(current_user, lang)
 
 @router.post("/upload_public_gallery", response_model=Response)
 async def upload_public_gallery(
     images: List[UploadFile] = File(...),
-    current_user: dict = Depends(UserPermission(["user"]))
+    current_user: dict = Depends(UserPermission(["user"])),
+    lang: str = Query(None)
+
 ):
     """
     Upload multiple images to public gallery
     """
     return await upload_public_gallery_controller(
         images=images,
-        current_user=current_user
+        current_user=current_user,
+        lang=lang
     )
 
 @router.post("/upload_private_gallery", response_model=Response)
 async def upload_private_gallery(
     image: UploadFile = File(...),
     price: int = Form(...),
-    current_user: dict = Depends(UserPermission(["user"]))
+    current_user: dict = Depends(UserPermission(["user"])),
+    lang: str = Query(None)
 ):
     """
     Upload single image with price to private gallery
@@ -45,24 +48,27 @@ async def upload_private_gallery(
     return await upload_private_gallery_controller(
         image=image,
         price=price,
-        current_user=current_user
+        current_user=current_user,
+        lang=lang
     )
 
 @router.get("/get_public_gallery", response_model=Response)
 async def get_public_gallery(
-    current_user: dict = Depends(UserPermission(["user"]))
+    current_user: dict = Depends(UserPermission(["user"])),
+    lang: str = Query(None)
 ):
     """
     Get user's public gallery
     """
-    return await get_public_gallery_controller(current_user)
+    return await get_public_gallery_controller(current_user, lang=lang)
 
 
 @router.get("/get_private_gallery", response_model=Response)
 async def get_private_gallery(
-    current_user: dict = Depends(UserPermission(["user"]))
+    current_user: dict = Depends(UserPermission(["user"])),
+    lang: str = Query(None)
 ):
     """
     Get user's private gallery
     """
-    return await get_private_gallery_controller(current_user)
+    return await get_private_gallery_controller(current_user, lang=lang)
