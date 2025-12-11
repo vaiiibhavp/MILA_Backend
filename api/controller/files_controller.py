@@ -56,9 +56,7 @@ async def save_file(file_obj: UploadFile, file_name: str, user_id: str, file_typ
                 content = await file_obj.read()
                 await out_file.write(content)
             public_url = f"{BASE_URL}/{file_type}/{user_id}/{timestamp}.{ext}"
-            relative = file_path.replace(UPLOAD_DIR, "").replace("\\", "/")
-            public_url_build = f"{BASE_URL}/{relative}"
-            return public_url_build, storage_key, "LOCAL"
+            return public_url, storage_key, "LOCAL"
 
         elif STORAGE_BACKEND == "S3":
 
