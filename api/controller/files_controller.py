@@ -31,7 +31,8 @@ response = CustomResponseMixin()
 
 
 #helper function to save the profile picture
-async def save_file(file_obj: UploadFile, file_name: str, user_id: str, file_type="profile_photo"):
+async def save_file(file_obj: UploadFile, file_name: str, user_id: str, file_type="profile_photo",custom_dir: str = None
+):
     """
     Save uploaded file to LOCAL or S3 based on STORAGE_BACKEND.
     Returns: (public_url, storage_key, backend)
@@ -48,7 +49,10 @@ async def save_file(file_obj: UploadFile, file_name: str, user_id: str, file_typ
 
         if STORAGE_BACKEND == "LOCAL":
             # Local save: use os.path.join for actual filesystem path
-            dir_path = os.path.join(UPLOAD_DIR, file_type, user_id)
+            if custom_dir:
+                dir_path = os.path.join(custom_dir, user_id)
+            else:
+                dir_path = os.path.join(UPLOAD_DIR, file_type, user_id)
             os.makedirs(dir_path, exist_ok=True)
             file_path = os.path.join(dir_path, f"{timestamp}.{ext}")
 
@@ -56,9 +60,8 @@ async def save_file(file_obj: UploadFile, file_name: str, user_id: str, file_typ
                 content = await file_obj.read()
                 await out_file.write(content)
 
-            # Public URL: always forward slashes for frontend
-            # public_url = f"{BASE_URL}uploads/{file_type}/{user_id}/{timestamp}.{ext}"
-            public_url = f"{BASE_URL}{file_type}/{user_id}/{timestamp}.{ext}"
+            relative = file_path.replace(UPLOAD_DIR, "").replace("\\", "/")
+            public_url = f"{BASE_URL}{relative}"
             return public_url, storage_key, "LOCAL"
 
         elif STORAGE_BACKEND == "S3":

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException , File
+import os
 from bson import ObjectId
 from fastapi import UploadFile
 from config.models.onboarding_model import OnboardingStepUpdate
@@ -15,6 +16,9 @@ from core.auth import get_current_user
 router = APIRouter()
 response = CustomResponseMixin()
 
+
+UPLOAD_DIR = os.getenv("UPLOAD_DIR")
+PROFILE_PHOTO_DIR = os.path.join(UPLOAD_DIR, "profile_photos")
 @router.get("/onboarding/profile")
 async def fetch_onboarding(
     current_user: dict = Depends(get_current_user),
@@ -252,6 +256,7 @@ async def upload_image(
         file_name=file.filename,
         user_id=user_id,
         file_type="onboarding_image",
+        custom_dir=PROFILE_PHOTO_DIR,
     )
 
     file_doc = Files(
@@ -340,6 +345,7 @@ async def upload_selfie(
         file_name=file.filename,
         user_id=user_id,
         file_type="selfie",
+        custom_dir=PROFILE_PHOTO_DIR,
     )
 
     file_doc = Files(
