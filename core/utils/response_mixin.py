@@ -1,10 +1,10 @@
 from fastapi.responses import JSONResponse
 from .exceptions import CustomValidationError
-from typing import Optional
+from typing import Optional, Union
 
 #class for CustomResponseMixin
 class CustomResponseMixin:
-    def success_message(self, message: str, data: Optional[dict] = None, status_code: int = 200):
+    def success_message(self, message: str, data: Optional[Union[dict, list]] = None, status_code: int = 200):
         return JSONResponse(
             content={
                 "message": message,
@@ -15,7 +15,7 @@ class CustomResponseMixin:
             status_code=status_code,
         )
     
-    def error_message(self, message: str, data: Optional[dict] = None, status_code: int = 400):
+    def error_message(self, message: str, data: Optional[Union[dict, list]] = None, status_code: int = 400):
         return JSONResponse(
             content={
                 "message": message,
@@ -26,11 +26,11 @@ class CustomResponseMixin:
             status_code=status_code,
         )
 
-    def raise_exception(self, message: str, data: Optional[dict] = None, status_code: int = 400):
+    def raise_exception(self, message: str, data: Optional[Union[dict, list, str]] = None, status_code: int = 500):
         if data is None:
-            data = {}
+            data = []
         elif not isinstance(data, dict):
-            data = {"error": str(data)}
+            data = [{"error": str(data)}]
 
         raise CustomValidationError(
             message=message,

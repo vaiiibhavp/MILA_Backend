@@ -160,7 +160,16 @@
   "FILE_DELETE_FAILED": "Failed to delete file",
 
   "SUBSCRIPTION_PLAN_FETCHED" : "Subscription plan fetched successfully.",
-  "ERROR_FETCHING_SUBSCRIPTION_PLAN" : "Error while fetching subscription plan."
+  "ERROR_FETCHING_SUBSCRIPTION_PLAN" : "Error while fetching subscription plan.",
+  "SUBSCRIPTION_PLAN_NOT_FOUND": "The subscription plan was not found.",
+
+  "ERROR_WHILE_FETCHING_TRANSACTION_DETAILS": "An error occurred while fetching the transaction details.",
+  "ALREADY_SUBSCRIBED_USING_THIS_TRANSACTION_ID": "This transaction ID has already been used for a subscription.",
+  "PAYMENT_AMOUNT_MISMATCH" : "The payment amount does not match the expected amount.",
+  "INVALID_DESTINATION_WALLET": "The payment was sent to an incorrect wallet address.",
+  "TRANSACTION_NOT_SUCCESSFUL": "The transaction was not successful.",
+  "TRANSACTION_DETAILS_VERIFIED_SUCCESSFULLY": "Transaction details have been verified successfully.",
+  "ERROR_VERIFYING_TRANSACTION_DETAILS": "An error occurred while verifying the transaction details."
 
 
 
