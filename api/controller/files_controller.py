@@ -55,10 +55,10 @@ async def save_file(file_obj: UploadFile, file_name: str, user_id: str, file_typ
             async with aiofiles.open(file_path, "wb") as out_file:
                 content = await file_obj.read()
                 await out_file.write(content)
-
+            public_url = f"{BASE_URL}/{file_type}/{user_id}/{timestamp}.{ext}"
             relative = file_path.replace(UPLOAD_DIR, "").replace("\\", "/")
-            public_url = f"{BASE_URL}{relative}"
-            return public_url, storage_key, "LOCAL"
+            public_url_build = f"{BASE_URL}/{relative}"
+            return public_url_build, storage_key, "LOCAL"
 
         elif STORAGE_BACKEND == "S3":
 
@@ -96,7 +96,7 @@ async def generate_file_url(storage_key: str, backend: str):
     Generate fetch URL for an existing file.
     """
     if backend == "LOCAL":
-        return f"{BASE_URL}/uploads/{storage_key}"
+        return f"{BASE_URL}{storage_key}"
 
     elif backend == "S3":
         s3_client = boto3.client(
