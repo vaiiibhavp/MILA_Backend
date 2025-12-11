@@ -159,7 +159,16 @@
   "FILE_DELETE_FAILED": "Échec de la suppression du fichier",
 
   "SUBSCRIPTION_PLAN_FETCHED" : "Abonnement récupéré avec succès.",
-  "ERROR_FETCHING_SUBSCRIPTION_PLAN" : "Erreur lors de la récupération du forfait d'abonnement."
+  "ERROR_FETCHING_SUBSCRIPTION_PLAN" : "Erreur lors de la récupération du forfait d'abonnement.",
+  "SUBSCRIPTION_PLAN_NOT_FOUND": "Aucun abonnement n'a été trouvé.",
+
+  "ERROR_WHILE_FETCHING_TRANSACTION_DETAILS": "Une erreur s'est produite lors de la récupération des détails de la transaction.",
+  "ALREADY_SUBSCRIBED_USING_THIS_TRANSACTION_ID": "Cet identifiant de transaction a déjà été utilisé pour un abonnement.",
+  "PAYMENT_AMOUNT_MISMATCH" : "Le montant du paiement ne correspond pas au montant attendu.",
+  "INVALID_DESTINATION_WALLET": "Le paiement a été envoyé à une adresse de portefeuille incorrecte.",
+  "TRANSACTION_NOT_SUCCESSFUL": "La transaction n'a pas abouti.",
+  "TRANSACTION_DETAILS_VERIFIED_SUCCESSFULLY": "Les détails de la transaction ont été vérifiés avec succès.",
+  "ERROR_VERIFYING_TRANSACTION_DETAILS": "Une erreur s'est produite lors de la vérification des détails de la transaction."
 
 
 

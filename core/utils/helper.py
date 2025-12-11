@@ -5,7 +5,7 @@ import re
 from .response_mixin import CustomResponseMixin
 import os, ssl, asyncio
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone, date, time, timedelta
 from tasks import send_contact_us_email_task
 from fastapi import Depends, Request
 from jose import jwt,JWTError
@@ -23,6 +23,8 @@ import os
 from bson import ObjectId
 from config.basic_config import settings
 from config.models.user_models import *
+from dateutil.relativedelta import relativedelta
+from typing import Optional, Tuple
 
 load_dotenv()
 
@@ -92,3 +94,50 @@ def convert_objectid_to_str(obj):
         return str(obj)
     else:
         return obj
+
+def get_membership_period(validity_value: int, validity_unit: str, current_expiry: Optional[datetime] = None) -> Tuple[datetime, datetime]:
+    """
+       Returns (start_date, end_date) in UTC.
+
+       - If no current_expiry: start = now (UTC)
+       - If current_expiry in the future or today: start = next day after expiry at 00:00 UTC
+    """
+    unit_map = {
+        "day": relativedelta(days=validity_value),
+        "month": relativedelta(months=validity_value),
+        "year": relativedelta(years=validity_value),
+    }
+
+    validity_unit = validity_unit.lower()
+    if validity_unit not in unit_map:
+        raise ValueError("validity_unit must be 'day', 'month', or 'year'")
+
+    now_utc = datetime.now(timezone.utc)
+
+    # --- Determine start_date ---
+    if current_expiry is None:
+        # No previous membership
+        start_date = now_utc
+    else:
+        # current_expiry might be date or datetime; normalize to a date
+        if isinstance(current_expiry, datetime):
+            expiry_date = current_expiry.date()
+        elif isinstance(current_expiry, date):
+            expiry_date = current_expiry
+        else:
+            raise TypeError("current_expiry must be datetime, date, or None")
+
+        today_utc = now_utc.date()
+
+        if expiry_date >= today_utc:
+            # Start from the next day after the expiry date, at 00:00 UTC
+            next_day = expiry_date + timedelta(days=1)
+            start_date = datetime.combine(next_day, time.min, tzinfo=timezone.utc)
+        else:
+            # Existing membership already expired in the past → start now
+            start_date = now_utc
+
+        # --- Determine end_date ---
+    end_date = start_date + unit_map[validity_unit]
+
+    return start_date, end_date

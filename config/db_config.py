@@ -77,6 +77,9 @@ token_collection = db["tokens"]
 file_collection = db["files"]
 admin_collection = db["Admin"]
 subscription_plan_collection = db["subscription_plan"]
+transaction_collection = db["transaction"]
+system_config_collection = db["system_config"]
+user_token_history_collection = db["user_token_history"]
 
 async def create_indexes():
     """
