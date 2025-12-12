@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from bson import ObjectId
 from pydantic import BaseModel,Field, field_validator
-from typing import Optional, List
+from typing import Optional, List, Union
 from core.utils.core_enums import TransactionStatus
 
 class TransactionRequestModel(BaseModel):
@@ -41,7 +41,34 @@ class TransactionCreateModel(BaseModel):
     paid_amount: float = 0.0
     remaining_amount: float = 0.0
     status: TransactionStatus
-    payment_details: PaymentDetailsModel
+    payment_details: Union[PaymentDetailsModel, List[PaymentDetailsModel]]
+    start_date: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
+    tokens:Optional[int] = 0
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class CompleteTransactionRequestModel(BaseModel):
+    txn_id: str
+    subscription_id: str
+
+    @field_validator("txn_id", "subscription_id")
+    def not_empty(cls, value):
+        if not value or not value.strip():
+            raise ValueError("Field cannot be empty")
+        return value
+
+    @field_validator("subscription_id")
+    def validate_subscription_id(cls, v):
+        if not ObjectId.is_valid(v):
+            raise ValueError("subscription_id must be a valid ObjectId")
+        return v
+
+class TransactionUpdateModel(BaseModel):
+    plan_amount: float = 0.0
+    paid_amount: float = 0.0
+    remaining_amount: float = 0.0
+    status: TransactionStatus
+    payment_details: Union[PaymentDetailsModel, List[PaymentDetailsModel]]
     start_date: Optional[datetime] = None
     expires_at: Optional[datetime] = None
     tokens:Optional[int] = 0

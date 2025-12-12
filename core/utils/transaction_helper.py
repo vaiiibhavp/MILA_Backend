@@ -5,10 +5,10 @@ from services.translation import translate_message
 from tronpy import Tron
 import requests, base58, hashlib
 from config.basic_config import settings
-from schemas.transcation_schema import PaymentDetailsModel, TransactionCreateModel
+from schemas.transcation_schema import PaymentDetailsModel, TransactionCreateModel, TransactionUpdateModel
 from core.utils.core_enums import MembershipType, MembershipStatus, TokenTransactionType, TokenTransactionReason, TransactionStatus
 from config.db_config import transaction_collection, system_config_collection, user_collection
-from config.models.transaction_models import store_transaction_details
+from config.models.transaction_models import store_transaction_details, update_transaction_details
 from bson import ObjectId
 from services.user_token_history import create_user_token_history
 from schemas.user_token_history_schema import CreateTokenHistory
@@ -83,7 +83,7 @@ def fetch_token_metadata(contract_addr_hex58: str):
     # fallback: try to call decimals() via tronpy/rpc if None (not implemented here)
     return token
 
-async def get_transaction_details(txn_id:str) -> dict:
+async def get_transaction_details(txn_id:str, lang:str) -> dict:
 
     try:
 
@@ -155,7 +155,9 @@ async def get_transaction_details(txn_id:str) -> dict:
                 else:
                     parsed["amount"] = None
                 break
-
+    if parsed is None or parsed['status'] is None:
+        raise response.raise_exception(translate_message("ERROR_WHILE_FETCHING_TRANSACTION_DETAILS", lang=lang),
+                                       data=[], status_code=502)
     return parsed
 
 def validate_destination_wallet(
@@ -163,10 +165,7 @@ def validate_destination_wallet(
     lang: str,
 ) -> Optional[Any]:
     if wallet_address != settings.ADMIN_WALLET_ADDRESS:
-        return response.error_message(
-            translate_message("INVALID_DESTINATION_WALLET", lang=lang),
-            data=[],
-        )
+        raise response.raise_exception(translate_message("INVALID_DESTINATION_WALLET", lang=lang),data=[])
     return None
 
 def validate_transaction_status(
@@ -174,20 +173,21 @@ def validate_transaction_status(
     lang: str,
 ) -> Optional[Any]:
     if transaction_status.lower() != "success":
-        return response.error_message(
-            translate_message("TRANSACTION_NOT_SUCCESSFUL", lang=lang),
-            data=[],
-        )
+        raise response.raise_exception(translate_message("TRANSACTION_NOT_SUCCESSFUL", lang=lang), data=[])
     return None
 
 async def build_transaction_model(
     user_id: str,
     plan_data: Dict[str, Any],
     transaction_details: Dict[str, Any],
+    partial_payment_data: Dict[str, Any] = None,
 ) -> TransactionCreateModel:
     plan_amount = float(plan_data["amount"])
     paid_amount = float(transaction_details["amount"])
     remaining_amount = plan_amount - paid_amount
+    if partial_payment_data is not None:
+        paid_amount = partial_payment_data['paid_amount'] + float(transaction_details["amount"])
+        remaining_amount = partial_payment_data['plan_amount'] - paid_amount
 
     payment_details = PaymentDetailsModel(**transaction_details)
 
@@ -217,19 +217,12 @@ async def handle_full_payment(
     for fully paid transactions.
     """
 
-    # 1. Determine membership period (may extend current membership)
-    start_date, expiry_date = await _calculate_membership_period_for_user(
+    transaction_data, system_config = await _prepare_transaction_for_subscription(
+        transaction_data=transaction_data,
         plan_data=plan_data,
-        user_id=user_id,
+        user_id=user_id
     )
-
-    transaction_data.start_date = start_date
-    transaction_data.expires_at = expiry_date
-
-    # 2. Fetch system config and user
-    system_config = await system_config_collection.find_one()
     user_details = await user_collection.find_one({"_id": ObjectId(user_id)})
-
     on_subscribe_tokens = int(system_config["on_subscribe_token"])
     transaction_data.tokens = on_subscribe_tokens
 
@@ -240,7 +233,6 @@ async def handle_full_payment(
     await _update_user_membership_and_tokens(
         user_id=user_id,
         user_details=user_details,
-        system_config=system_config,
         on_subscribe_tokens=on_subscribe_tokens,
         transaction_id=doc["_id"],
     )
@@ -270,7 +262,7 @@ async def _calculate_membership_period_for_user(
         current_mem_txn_id = user_details.get("membership_trans_id")
         if current_mem_txn_id:
             current_mem_txn_details = await transaction_collection.find_one(
-                {"_id": current_mem_txn_id}
+                {"_id": ObjectId(current_mem_txn_id)}
             )
             if current_mem_txn_details:
                 _, expiry_date = get_membership_period(
@@ -287,7 +279,6 @@ async def _calculate_membership_period_for_user(
 async def _update_user_membership_and_tokens(
     user_id: str,
     user_details: Dict[str, Any],
-    system_config: Dict[str, Any],
     on_subscribe_tokens: int,
     transaction_id: ObjectId,
 ) -> None:
@@ -331,6 +322,68 @@ async def _update_user_membership_and_tokens(
         },
     )
 
+async def _prepare_transaction_for_subscription(
+    transaction_data: TransactionCreateModel,
+    user_id: str,
+    plan_data: Dict[str, Any],
+) -> Tuple[TransactionCreateModel,dict]:
+    """
+        Prepare transaction_data for a new subscription:
+          1. calculate membership period (may extend existing membership)
+          2. set start_date and expires_at on transaction_data
+          3. fetch system_config
+          4. set transaction_data.tokens from system_config
+
+        Returns:
+          (transaction_data, system_config)
+    """
+    # 1. Determine membership period (may extend current membership)
+    start_date, expiry_date = await _calculate_membership_period_for_user(
+        plan_data=plan_data,
+        user_id=user_id,
+    )
+
+    transaction_data.start_date = start_date
+    transaction_data.expires_at = expiry_date
+
+    # 2. Fetch system config and user
+    system_config = await system_config_collection.find_one()
+
+    on_subscribe_tokens = int(system_config["on_subscribe_token"])
+    transaction_data.tokens = on_subscribe_tokens
+    return transaction_data, system_config
+
+async def mark_full_payment_received(
+    transaction_data: TransactionCreateModel,
+    plan_data: Dict[str, Any],
+    user_id: str,
+    subscription_id:str
+) -> Dict[str, Any]:
+    """
+        Handles membership period, token credit, and user membership updates
+        for remaining paid transactions.
+    """
+    transaction_data, system_config = await _prepare_transaction_for_subscription(
+        transaction_data = transaction_data,
+        plan_data = plan_data,
+        user_id = user_id
+    )
+    user_details = await user_collection.find_one({"_id": ObjectId(user_id)})
+    on_subscribe_tokens = int(system_config["on_subscribe_token"])
+    transaction_data.tokens = on_subscribe_tokens
+
+    # 3. Persist transaction
+    doc = await update_transaction_details(doc=TransactionUpdateModel(**transaction_data.model_dump()),subscription_id=subscription_id)
+
+    # 4. Token history and membership updates
+    await _update_user_membership_and_tokens(
+        user_id=user_id,
+        user_details=user_details,
+        on_subscribe_tokens=on_subscribe_tokens,
+        transaction_id=doc["_id"],
+    )
+
+    return doc
 
 
 

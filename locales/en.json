@@ -169,7 +169,8 @@
   "INVALID_DESTINATION_WALLET": "The payment was sent to an incorrect wallet address.",
   "TRANSACTION_NOT_SUCCESSFUL": "The transaction was not successful.",
   "TRANSACTION_DETAILS_VERIFIED_SUCCESSFULLY": "Transaction details have been verified successfully.",
-  "ERROR_VERIFYING_TRANSACTION_DETAILS": "An error occurred while verifying the transaction details."
+  "ERROR_VERIFYING_TRANSACTION_DETAILS": "An error occurred while verifying the transaction details.",
+  "TRANSACTION_PAYMENT_DETAILS_NOT_FOUND": "Transaction payment details could not be found."
 
 
 
