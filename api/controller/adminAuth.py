@@ -211,28 +211,41 @@ async def verify_forgot_pwd_otp_admin(otp: ForgotPasswordOtpVerify, lang: str = 
     Verify Forgot Password OTP (Forgot Password Flow)
     """
 
-    #  Step 1: Validate input
-    if not (otp.reset_otp and otp.email):
+    # ✅ Step 1: Validate input
+    if not otp.email or not otp.otp:
         raise response.raise_exception(
-            message=translate_message("Email or OTP cannot be empty", lang)
+            message=translate_message("Email or OTP cannot be empty", lang),
+            status_code=400
         )
 
-    #  Step 2: Fetch stored OTP
+    # ✅ Step 2: Validate email existence (IMPORTANT FIX)
+    admin = await admin_collection.find_one(
+        {"email": otp.email},
+        {"_id": 1}
+    )
+
+    if not admin:
+        raise response.raise_exception(
+            message=translate_message("EMAIL_NOT_FOUND", lang),
+            status_code=404
+        )
+
+    # ✅ Step 3: Fetch stored OTP
     stored_code = await get_from_redis(f"password_reset:{otp.email}")
 
     if not stored_code:
         raise response.raise_exception(
-            message=translate_message("Invalid or expired reset code", lang),
+            message=translate_message("OTP_EXPIRED_OR_INVALID", lang),
             status_code=400
         )
 
-    if stored_code != otp.reset_otp:
+    if stored_code != otp.otp:
         raise response.raise_exception(
-            message=translate_message("Invalid verification code", lang),
+            message=translate_message("INVALID_OTP", lang),
             status_code=400
         )
 
-    #  Step 3: Generate reset_token (after OTP success)
+    # ✅ Step 4: Generate reset token
     temp_token = str(uuid.uuid4())
 
     redis_key = f"reset_token:{temp_token}"
@@ -326,7 +339,7 @@ async def request_password_reset_admin(request: RequestResetPassword, lang: str 
 
         if not admin:
             return response.error_message(
-                translate_message("User not found", lang),
+                translate_message("Admin not found with this email", lang),
                 data={}, 
                 status_code=404
             )

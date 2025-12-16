@@ -62,10 +62,10 @@ class RequestResetPassword(BaseModel):
 
 # Password Reset Request Schema
 class ForgotPasswordOtpVerify(BaseModel):
-    reset_otp: str
+    otp: str
     email: str
 
-    @field_validator("reset_otp")
+    @field_validator("otp")
     def validate_reset_otp(cls, v):
         if not v or not v.strip():
             raise ValueError("Reset OTP cannot be empty.")
