@@ -24,6 +24,8 @@ from core.utils.redis_helper import redis_client
 from core.utils.pagination import StandardResultsSetPagination   
 from services.translation import translate_message
 from core.templates.email_templates import *
+from core.utils.core_enums import *
+from bson import ObjectId
 
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 REFRESH_TOKEN_EXPIRE_MINUTES =int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
@@ -77,8 +79,6 @@ async def logout(request: LogoutRequest, lang: str = "en"):
     """
     Logout a user by blacklisting their refresh token.
     """
-
-    print("lang",lang)
     try:
         # Verify the token
         token_data = verify_token(request.refresh_token)
@@ -105,6 +105,17 @@ async def logout(request: LogoutRequest, lang: str = "en"):
         {"$set": {"is_blacklisted": True}}
     )
 
+    user_object_id = ObjectId(login_user)
+
+    await user_collection.update_one(
+        {"_id": user_object_id},
+        {
+            "$set": {
+                "login_status": LoginStatus.INACTIVE,
+                "last_logout_at": datetime.utcnow()
+            }
+        }
+    )
     return response.success_message(translate_message("Logout successful.", lang), data={})
 
 
@@ -311,6 +322,16 @@ async def login_controller(payload: LoginRequest):
     # Step 3: If 2FA disabled → return tokens immediately
     if not user.get("two_factor_enabled", True):
         access_token, refresh_token = generate_login_tokens(user)
+
+        await user_collection.update_one(
+            {"_id": user["_id"]},
+            {
+                "$set": {
+                    "login_status": LoginStatus.ACTIVE,
+                    "last_login_at": datetime.utcnow()
+                }
+            }
+        )
         return response.success_message("Login successful", data={
             "access_token": access_token,
             "refresh_token": refresh_token
@@ -349,6 +370,15 @@ async def verify_login_otp_controller(payload):
 
     access_token, refresh_token = generate_login_tokens(user)
 
+    await user_collection.update_one(
+        {"_id": user["_id"]},
+        {
+            "$set": {
+                "login_status": LoginStatus.ACTIVE,
+                "last_login_at": datetime.utcnow()
+            }
+        }
+    )
     # Remove otp after success
     await redis_client.delete(f"login:{email}:otp")
 

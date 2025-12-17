@@ -1,13 +1,14 @@
 #profile_controller.py:
 
 from bson import ObjectId
-from config.db_config import user_collection, onboarding_collection
+from config.db_config import user_collection, onboarding_collection, file_collection
 from core.utils.response_mixin import CustomResponseMixin
 from core.utils.age_calculation import calculate_age
-from api.controller.files_controller import save_file, generate_file_url
+from api.controller.files_controller import save_file, generate_file_url, get_profile_photo_url
 from datetime import date, datetime
 from services.translation import translate_message
 from core.utils.helper import serialize_datetime_fields
+from config.models.user_models import Files, FileType
 
 response = CustomResponseMixin()
 
@@ -46,11 +47,14 @@ async def get_user_profile_controller(current_user: dict, lang: str = "en"):
 
     tokens = user.get("tokens", 0) if onboarding else 0
 
+    profile_photo_url = await get_profile_photo_url(current_user)
+
     profile_data = [{
             "name": user.get("username"),
             "age": age,
             "email": user.get("email"),
-            "profile_photo": onboarding.get("selfie_image") if onboarding else None,
+            "profile_photo": profile_photo_url,
+            "about": onboarding.get("bio"),
             "screen_state": screen_state,
             "verification": {
                 "status": verification_status,
@@ -67,7 +71,7 @@ async def get_user_profile_controller(current_user: dict, lang: str = "en"):
                 "count": len(public_gallery)
             },
             "private_gallery": {
-                "items": [] if private_gallery_locked else private_gallery,
+                "items": private_gallery,
                 "count": len(private_gallery),
                 "locked": private_gallery_locked
             },
@@ -117,23 +121,33 @@ async def upload_public_gallery_controller(images, current_user, lang: str = "en
             file_type="public_gallery"
         )
 
+        file_doc = Files(
+            storage_key=storage_key,
+            storage_backend=backend,
+            file_type=FileType.PUBLIC_GALLERY,
+            uploaded_by=str(current_user["_id"])
+        )
+
+        result = await file_collection.insert_one(file_doc.dict(by_alias=True))
+        file_id = str(result.inserted_id)
+
         public_items.append({
-            "storage_key": storage_key,
-            "backend": backend,
+            "file_id": file_id,
             "uploaded_at": datetime.utcnow()
         })
         
-    await onboarding_collection.update_one(
-        {"user_id": str(current_user["_id"])},
-        {
-            "$push": {
-                "public_gallery": {
-                    "$each": public_items
-                }
+        await onboarding_collection.update_one(
+            {"user_id": str(current_user["_id"])},
+            {
+                "$push": {"public_gallery": {"$each": public_items}},
+                "$setOnInsert": {
+                    "user_id": str(current_user["_id"]),
+                    "created_at": datetime.utcnow()
+                },
+                "$set": {"updated_at": datetime.utcnow()}
             },
-            "$set": {"updated_at": datetime.utcnow()}
-        }
-    )
+            upsert=True
+        )
     response_data = serialize_datetime_fields({
             "count": len(public_items),
             "items": public_items
@@ -185,21 +199,35 @@ async def upload_private_gallery_controller(image, price, current_user, lang: st
         file_type="private_gallery"
     )
 
+    file_doc = Files(
+        storage_key=storage_key,
+        storage_backend=backend,
+        file_type=FileType.PRIVATE_GALLERY,
+        uploaded_by=str(current_user["_id"])
+    )
+
+    result = await file_collection.insert_one(file_doc.dict(by_alias=True))
+    file_id = str(result.inserted_id)
+
+    # Store reference in onboarding
     private_item = {
+        "file_id": file_id,
         "price": price,
-        "storage_key": storage_key,
-        "backend": backend,
-        "uploaded_at": datetime.utcnow().isoformat()
+        "uploaded_at": datetime.utcnow()
     }
 
     await onboarding_collection.update_one(
         {"user_id": str(current_user["_id"])},
         {
             "$push": {"private_gallery": private_item},
+            "$setOnInsert": {
+                "user_id": str(current_user["_id"]),
+                "created_at": datetime.utcnow()
+            },
             "$set": {"updated_at": datetime.utcnow()}
-        }
+        },
+        upsert=True
     )
-
     response_data = serialize_datetime_fields({
         **private_item,
         "remaining_slots": max_limit - (existing_count + 1)
@@ -222,21 +250,39 @@ async def get_public_gallery_controller(current_user, lang: str = "en"):
     result = []
 
     for item in gallery:
-        image_url = (
-            # item.get("image_url")
-            await generate_file_url(item["storage_key"], item["backend"])
+        file_id = item.get("file_id")
+        if not file_id:
+            continue
+
+        file_doc = await file_collection.find_one(
+            {
+                "_id": ObjectId(file_id),
+                "is_deleted": {"$ne": True}
+            }
+        )
+
+        if not file_doc:
+            continue
+
+        image_url = await generate_file_url(
+            storage_key=file_doc["storage_key"],
+            backend=file_doc["storage_backend"]
         )
 
         result.append({
-            "image_url": image_url,
+            "file_id": file_id,
+            "url": image_url,
+            "uploaded_at": item.get("uploaded_at")
         })
+
+    response_data = serialize_datetime_fields({
+        "count": len(result),
+        "items": result
+    })
 
     return response.success_message(
         translate_message("Public gallery fetched successfully", lang=lang),
-        data=[{
-            "count": len(result),
-            "items": result
-        }],
+        data=[response_data],
         status_code=200
     )
 
@@ -254,25 +300,38 @@ async def get_private_gallery_controller(current_user, lang: str = "en"):
     result = []
 
     for item in gallery:
-        image_url = (
-            item.get("image_url")
-            or await generate_file_url(item["storage_key"], item["backend"])
+        file_id = item.get("file_id")
+        if not file_id:
+            continue
+
+        file_doc = await file_collection.find_one(
+            {
+                "_id": ObjectId(file_id),
+                "is_deleted": {"$ne": True}
+            }
+        )
+
+        if not file_doc:
+            continue
+
+        image_url = await generate_file_url(
+            storage_key=file_doc["storage_key"],
+            backend=file_doc["storage_backend"]
         )
 
         result.append({
-            "image_url": image_url,
-            "price": item.get("price"),
+            "file_id": file_id,
+            "url": image_url,
+            "uploaded_at": item.get("uploaded_at")
         })
+
+    response_data = serialize_datetime_fields({
+        "count": len(result),
+        "items": result
+    })
 
     return response.success_message(
         translate_message("Private gallery fetched successfully", lang=lang),
-        data=[{
-            "count": len(result),
-            "limit": max_limit,
-            "membership": membership,
-            "remaining_slots": max_limit - len(result),
-            "items": result
-        }],
+        data=[response_data],
         status_code=200
     )
-
