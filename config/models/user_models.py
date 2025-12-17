@@ -60,7 +60,8 @@ class FileType(str, Enum):
     INVOICE = "invoice"
     ONBOARDING_IMAGE = "onboarding_image"
     SELFIE = "selfie"
-
+    PUBLIC_GALLERY = "public_gallery"
+    PRIVATE_GALLERY = "private_gallery"
 
 # ---- Files model ----
 class Files(BaseModel):
