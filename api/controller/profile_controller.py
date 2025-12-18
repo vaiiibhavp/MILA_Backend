@@ -33,22 +33,6 @@ async def get_user_profile_controller(current_user: dict, lang: str = "en"):
         age = calculate_age(onboarding["birthdate"])
 
     verification_status = user.get("is_verified")
-    reward_given = user.get("verification_reward_given", False)
-
-    if verification_status is True and not reward_given:
-        new_tokens = user.get("tokens", 0) + VERIFICATION_REWARD_TOKENS
-
-        await user_collection.update_one(
-            {"_id": user["_id"]},
-            {
-                "$set": {
-                    "tokens": new_tokens,
-                    "verification_reward_given": True
-                }
-            }
-        )
-        user["tokens"] = new_tokens
-        user["verification_reward_given"] = True
     membership_type = user.get("membership_type", "free")
 
     if verification_status == True:
