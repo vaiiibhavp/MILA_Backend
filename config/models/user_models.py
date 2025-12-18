@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, model_validator,field_validator
-from typing import Optional, Union, Any, Callable
+from typing import Optional, Union, Any, Callable, Dict, List
 from pydantic import GetJsonSchemaHandler
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
@@ -184,3 +184,20 @@ async def get_user_by_email(data: str) -> UserCreate:
         return False
     # return UserCreate(**user)
     return user["_id"]
+
+async def get_user_details(
+        condition: Dict[str, Any],
+        fields: Optional[List[str]] = None
+):
+    projection = None
+    if fields:
+        projection = {field: 1 for field in fields}
+        # If user didn't explicitly ask for _id, exclude it
+        if "_id" not in fields:
+            projection["_id"] = 0
+
+
+    return await user_collection.find_one(
+        condition,
+        projection
+    )

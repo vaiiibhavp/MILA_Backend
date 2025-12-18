@@ -1,5 +1,4 @@
-from typing import Any
-from fastapi import Request, Depends
+from fastapi import Query
 from pydantic import BaseModel
 
 # class for StandardResultsSetPagination
@@ -16,5 +15,10 @@ class StandardResultsSetPagination(BaseModel):
         return self.page_size
 
 # To use the pagination class in the endpoint
-def pagination_params(pagination: StandardResultsSetPagination = Depends(StandardResultsSetPagination)):
-    return pagination
+def pagination_params(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100)) -> StandardResultsSetPagination:
+    return StandardResultsSetPagination(
+        page=page,
+        page_size=page_size
+    )
