@@ -8,10 +8,12 @@ from api.controller.files_controller import save_file, generate_file_url, get_pr
 from datetime import date, datetime
 from services.translation import translate_message
 from core.utils.helper import serialize_datetime_fields
+from config.basic_config import settings
 from config.models.user_models import Files, FileType
 
 response = CustomResponseMixin()
 
+VERIFICATION_REWARD_TOKENS=settings.VERIFICATION_REWARD_TOKENS
 
 async def get_user_profile_controller(current_user: dict, lang: str = "en"):
     """
@@ -31,6 +33,22 @@ async def get_user_profile_controller(current_user: dict, lang: str = "en"):
         age = calculate_age(onboarding["birthdate"])
 
     verification_status = user.get("is_verified")
+    reward_given = user.get("verification_reward_given", False)
+
+    if verification_status is True and not reward_given:
+        new_tokens = user.get("tokens", 0) + VERIFICATION_REWARD_TOKENS
+
+        await user_collection.update_one(
+            {"_id": user["_id"]},
+            {
+                "$set": {
+                    "tokens": new_tokens,
+                    "verification_reward_given": True
+                }
+            }
+        )
+        user["tokens"] = new_tokens
+        user["verification_reward_given"] = True
     membership_type = user.get("membership_type", "free")
 
     if verification_status == True:
@@ -45,8 +63,7 @@ async def get_user_profile_controller(current_user: dict, lang: str = "en"):
 
     private_gallery_locked = membership_type == "free"
 
-    tokens = user.get("tokens", 0) if onboarding else 0
-
+    tokens = user.get("tokens", 0)
     profile_photo_url = await get_profile_photo_url(current_user)
 
     profile_data = [{

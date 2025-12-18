@@ -57,6 +57,7 @@ class Settings(BaseSettings):
     ALGORITHM: str
     ADMIN_WALLET_ADDRESS:str
     WALLET_NETWORK:str
+    VERIFICATION_REWARD_TOKENS: int
 
     class ConfigDict:
         env_file = ".env"

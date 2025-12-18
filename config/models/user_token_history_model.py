@@ -2,6 +2,9 @@ from config.db_config import user_token_history_collection
 from core.utils.pagination import StandardResultsSetPagination
 from schemas.user_token_history_schema import TokenHistory
 from services.translation import translate_message
+from config.db_config import user_token_history_collection
+from schemas.user_token_history_schema import CreateTokenHistory
+
 async def get_user_token_history(user_id:str,lang:str, pagination:StandardResultsSetPagination):
     cursor = ((user_token_history_collection
                 .find({"user_id":user_id})).sort("created_at", -1).skip(pagination.skip).limit(pagination.limit))
@@ -19,3 +22,6 @@ async def get_user_token_history(user_id:str,lang:str, pagination:StandardResult
         })
 
     return history
+
+async def create_user_token_history(data:CreateTokenHistory):
+    await user_token_history_collection.insert_one(data.model_dump())
