@@ -7,7 +7,7 @@ from schemas.user_schemas import *
 from api.controller.user_auth import *
 from schemas.response_schema import Response
 from core.utils.permissions import UserPermission, AdminPermission
-from core.utils.pagination import StandardResultsSetPagination
+from core.utils.pagination import StandardResultsSetPagination, pagination_params
 import time
 from fastapi import Body
 
@@ -97,3 +97,22 @@ async def verify_reset_password_otp(payload: VerifyResetOtpRequest):
 @router.post("/password-reset", response_model=Response)
 async def reset_password(payload: ResetPasswordRequest):
     return await reset_password_controller(payload)
+
+@router.get("/{user_id}", response_model=Response)
+async def get_user_by_id(
+    user_id: str,
+    current_user: dict = Depends(UserPermission(allowed_roles=["admin", "user"])),
+    lang: str = Query(None)
+):
+    return await get_user_by_id_controller(user_id, lang)
+
+@router.get("", response_model=Response)
+async def get_all_users(
+    pagination: StandardResultsSetPagination = Depends(pagination_params),
+    current_user: dict = Depends(UserPermission(allowed_roles=["admin", "user"])),
+    lang: str = Query(None)
+):
+    """
+    Get all users (Admin only) with standard pagination
+    """
+    return await get_all_users_controller(pagination, lang)

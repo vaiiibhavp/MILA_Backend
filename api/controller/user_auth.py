@@ -26,6 +26,7 @@ from services.translation import translate_message
 from core.templates.email_templates import *
 from core.utils.core_enums import *
 from bson import ObjectId
+from config.models.user_models import *
 
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 REFRESH_TOKEN_EXPIRE_MINUTES =int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
@@ -468,3 +469,81 @@ async def reset_password_controller(payload):
     await redis_client.delete(f"reset:{email}:verified")
 
     return response.success_message("Password reset successfully. Please log in.", status_code=200)
+
+async def get_user_by_id_controller(user_id: str, lang: str):
+    if not ObjectId.is_valid(user_id):
+        return response.error_message(translate_message("Invalid user ID.", lang=lang), status_code=400)
+
+    user = await get_user_details(
+        condition={"_id": ObjectId(user_id), "is_deleted": {"$ne": True}},
+        fields=[
+            "_id",
+            "username",
+            "email",
+            "role",
+            "two_factor_enabled",
+            "login_status",
+            "last_login_at",
+            "created_at",
+            "updated_at",
+            "membership_type",
+            "is_verified",
+            "tokens",
+        ]
+    )
+
+    if not user:
+        return response.error_message(translate_message("User not found.", lang=lang), status_code=404)
+
+    # Normalize ID
+    user["id"] = user.pop("_id")
+
+    user = convert_objectid_to_str(user)
+    user = serialize_datetime_fields(user)
+
+    return response.success_message(
+        translate_message("User fetched successfully.", lang=lang),
+        data=[user],
+        status_code=200
+    )
+
+async def get_all_users_controller(
+    pagination: StandardResultsSetPagination,
+    lang: str
+):
+    users, total = await get_users_list(
+        condition={"is_deleted": {"$ne": True}},
+        fields=[
+            "_id",
+            "username",
+            "email",
+            "role",
+            "two_factor_enabled",
+            "login_status",
+            "last_login_at",
+            "created_at",
+            "updated_at",
+            "membership_type",
+            "is_verified",
+            "tokens",
+        ],
+        skip=pagination.skip,
+        limit=pagination.limit
+    )
+
+    for user in users:
+        user["id"] = user.pop("_id")
+
+    users = convert_objectid_to_str(users)
+    users = serialize_datetime_fields(users)
+
+    return response.success_message(
+        translate_message("Users fetched successfully.", lang=lang),
+        data=[{
+            "results": users,
+            "page": pagination.page,
+            "page_size": pagination.page_size,
+            "total": total
+        }],
+        status_code=200
+    )

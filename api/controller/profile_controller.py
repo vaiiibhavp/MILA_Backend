@@ -55,7 +55,7 @@ async def get_user_profile_controller(current_user: dict, lang: str = "en"):
             "age": age,
             "email": user.get("email"),
             "profile_photo": profile_photo_url,
-            "about": onboarding.get("bio"),
+            "about": onboarding.get("bio") if onboarding else None,
             "screen_state": screen_state,
             "verification": {
                 "status": verification_status,
