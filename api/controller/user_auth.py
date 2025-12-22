@@ -42,12 +42,12 @@ async def refresh_token(request: RefreshTokenRequest, lang: str = "en"):
     result  = await token_collection.find_one({"refresh_token": request.refresh_token})
     existing_token = await result if isinstance(result, asyncio.Future) else result
     if not existing_token:
-        raise response.raise_exception(message=translate_message("Refresh token not found.", lang), data={}, status_code=400)
+        raise response.raise_exception(message=translate_message("REFRESH_TOKEN_NOT_FOUND", lang), data={}, status_code=400)
 
     # Check if the token is blacklisted
     if existing_token.get("is_blacklisted", True):
         raise response.raise_exception(
-            message=translate_message("The refresh token is blacklisted.", lang), data={}, status_code=401
+            message=translate_message("REFRESH_TOKEN_BLACKLISTED", lang), data={}, status_code=401
         )
 
     # Verify token and generate new access token
@@ -60,7 +60,7 @@ async def refresh_token(request: RefreshTokenRequest, lang: str = "en"):
     user = await user_collection.find_one({"email": token_data["sub"]})
     if not user:
         return response.raise_exception(
-            message="User not found.",
+            message="USER_NOT_FOUND",
             data={},
             status_code=404
         )
@@ -68,7 +68,7 @@ async def refresh_token(request: RefreshTokenRequest, lang: str = "en"):
     new_access_token, new_refresh_token = generate_login_tokens(user)
 
     return response.success_message(
-        "Token refreshed successfully",
+        "TOKEN_REFRESHED_SUCCESSFULLY",
         data=[{
             "access_token": new_access_token,
             "refresh_token": new_refresh_token
@@ -84,21 +84,21 @@ async def logout(request: LogoutRequest, lang: str = "en"):
         # Verify the token
         token_data = verify_token(request.refresh_token)
     except Exception as e:
-        raise response.raise_exception(message=translate_message("Invalid refresh token.", lang), data={}, status_code=400)
+        raise response.raise_exception(message=translate_message("INVALID_REFRESH_TOKEN", lang), data={}, status_code=400)
 
     # Find the token in the database
     existing_token = await token_collection.find_one({"refresh_token": request.refresh_token})
 
     if not existing_token:
-        raise response.raise_exception(message=translate_message("Refresh token not found.", lang), data={}, status_code=400)
+        raise response.raise_exception(message=translate_message("REFRESH_TOKEN_NOT_FOUND", lang), data={}, status_code=400)
 
     # Step 3: Check if the token is already blacklisted
     if existing_token.get("is_blacklisted", True):
-        raise response.raise_exception(message=translate_message("This token is already blacklisted.", lang), data={}, status_code=400)
+        raise response.raise_exception(message=translate_message("TOKEN_ALREADY_BLACKLISTED", lang), data={}, status_code=400)
 
     login_user = existing_token.get("user_id", "")
     if not login_user:
-        raise response.raise_exception(message=translate_message("User ID not found.", lang),  data={}, status_code=400)
+        raise response.raise_exception(message=translate_message("USER_ID_NOT_FOUND", lang),  data={}, status_code=400)
 
     # Blacklist the token
     await token_collection.update_one(
@@ -117,7 +117,7 @@ async def logout(request: LogoutRequest, lang: str = "en"):
             }
         }
     )
-    return response.success_message(translate_message("Logout successful.", lang), data={})
+    return response.success_message(translate_message("LOGOUT_SUCCESSFUL", lang), data={})
 
 
 # helper function -Dependency to extract user email from token
@@ -128,17 +128,17 @@ def get_current_user_email(request: Request):
     # Extract token from Authorization header
     authorization = request.headers.get("Authorization")
     if not authorization or not authorization.startswith("Bearer "):
-        raise response.raise_exception( message="Invalid or missing token",status_code=401)
+        raise response.raise_exception( message="INVALID_OR_MISSING_TOKEN", data=[], status_code=401)
     token = authorization.split(" ")[1]
     try:
         # Decode the token
         payload = jwt.decode(token, SECRET_ACCESS_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
-            raise response.raise_exception(message="Invalid token: email not found",data={},status_code=401)
+            raise response.raise_exception(message="INVALID_TOKEN_EMAIL_NOT_FOUND",data=[],status_code=401)
         return email
     except JWTError:
-        raise response.raise_exception( message="Invalid or expired token",status_code=401)
+        raise response.raise_exception( message="INVALID_OR_EXPIRED_TOKEN",status_code=401)
 
 
 
@@ -189,12 +189,12 @@ async def signup_controller(payload: Signup, lang):
     # Step 1: Check if email already exists in DB
     existing = await user_collection.find_one({"email": payload.email})
     if existing:
-        return response.error_message(translate_message("Email already registered. Please log in instead.", lang=lang), status_code=400)
+        return response.error_message(translate_message("EMAIL_ALREADY_REGISTERED", lang=lang), status_code=400)
 
     existing_username = await user_collection.find_one({"username": payload.username})
     if existing_username:
         return response.error_message(
-            translate_message("Username already taken. Please choose a different one.", lang=lang),
+            translate_message("USERNAME_ALREADY_TAKEN", lang=lang),
             status_code=400
         )
     
@@ -225,7 +225,7 @@ async def signup_controller(payload: Signup, lang):
     is_html = True
     await send_email(payload.email, subject, body, is_html)
 
-    return response.success_message(translate_message("OTP sent successfully. Please verify to continue.", lang=lang), 
+    return response.success_message(translate_message("OTP_SENT_SUCCESSFULLY", lang=lang), 
                                     data=[{"otp": otp}], status_code=200)
 
 async def verify_signup_otp_controller(payload, lang):
@@ -235,18 +235,18 @@ async def verify_signup_otp_controller(payload, lang):
     # Step 1: Get stored OTP
     stored_otp = await redis_client.get(f"signup:{email}:otp")
     if not stored_otp:
-        return response.error_message(translate_message("OTP expired or not found. Please request a new OTP.", lang=lang), status_code=400)
+        return response.error_message(translate_message("OTP_EXPIRED_OR_NOT_FOUND", lang=lang), status_code=400)
 
     stored_otp = stored_otp.encode() if isinstance(stored_otp, bytes) else stored_otp
 
     # Step 2: Compare OTP
     if otp != stored_otp:
-        return response.error_message(translate_message("Invalid OTP. Please try again.", lang=lang), status_code=400)
+        return response.error_message(translate_message("INVALID_OTP", lang=lang), status_code=400)
 
     # Step 3: Get stored signup data
     temp_data = await redis_client.get(f"signup:{email}:data")
     if not temp_data:
-        return response.error_message(translate_message("Signup session expired. Please sign up again.", lang=lang), status_code=400)
+        return response.error_message(translate_message("SIGNUP_SESSION_EXPIRED", lang=lang), status_code=400)
 
     temp_data = json.loads(temp_data.encode())
 
@@ -266,16 +266,25 @@ async def verify_signup_otp_controller(payload, lang):
         user_id = str(result.inserted_id)
 
     except Exception as e:
-        return response.error_message(translate_message("Failed to create user",lang=lang), data = [{str(e)}], status_code=500)
+        return response.error_message(translate_message("FAILED_TO_CREATE_USER",lang=lang), data = [{str(e)}], status_code=500)
 
     # Step 5: Cleanup Redis keys
     await redis_client.delete(f"signup:{email}:otp")
     await redis_client.delete(f"signup:{email}:data")
 
+    # user = await user_collection.find_one({"email": email})
+    user = await user_collection.find_one({"_id": ObjectId(user_id)})
+
+    access_token, refresh_token = generate_login_tokens(user)
+
     # Success Response
     return response.success_message(
-        translate_message("Email verified successfully!", lang=lang),
-        data=[{"user_id": user_id}], status_code=200
+        translate_message("EMAIL_VERIFIED_SUCCESSFULLY", lang=lang),
+        data=[{
+            "user_id": user_id,
+            "access_token": access_token,
+            "refresh_token": refresh_token            
+            }], status_code=200
     )
 
 async def resend_otp_controller(payload, lang):
@@ -284,7 +293,7 @@ async def resend_otp_controller(payload, lang):
     # Step 1: Check if signup session still exists
     temp_data = await redis_client.get(f"signup:{email}:data")
     if not temp_data:
-        return response.error_message(translate_message("Signup session expired. Please start again.", lang=lang), status_code=400)
+        return response.error_message(translate_message("SIGNUP_SESSION_EXPIRED_START_AGAIN", lang=lang), status_code=400)
 
     # Step 2: Generate new OTP
     otp = generate_verification_code()
@@ -303,7 +312,7 @@ async def resend_otp_controller(payload, lang):
 
     await send_email(email, subject, body, is_html=True)
 
-    return response.success_message(translate_message("A new OTP has been sent to your email.", lang=lang),
+    return response.success_message(translate_message("NEW_OTP_SENT_TO_EMAIL", lang=lang),
                                     data= [{"otp": otp}], status_code=200)
 
 async def login_controller(payload: LoginRequest, lang):
@@ -314,11 +323,11 @@ async def login_controller(payload: LoginRequest, lang):
     # Step 1: Check user exists
     user = await user_collection.find_one({"email": email})
     if not user:
-        return response.error_message(translate_message("Invalid email or password.", lang=lang), status_code=400)
+        return response.error_message(translate_message("INVALID_EMAIL_OR_PASSWORD", lang=lang), status_code=400)
 
     # Step 2: Validate password
     if not verify_password(password, user["password"]):
-        return response.error_message(translate_message("Invalid email or password.", lang=lang), status_code=400)
+        return response.error_message(translate_message("INVALID_EMAIL_OR_PASSWORD", lang=lang), status_code=400)
 
     # Step 3: If 2FA disabled → return tokens immediately
     if not user.get("two_factor_enabled", True):
@@ -333,7 +342,7 @@ async def login_controller(payload: LoginRequest, lang):
                 }
             }
         )
-        return response.success_message(translate_message("Login successful", lang=lang), data={
+        return response.success_message(translate_message("LOGIN_SUCCESSFUL", lang=lang), data={
             "access_token": access_token,
             "refresh_token": refresh_token
         }, status_code=200)
@@ -347,7 +356,7 @@ async def login_controller(payload: LoginRequest, lang):
     await send_email(email, subject, body, is_html=True)
 
     return response.success_message(
-        translate_message("OTP sent to your email. Please verify to continue.", lang=lang),
+        translate_message("LOGIN_OTP_SENT", lang=lang),
         data=[{
             "otp_required": True,
             "otp": otp}],
@@ -360,12 +369,12 @@ async def verify_login_otp_controller(payload, lang):
 
     stored_otp = await redis_client.get(f"login:{email}:otp")
     if not stored_otp:
-        return response.error_message(translate_message("OTP expired or invalid. Please request a new one.", lang=lang), status_code=400)
+        return response.error_message(translate_message("LOGIN_OTP_EXPIRED_OR_INVALID", lang=lang), status_code=400)
 
     stored_otp = stored_otp.decode() if isinstance(stored_otp, bytes) else stored_otp
 
     if otp != stored_otp:
-        return response.error_message(translate_message("Incorrect OTP.", lang=lang), status_code=400)
+        return response.error_message(translate_message("INCORRECT_OTP", lang=lang), status_code=400)
 
     user = await user_collection.find_one({"email": email})
 
@@ -383,7 +392,7 @@ async def verify_login_otp_controller(payload, lang):
     # Remove otp after success
     await redis_client.delete(f"login:{email}:otp")
 
-    return response.success_message(translate_message("Login successful", lang=lang), data=[{
+    return response.success_message(translate_message("LOGIN_SUCCESSFUL", lang=lang), data=[{
         "access_token": access_token,
         "refresh_token": refresh_token
     }], status_code=200)
@@ -394,7 +403,7 @@ async def resend_login_otp_controller(payload, lang):
     # Check user exists
     user = await user_collection.find_one({"email": email})
     if not user:
-        return response.error_message(translate_message("User not found.", lang=lang), status_code=404)
+        return response.error_message(translate_message("USER_NOT_FOUND", lang=lang), status_code=404)
 
     # Generate new OTP
     otp = generate_verification_code()
@@ -405,7 +414,7 @@ async def resend_login_otp_controller(payload, lang):
     await send_email(email, subject, body, is_html=True)
 
     return response.success_message(
-        translate_message("A new OTP has been sent to your email.", lang=lang),
+        translate_message("NEW_OTP_SENT_TO_EMAIL", lang=lang),
         data=[{"otp": otp}],
         status_code=200)
 
@@ -415,7 +424,7 @@ async def send_reset_password_otp_controller(payload: ForgotPasswordRequest, lan
     # Step 1: Check user exists
     user = await user_collection.find_one({"email": email})
     if not user:
-        return response.error_message(translate_message("No account found with this email.", lang=lang), status_code=404)
+        return response.error_message(translate_message("NO_ACCOUNT_FOUND_WITH_EMAIL", lang=lang), status_code=404)
 
     # Step 2: Generate OTP
     otp = generate_verification_code()
@@ -428,7 +437,7 @@ async def send_reset_password_otp_controller(payload: ForgotPasswordRequest, lan
 
     await send_email(email, subject, body, is_html=True)
 
-    return response.success_message(translate_message("OTP sent to your email.", lang=lang), data=[{"otp": otp}], status_code=200)
+    return response.success_message(translate_message("NEW_OTP_SENT_TO_EMAIL", lang=lang), data=[{"otp": otp}], status_code=200)
 
 async def verify_reset_password_otp_controller(payload, lang):
     email = payload.email
@@ -437,17 +446,17 @@ async def verify_reset_password_otp_controller(payload, lang):
     stored_otp = await redis_client.get(f"reset:{email}:otp")
 
     if not stored_otp:
-        return response.error_message(translate_message("OTP expired or invalid.", lang=lang), status_code=400)
+        return response.error_message(translate_message("OTP_EXPIRED_OR_NOT_FOUND", lang=lang), status_code=400)
 
     stored_otp = stored_otp.decode() if isinstance(stored_otp, bytes) else stored_otp
 
     if otp != stored_otp:
-        return response.error_message(translate_message("Incorrect OTP.", lang=lang), status_code=400)
+        return response.error_message(translate_message("INVALID_OTP", lang=lang), status_code=400)
 
     # Mark OTP as verified (valid for 10 minutes)
     await redis_client.setex(f"reset:{email}:verified", 600, "true")
 
-    return response.success_message(translate_message("OTP verified successfully.", lang=lang), status_code=200)
+    return response.success_message(translate_message("OTP_VERIFIED_SUCCESSFULLY", lang=lang), status_code=200)
 
 async def reset_password_controller(payload, lang):
     email = payload.email
@@ -456,7 +465,7 @@ async def reset_password_controller(payload, lang):
     # Ensure user completed OTP verification
     is_verified = await redis_client.get(f"reset:{email}:verified")
     if not is_verified:
-        return response.error_message(translate_message("OTP verification required.", lang=lang), status_code=400)
+        return response.error_message(translate_message("OTP_VERIFICATION_REQUIRED", lang=lang), status_code=400)
 
     # Hash new password
     hashed_password = get_hashed_password(new_password)
@@ -471,11 +480,11 @@ async def reset_password_controller(payload, lang):
     await redis_client.delete(f"reset:{email}:otp")
     await redis_client.delete(f"reset:{email}:verified")
 
-    return response.success_message(translate_message("Password reset successfully. Please log in.", lang=lang), status_code=200)
+    return response.success_message(translate_message("PASSWORD_RESET_SUCCESSFULLY", lang=lang), status_code=200)
 
 async def get_user_by_id_controller(user_id: str, lang: str):
     if not ObjectId.is_valid(user_id):
-        return response.error_message(translate_message("Invalid user ID.", lang=lang), status_code=400)
+        return response.error_message(translate_message("INVALID_USER_ID", lang=lang), status_code=400)
 
     user = await get_user_details(
         condition={"_id": ObjectId(user_id), "is_deleted": {"$ne": True}},
@@ -496,7 +505,7 @@ async def get_user_by_id_controller(user_id: str, lang: str):
     )
 
     if not user:
-        return response.error_message(translate_message("User not found.", lang=lang), status_code=404)
+        return response.error_message(translate_message("USER_NOT_FOUND", lang=lang), status_code=404)
 
     # Normalize ID
     user["id"] = user.pop("_id")
@@ -505,7 +514,7 @@ async def get_user_by_id_controller(user_id: str, lang: str):
     user = serialize_datetime_fields(user)
 
     return response.success_message(
-        translate_message("User fetched successfully.", lang=lang),
+        translate_message("USER_PROFILE_FETCHED", lang=lang),
         data=[user],
         status_code=200
     )
@@ -541,7 +550,7 @@ async def get_all_users_controller(
     users = serialize_datetime_fields(users)
 
     return response.success_message(
-        translate_message("Users fetched successfully.", lang=lang),
+        translate_message("USER_PROFILE_FETCHED", lang=lang),
         data=[{
             "results": users,
             "page": pagination.page,
