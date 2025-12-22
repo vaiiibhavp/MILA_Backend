@@ -174,12 +174,81 @@
   "Purchased_Subscription_Plan": "Nouvel abonnement souscrit.",
   "Account_Verified": "VÉRIFICATION DU COMPTE.",
 
-  "ERROR_WHILE_FETCHING_TOKEN_DETAILS": "Une erreur est survenue lors de la récupération des informations du jeton utilisateur."
+  "ERROR_WHILE_FETCHING_TOKEN_DETAILS": "Une erreur est survenue lors de la récupération des informations du jeton utilisateur.",
 
 
+  "-------------3-------------":"-------------3-------------",  
+  "USER_NOT_FOUND": "Utilisateur non trouvé",
+  "PROFILE_FETCHED_SUCCESSFULLY": "Profil récupéré avec succès",
 
+  "PRICE_REQUIRED": "Prix requis",
+  "PLEASE_SELECT_ONE_IMAGE_AT_A_TIME_WITH_ITS_PRICE": "Veuillez sélectionner une image à la fois avec son prix",
+  "PRICE_MUST_BE_GREATER_THAN_ZERO": "Le prix doit être supérieur à zéro",
+  "PRIVATE_GALLERY_LIMIT_REACHED_UPGRADE_TO_PREMIUM_TO_ADD_MORE_PHOTOS": "Limite de galerie privée atteinte. Passez à la version premium pour ajouter plus de photos.",
+  "PRIVATE_GALLERY_IMAGE_UPLOADED_SUCCESSFULLY": "Image de galerie privée téléchargée avec succès",
 
+  "PUBLIC_GALLERY_IMAGES_REQUIRED": "Des images de galerie publique sont requises",
+  "PUBLIC_GALLERY_MAX_LIMIT_EXCEEDED": "Un maximum de 5 images de la galerie publique est autorisé",
+  "PUBLIC_GALLERY_IMAGES_UPLOADED_SUCCESSFULLY": "Images de la galerie publique téléchargées avec succès",
 
+  "PUBLIC_GALLERY_FETCHED_SUCCESSFULLY": "Galerie publique récupérée avec succès",
+  "PRIVATE_GALLERY_FETCHED_SUCCESSFULLY": "Galerie privée récupérée avec succès",
+
+  "-------------4-------------":"-------------4-------------",  
+  "PROFILE_NOT_FOUND": "Profil non trouvé",
+  "IMAGE_NOT_FOUND": "Image non trouvée",
+  "PRIVATE_IMAGE_FETCHED": "Image privée récupérée",
+  "IMAGE_ALREADY_UNLOCKED": "Image déjà déverrouillée",
+  "INSUFFICIENT_TOKENS": "Jetons insuffisants",
+  "IMAGE_UNLOCKED_SUCCESSFULLY": "Image déverrouillée avec succès",
+  "GALLERY_FETCHED_SUCCESSFULLY": "Galerie récupérée avec succès",
+
+  "-------------5-------------":"-------------5-------------",
+
+  "REFRESH_TOKEN_NOT_FOUND": "Jeton de rafraîchissement introuvable",
+  "REFRESH_TOKEN_BLACKLISTED": "Le jeton de rafraîchissement est sur liste noire",
+  "INVALID_REFRESH_TOKEN": "Jeton de rafraîchissement invalide",
+  "TOKEN_ALREADY_BLACKLISTED": "Ce jeton est déjà sur liste noire",
+  "USER_ID_NOT_FOUND": "Identifiant utilisateur introuvable",
+  "LOGOUT_SUCCESSFUL": "Déconnexion réussie",
+  "TOKEN_REFRESHED_SUCCESSFULLY": "Jeton rafraîchi avec succès",
+
+  "INVALID_OR_MISSING_TOKEN": "Jeton invalide ou manquant",
+  "INVALID_TOKEN_EMAIL_NOT_FOUND": "Jeton invalide : e-mail introuvable",
+  "INVALID_OR_EXPIRED_TOKEN": "Jeton invalide ou expiré",
+
+  "USER_PROFILE_FETCHED": "Profil utilisateur récupéré avec succès",
+  "ERROR_FETCHING_PROFILE": "Erreur lors de la récupération du profil",
+
+  "EMAIL_ALREADY_REGISTERED": "Adresse e-mail déjà enregistrée. Veuillez vous connecter",
+  "USERNAME_ALREADY_TAKEN": "Nom d'utilisateur déjà utilisé. Veuillez en choisir un autre",
+  "OTP_SENT_SUCCESSFULLY": "OTP envoyé avec succès. Veuillez vérifier pour continuer",
+  "OTP_EXPIRED_OR_NOT_FOUND": "OTP expiré ou introuvable. Veuillez demander un nouvel OTP",
+  "INVALID_OTP": "OTP invalide. Veuillez réessayer",
+  "SIGNUP_SESSION_EXPIRED": "Session d'inscription expirée. Veuillez vous inscrire à nouveau",
+  "FAILED_TO_CREATE_USER": "Échec de la création de l'utilisateur",
+  "EMAIL_VERIFIED_SUCCESSFULLY": "E-mail vérifié avec succès",
+  "SIGNUP_SESSION_EXPIRED_START_AGAIN": "Session d'inscription expirée. Veuillez recommencer",
+  "NEW_OTP_SENT_TO_EMAIL": "Un nouvel OTP a été envoyé à votre adresse e-mail",
+
+  "INVALID_EMAIL_OR_PASSWORD": "Adresse e-mail ou mot de passe invalide",
+  "LOGIN_SUCCESSFUL": "Connexion réussie",
+  "LOGIN_OTP_SENT": "OTP envoyé à votre e-mail. Veuillez vérifier pour continuer",
+  "LOGIN_OTP_EXPIRED_OR_INVALID": "OTP expiré ou invalide. Veuillez en demander un nouveau",
+  "INCORRECT_OTP": "OTP incorrect",
+  "LOGIN_USER_NOT_FOUND": "Utilisateur introuvable",
+  "LOGIN_NEW_OTP_SENT": "Un nouvel OTP a été envoyé à votre adresse e-mail",
+
+  "NO_ACCOUNT_FOUND_WITH_EMAIL": "Aucun compte trouvé avec cette adresse e-mail",
+  "RESET_PASSWORD_OTP_SENT": "OTP envoyé à votre adresse e-mail",
+  "RESET_PASSWORD_OTP_EXPIRED_OR_INVALID": "OTP expiré ou invalide",
+  "OTP_VERIFIED_SUCCESSFULLY": "OTP vérifié avec succès",
+  "OTP_VERIFICATION_REQUIRED": "Vérification OTP requise",
+  "PASSWORD_RESET_SUCCESSFULLY": "Mot de passe réinitialisé avec succès. Veuillez vous connecter",
+
+  "INVALID_USER_ID": "Identifiant utilisateur invalide",
+  "USER_FETCHED_SUCCESSFULLY": "Utilisateur récupéré avec succès",
+  "USERS_FETCHED_SUCCESSFULLY": "Utilisateurs récupérés avec succès"
 
 
 }

@@ -175,12 +175,77 @@
   "Purchased_Subscription_Plan": "Purchased New Subscription Plan.",
   "Account_Verified": "Account Verification.",
 
-  "ERROR_WHILE_FETCHING_TOKEN_DETAILS": "An error occurred while fetching the user token details."
+  "ERROR_WHILE_FETCHING_TOKEN_DETAILS": "An error occurred while fetching the user token details.",
 
+  "-------------3-------------":"-------------3-------------",  
+  "PRICE_REQUIRED": "Price required",
+  "PLEASE_SELECT_ONE_IMAGE_AT_A_TIME_WITH_ITS_PRICE": "Please select one image at a time with its price",
+  "PRICE_MUST_BE_GREATER_THAN_ZERO": "Price must be greater than zero",
+  "PRIVATE_GALLERY_LIMIT_REACHED_UPGRADE_TO_PREMIUM_TO_ADD_MORE_PHOTOS": "Private gallery limit reached. Upgrade to premium to add more photos.",
+  "PRIVATE_GALLERY_IMAGE_UPLOADED_SUCCESSFULLY": "Private gallery image uploaded successfully",
 
+  "PUBLIC_GALLERY_IMAGES_REQUIRED": "Public gallery images are required",
+  "PUBLIC_GALLERY_MAX_LIMIT_EXCEEDED": "Maximum 5 public gallery images are allowed",
+  "PUBLIC_GALLERY_IMAGES_UPLOADED_SUCCESSFULLY": "Public gallery images uploaded successfully",
 
+  "PUBLIC_GALLERY_FETCHED_SUCCESSFULLY": "Public gallery fetched successfully",
+  "PRIVATE_GALLERY_FETCHED_SUCCESSFULLY": "Private gallery fetched successfully",
 
+  "-------------4-------------":"-------------4-------------",  
+  "PROFILE_NOT_FOUND": "Profile not found",
+  "IMAGE_NOT_FOUND": "Image not found",
+  "PRIVATE_IMAGE_FETCHED": "Private image fetched",
+  "IMAGE_ALREADY_UNLOCKED": "Image already unlocked",
+  "INSUFFICIENT_TOKENS": "Insufficient tokens",
+  "IMAGE_UNLOCKED_SUCCESSFULLY": "Image unlocked successfully",
+  "GALLERY_FETCHED_SUCCESSFULLY": "Gallery fetched successfully",
 
+  "-------------5-------------":"-------------5-------------",  
+  "REFRESH_TOKEN_NOT_FOUND": "Refresh token not found",
+  "REFRESH_TOKEN_BLACKLISTED": "The refresh token is blacklisted",
+  "INVALID_REFRESH_TOKEN": "Invalid refresh token",
+  "TOKEN_ALREADY_BLACKLISTED": "This token is already blacklisted",
+  "USER_ID_NOT_FOUND": "User ID not found",
+  "LOGOUT_SUCCESSFUL": "Logout successful",
+  "TOKEN_REFRESHED_SUCCESSFULLY": "Token refreshed successfully",
 
+  "INVALID_OR_MISSING_TOKEN": "Invalid or missing token",
+  "INVALID_TOKEN_EMAIL_NOT_FOUND": "Invalid token: email not found",
+  "INVALID_OR_EXPIRED_TOKEN": "Invalid or expired token",
+
+  "USER_NOT_FOUND": "User not found",
+  "USER_PROFILE_FETCHED": "User profile fetched successfully",
+  "ERROR_FETCHING_PROFILE": "Error fetching profile",
+  "PROFILE_FETCHED_SUCCESSFULLY": "Profile fetched successfully",
+
+  "EMAIL_ALREADY_REGISTERED": "Email already registered. Please log in instead",
+  "USERNAME_ALREADY_TAKEN": "Username already taken. Please choose a different one",
+  "OTP_SENT_SUCCESSFULLY": "OTP sent successfully. Please verify to continue",
+  "OTP_EXPIRED_OR_NOT_FOUND": "OTP expired or not found. Please request a new OTP",
+  "INVALID_OTP": "Invalid OTP. Please try again",
+  "SIGNUP_SESSION_EXPIRED": "Signup session expired. Please sign up again",
+  "FAILED_TO_CREATE_USER": "Failed to create user",
+  "EMAIL_VERIFIED_SUCCESSFULLY": "Email verified successfully",
+  "SIGNUP_SESSION_EXPIRED_START_AGAIN": "Signup session expired. Please start again",
+  "NEW_OTP_SENT_TO_EMAIL": "A new OTP has been sent to your email",
+
+  "INVALID_EMAIL_OR_PASSWORD": "Invalid email or password",
+  "LOGIN_SUCCESSFUL": "Login successful",
+  "LOGIN_OTP_SENT": "OTP sent to your email. Please verify to continue",
+  "LOGIN_OTP_EXPIRED_OR_INVALID": "OTP expired or invalid. Please request a new one",
+  "INCORRECT_OTP": "Incorrect OTP",
+  "LOGIN_USER_NOT_FOUND": "User not found",
+  "LOGIN_NEW_OTP_SENT": "A new OTP has been sent to your email",
+
+  "NO_ACCOUNT_FOUND_WITH_EMAIL": "No account found with this email",
+  "RESET_PASSWORD_OTP_SENT": "OTP sent to your email",
+  "RESET_PASSWORD_OTP_EXPIRED_OR_INVALID": "OTP expired or invalid",
+  "OTP_VERIFIED_SUCCESSFULLY": "OTP verified successfully",
+  "OTP_VERIFICATION_REQUIRED": "OTP verification required",
+  "PASSWORD_RESET_SUCCESSFULLY": "Password reset successfully. Please log in",
+
+  "INVALID_USER_ID": "Invalid user ID",
+  "USER_FETCHED_SUCCESSFULLY": "User fetched successfully",
+  "USERS_FETCHED_SUCCESSFULLY": "Users fetched successfully"
 
 }

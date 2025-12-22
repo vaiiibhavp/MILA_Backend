@@ -22,7 +22,7 @@ async def get_profile_controller(user_id: str, lang: str = "en"):
         {"_id": ObjectId(user_id)}
     )
     if not user:
-        return response.error_message(translate_message("User not found", lang=lang), data=[], status_code=404)
+        return response.error_message(translate_message("USER_NOT_FOUND", lang=lang), data=[], status_code=404)
 
     onboarding = await onboarding_collection.find_one(
         {"user_id": str(user["_id"])}
@@ -64,7 +64,7 @@ async def get_profile_controller(user_id: str, lang: str = "en"):
 
     profile_data = serialize_datetime_fields(profile_data)
     return response.success_message(
-        translate_message("Profile fetched successfully", lang=lang),
+        translate_message("PROFILE_FETCHED_SUCCESSFULLY", lang=lang),
         data=profile_data,
         status_code=200
     )
@@ -82,7 +82,7 @@ async def get_private_gallery_image(
 
     if not onboarding:
         return response.error_message(
-            translate_message("Profile not found", lang=lang),
+            translate_message("PROFILE_NOT_FOUND", lang=lang),
             status_code=404
         )
 
@@ -95,7 +95,7 @@ async def get_private_gallery_image(
 
     if not image:
         return response.error_message(
-            translate_message("Image not found", lang=lang),
+            translate_message("IMAGE_NOT_FOUND", lang=lang),
             status_code=404
         )
 
@@ -113,7 +113,7 @@ async def get_private_gallery_image(
     )
 
     return response.success_message(
-        translate_message("Private image fetched", lang=lang),
+        translate_message("PRIVATE_IMAGE_FETCHED", lang=lang),
         data=[{
             "image_id": image_id,
             "image_url": image_url,
@@ -137,7 +137,7 @@ async def buy_private_gallery_image(
 
     if not onboarding:
         return response.error_message(
-            translate_message("Profile not found", lang),
+            translate_message("PROFILE_NOT_FOUND", lang),
             status_code=404
         )
 
@@ -150,7 +150,7 @@ async def buy_private_gallery_image(
 
     if not image:
         return response.error_message(
-            translate_message("Image not found", lang),
+            translate_message("IMAGE_NOT_FOUND", lang),
             status_code=404
         )
 
@@ -165,7 +165,7 @@ async def buy_private_gallery_image(
     # 4. Already unlocked
     if image_id in unlocked_images:
         return response.success_message(
-            translate_message("Image already unlocked", lang),
+            translate_message("IMAGE_ALREADY_UNLOCKED", lang),
             data={
                 "image_id": image_id,
                 "remaining_tokens": available_tokens,
@@ -176,7 +176,7 @@ async def buy_private_gallery_image(
     # 5. Insufficient balance
     if available_tokens < price:
         return response.error_message(
-            translate_message("Insufficient tokens", lang),
+            translate_message("INSUFFICIENT_TOKENS", lang),
             status_code=400
         )
 
@@ -204,7 +204,7 @@ async def buy_private_gallery_image(
     )
 
     return response.success_message(
-        translate_message("Image unlocked successfully", lang),
+        translate_message("IMAGE_UNLOCKED_SUCCESSFULLY", lang),
         data=[{
             "image_id": image_id,
             "remaining_tokens": new_token_balance,
@@ -222,7 +222,7 @@ async def get_profile_gallery(
     )
 
     if not onboarding:
-        return response.error_message("Profile not found", status_code=404)
+        return response.error_message("PROFILE_NOT_FOUND", status_code=404)
 
     unlocked_images = set(viewer.get("unlocked_images", []))
 
@@ -251,7 +251,7 @@ async def get_profile_gallery(
         })
 
     return response.success_message(
-        translate_message("Gallery fetched successfully", lang),
+        translate_message("GALLERY_FETCHED_SUCCESSFULLY", lang),
         data=[{
             "public_gallery": public_gallery,
             "private_gallery": private_gallery
