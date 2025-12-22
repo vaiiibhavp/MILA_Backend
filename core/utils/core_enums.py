@@ -24,3 +24,7 @@ class TokenTransactionReason(str, Enum):
 class LoginStatus(str, Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
+
+class TransactionType(str, Enum):
+    SUBSCRIPTION_TRANSACTION = "subscription_transaction"
+    TOKEN_TRANSACTION = "token_transaction"

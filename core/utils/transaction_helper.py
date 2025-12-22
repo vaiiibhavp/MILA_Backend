@@ -6,7 +6,7 @@ from tronpy import Tron
 import requests, base58, hashlib
 from config.basic_config import settings
 from schemas.transcation_schema import PaymentDetailsModel, TransactionCreateModel, TransactionUpdateModel
-from core.utils.core_enums import MembershipType, MembershipStatus, TokenTransactionType, TokenTransactionReason, TransactionStatus
+from core.utils.core_enums import MembershipType, MembershipStatus, TokenTransactionType, TokenTransactionReason, TransactionStatus, TransactionType
 from config.db_config import transaction_collection, system_config_collection, user_collection
 from config.models.transaction_models import store_transaction_details, update_transaction_details
 from bson import ObjectId
@@ -205,6 +205,7 @@ async def build_transaction_model(
         remaining_amount=remaining_amount,
         status=status,
         payment_details=payment_details,
+        trans_type = TransactionType.SUBSCRIPTION_TRANSACTION.value
     )
 
 async def handle_full_payment(
