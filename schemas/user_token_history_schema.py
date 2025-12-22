@@ -1,4 +1,7 @@
 from datetime import datetime, timezone
+
+from bson import ObjectId
+
 from core.utils.core_enums import TokenTransactionType
 from pydantic import BaseModel,Field
 from typing import List
@@ -21,8 +24,19 @@ class TokenHistory(BaseModel):
     balance_after: str
     created_at: datetime
 
+class TokenPlans(BaseModel):
+    id: str = Field(alias="_id")
+    title: str
+    amount: str
+    tokens: str
+    status: str
+    model_config = {
+        "populate_by_name": True
+    }
+
 class TokenHistoryResponse(BaseModel):
     history: List[TokenHistory]
     available_tokens: str
+    token_plans:List[TokenPlans]
 
 

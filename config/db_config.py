@@ -82,6 +82,7 @@ onboarding_collection = db["user_onboarding"]
 transaction_collection = db["transaction"]
 system_config_collection = db["system_config"]
 user_token_history_collection = db["user_token_history"]
+token_packages_plan_collection = db["token_packages_plan"]
 
 async def create_indexes():
     """
