@@ -1,7 +1,7 @@
 from fastapi import HTTPException , status
 from bson import ObjectId
 from datetime import datetime
-from config.db_config import onboarding_collection , user_collection  , favorite_collection ,user_like_history ,user_match_history , user_passed_hostory
+from config.db_config import onboarding_collection , user_collection  , favorite_collection ,user_like_history ,user_match_history , user_passed_hostory,countries_collection,interest_categories_collection
 from core.utils.helper import serialize_datetime_fields
 from core.utils.response_mixin import CustomResponseMixin
 from core.utils.helper import serialize_datetime_fields
@@ -290,5 +290,38 @@ async def total_token(user_id: str, lang: str = "en"):
         translate_message("TOKENS_FETCHED", lang),
         data={
             "total_tokens": tokens
+        }
+    )
+
+async def get_user_login_status_internal(user_id: str, lang: str = "en"):
+    """
+    Internal function to fetch login status of a user
+    """
+
+    # Validate ObjectId
+    try:
+        obj_id = ObjectId(user_id)
+    except Exception:
+        return response.error_message(
+            translate_message("INVALID_USER_ID", lang),
+            status_code=400
+        )
+
+    user = await user_collection.find_one(
+        {"_id": obj_id},
+        {"_id": 0, "login_status": 1}
+    )
+
+    if not user:
+        return response.error_message(
+            translate_message("USER_NOT_FOUND", lang),
+            status_code=404
+        )
+
+    return response.success_message(
+        translate_message("USER_STATUS_FETCHED", lang),
+        data={
+            "user_id": user_id,
+            "login_status": user.get("login_status")
         }
     )

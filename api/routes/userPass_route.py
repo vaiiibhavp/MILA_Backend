@@ -7,7 +7,8 @@ from config.models.userPass_model import(
      pass_user , 
      get_my_favorites , 
      total_token , 
-     get_users_who_liked_me)
+     get_users_who_liked_me, 
+     get_user_login_status_internal)
 from core.utils.response_mixin import CustomResponseMixin
 from services.translation import translate_message
 from schemas.userpass_schema import( 
@@ -104,6 +105,14 @@ async def get_total_tokens(
     lang : str = "en"
 ):
     user_id = str(current_user["_id"])
-    print("the id of the users is",user_id)
     return await total_token(user_id  , lang)
 
+@router.get("/user/login-status")
+async def get_user_login_status_api(
+    user_id: str,
+    lang: str = "en"
+):
+    """
+    Internal API: Get user login status
+    """
+    return await get_user_login_status_internal(user_id, lang)

@@ -211,7 +211,7 @@ async def get_basic_user_profile(user_id: str) -> Dict[str, Any]:
       - username
       - bio
       - age
-      - city
+      - country
       - interested_in (preferences)
     """
 
@@ -221,7 +221,7 @@ async def get_basic_user_profile(user_id: str) -> Dict[str, Any]:
             "_id": 0,
             "bio": 1,
             "birthdate": 1,
-            "city": 1,
+            "country": 1,
             "interested_in": 1,
         },
     )
@@ -250,7 +250,7 @@ async def get_basic_user_profile(user_id: str) -> Dict[str, Any]:
         "username": username,
         "bio": onboarding_data.get("bio"),
         "age": age,
-        "city": onboarding_data.get("city"),
+        "country": onboarding_data.get("country"),
         "interested_in": onboarding_data.get("interested_in"),
     }
     return profile
@@ -383,7 +383,7 @@ async def fetch_user_by_id(user_id: str, lang: str):
             "_id": 0,
             "bio": 1,
             "passions": 1,
-            "city": 1,
+            "country": 1,
             "birthdate": 1,
             "tokens": 1,
         }
@@ -397,7 +397,7 @@ async def fetch_user_by_id(user_id: str, lang: str):
 
     user = await user_collection.find_one(
         {"_id": ObjectId(user_id)},
-        {"_id": 0, "username": 1, "is_verified": 1, "profile_photo_id": 1}
+        {"_id": 0, "username": 1, "is_verified": 1, "profile_photo_id": 1 , "login_status": 1}
     )
 
     if not user:
@@ -435,10 +435,12 @@ async def fetch_user_by_id(user_id: str, lang: str):
         "user_id": user_id,
         "username": user.get("username"),
         "is_verified": user.get("is_verified"),
+        "status": user.get("login_status"),
         "bio": user_data.get("bio"),
         "age": age,
-        "city": user_data.get("city"),
+        "country": user_data.get("country"),
         "tokens": user_data.get("tokens"),
         "passions": user_data.get("passions"),
         "profile_photo": profile_photo
     })
+

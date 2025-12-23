@@ -1,4 +1,4 @@
-
+from datetime import datetime, timedelta
 from config.db_config import (
     onboarding_collection,
     user_passed_hostory,
@@ -36,47 +36,72 @@ async def get_home_suggestions(user_id: str, lang: str = "en"):
 
     excluded_ids = await _get_excluded_user_ids(user_id)
 
-    # Mandatory minimal filters
+    # 1️ HARD FILTERS (Core preferences)
     query = {
         "onboarding_completed": True,
         "user_id": {"$nin": list(excluded_ids)},
-        "interested_in": {"$in": [user.get("gender")]}
+        "interested_in": {"$in": [user.get("gender")]},
     }
+
+    # Sexual preferences → hard filter
+    if user.get("sexual_preferences"):
+        query["sexual_preferences"] = {
+            "$in": user["sexual_preferences"]
+        }
+
+    # Country
+    if user.get("preferred_country"):
+        query["country"] = {
+            "$in": user["preferred_country"]
+        }
 
     cursor = onboarding_collection.find(query)
 
-    # Logged-in user sets
-    user_interested_in = set(user.get("interested_in", []))
+    # 3️ Prioritization signals ONLY
+
     user_passions = set(user.get("passions", []))
-    user_sexual_prefs = set(user.get("sexual_preferences", []))
-    user_preferred_city = set(user.get("preferred_city", []))
+    now = datetime.utcnow()
 
     results = []
 
-    for candidate in await cursor.to_list(length=100):
+    async for candidate in cursor:
         details = await fetch_user_by_id(candidate["user_id"], lang)
         if not details:
             continue
 
-        candidate_interested_in = set(candidate.get("interested_in", []))
+        priority = {
+            "is_online": False,
+            "recently_active": False,
+            "shared_interests": 0
+        }
+
+        # Activity status
+        if candidate.get("is_online"):
+            priority["is_online"] = True
+        elif candidate.get("last_active_at"):
+            last_active = candidate["last_active_at"]
+            if isinstance(last_active, datetime) and now - last_active <= timedelta(days=7):
+                priority["recently_active"] = True
+
+        # Shared interests (ranking only)
         candidate_passions = set(candidate.get("passions", []))
-        candidate_sexual_prefs = set(candidate.get("sexual_preferences", []))
-        candidate_preferred_city = set(candidate.get("preferred_city", []))
+        priority["shared_interests"] = len(user_passions & candidate_passions)
 
-        if user_preferred_city:
-            if not (user_preferred_city & candidate_preferred_city):
-                continue
-
-        has_other_match = (
-            user_interested_in & candidate_interested_in
-            or user_passions & candidate_passions
-            or user_sexual_prefs & candidate_sexual_prefs
-        )
-
-        if not has_other_match:
-            continue
-
+        details["_priority"] = priority
         results.append(details)
+
+    # 4️ Ordering (NO filtering)
+    results.sort(
+        key=lambda x: (
+            x["_priority"]["is_online"],
+            x["_priority"]["recently_active"],
+            x["_priority"]["shared_interests"],
+        ),
+        reverse=True
+    )
+
+    for r in results:
+        r.pop("_priority", None)
 
     return {
         "count": len(results),
