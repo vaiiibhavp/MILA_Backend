@@ -55,12 +55,11 @@ async def add_favorite_user(
 ):
     logged_in_user_id = str(current_user["_id"])
 
-    response = await add_to_fav(
+    return await add_to_fav(
         user_id=logged_in_user_id,
         favorite_user_id=request.favorite_user_id
     )
 
-    return response
 
 # API to return the passed user.
 @router.post("/user/pass", response_model=dict)

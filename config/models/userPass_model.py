@@ -140,10 +140,10 @@ async def like_user(user_id: str, liked_user_id: str, lang: str = "en"):
             "MATCH_CREATED" if is_match else "USER_LIKED_SUCCESSFULLY",
             lang
         ),
-        data={
+        data=[{
             "liked_user_id": liked_user_id,
             "is_match": is_match
-        }
+        }]
     )
 
 # Function to pass the user.
@@ -195,9 +195,9 @@ async def pass_user(user_id: str, passed_user_id: str, lang: str = "en"):
 
     return response.success_message(
         translate_message("USER_PASSED_SUCCESSFULLY", lang),
-        data={
+        data=[{
             "passed_user_id": passed_user_id
-        }
+        }]
     )
 
 # Function to return the list of the favorites users.
@@ -296,8 +296,8 @@ async def get_user_login_status_internal(user_id: str, lang: str = "en"):
 
     return response.success_message(
         translate_message("USER_STATUS_FETCHED", lang),
-        data={
+        data=[{
             "user_id": user_id,
             "login_status": user.get("login_status")
-        }
+        }]
     )

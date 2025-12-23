@@ -231,7 +231,7 @@ async def get_basic_user_profile(user_id: str, lang: str = "en") -> Dict[str, An
         if not onboarding_data:
             return response.raise_exception(
                 translate_message("FAILED_TO_FETCH_USER_DETAILS", lang),
-                data={"user_id": user_id},
+                data=[],
                 status_code=404
             )
 
@@ -243,7 +243,7 @@ async def get_basic_user_profile(user_id: str, lang: str = "en") -> Dict[str, An
         except Exception:
             return response.raise_exception(
                 translate_message("INVALID_USER_ID", lang),
-                data={"user_id": user_id},
+                data=[],
                 status_code=400
             )
 
@@ -338,11 +338,11 @@ async def get_onboarding_steps_by_user_id(user_id: str, lang: str = "en"):
 
     return response.success_message(
         translate_message("ONBOARDING_STEPS_FETCHED", lang),
-        data={
+        data=[{
             "user_id": user_id,
             "onboarding_completed": onboarding.get("onboarding_completed", False),
             "steps": steps
-        }
+        }]
     )
 
 
@@ -353,10 +353,10 @@ async def list_of_country(lang: str = "en"):
         if total == 0:
             return response.success_message(
                 translate_message("NO_COUNTRIES_FOUND", lang),
-                data={
+                data=[{
                     "count": 0,
                     "results": []
-                }
+                }]
             )
 
         cursor = countries_collection.find(
@@ -377,10 +377,10 @@ async def list_of_country(lang: str = "en"):
 
         return response.success_message(
             translate_message("COUNTRY_LIST_FETCHED", lang),
-            data={
+            data=[{
                 "count": len(results),
                 "results": results
-            }
+            }]
         )
 
     except Exception as e:
@@ -411,10 +411,10 @@ async def intrest_and_categories(lang: str = "en"):
 
         return response.success_message(
             translate_message("INTEREST_CATEGORIES_FETCHED", lang),
-            data={
+            data=[{
                 "count": len(results),
                 "results": results
-            }
+            }]
         )
 
     except Exception as e:
@@ -443,7 +443,7 @@ async def fetch_user_by_id(user_id: str, lang: str):
         if not user_data:
             return response.raise_exception(
                 translate_message("FAILED_TO_FETCH_USER_DETAILS", lang),
-                data={"user_id": user_id},
+                data=[],
                 status_code=500
             )
 
@@ -461,7 +461,7 @@ async def fetch_user_by_id(user_id: str, lang: str):
         if not user:
             return response.raise_exception(
                 translate_message("USER_NOT_FOUND", lang),
-                data={"user_id": user_id},
+                data=[],
                 status_code=404
             )
 

@@ -36,10 +36,10 @@ async def get_home_suggestions(user_id: str, lang: str = "en"):
         if not user or not user.get("onboarding_completed"):
             return response.success_message(
                 translate_message("ONBOARDING_NOT_COMPLETED", lang),
-                data={
+                data=[{
                     "count": 0,
                     "results": []
-                }
+                }]
             )
 
         excluded_ids = await _get_excluded_user_ids(user_id)
@@ -110,10 +110,10 @@ async def get_home_suggestions(user_id: str, lang: str = "en"):
 
         return response.success_message(
             translate_message("HOME_SUGGESTIONS_FETCHED", lang),
-            data={
+            data=[{
                 "count": len(results),
                 "results": results
-            }
+            }]
         )
 
     except Exception as e:
