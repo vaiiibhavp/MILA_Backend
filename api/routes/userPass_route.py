@@ -19,8 +19,6 @@ from schemas.userpass_schema import(
 router = APIRouter()
 response = CustomResponseMixin()
 
-supported_langs = ["en" , "fr"]
-
 @router.get("/home")
 async def home(
     current_user: dict = Depends(get_current_user),
