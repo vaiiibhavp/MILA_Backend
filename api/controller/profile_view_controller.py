@@ -11,6 +11,8 @@ from core.utils.helper import serialize_datetime_fields
 from config.models.user_token_history_model import create_user_token_history
 from schemas.user_token_history_schema import CreateTokenHistory
 from config.models.user_models import *
+from core.utils.core_enums import *
+from core.utils.pagination import StandardResultsSetPagination
 
 response = CustomResponseMixin()
 
@@ -403,95 +405,71 @@ async def send_gift_to_profile(
 async def search_profiles_controller(
     payload: dict,
     current_user: dict,
+    pagination: StandardResultsSetPagination,
     lang: str = "en"
 ):
-    is_premium = current_user.get("membership_type") == "premium"
-    print("current user: ", current_user)
-    print("membership: ", is_premium)
+    user_membership = current_user.get("membership_type", MembershipType.FREE)
+    is_premium = user_membership == MembershipType.PREMIUM
 
-    query = {
-        "onboarding_completed": True
-    }
+    query = {"onboarding_completed": True}
 
-    premium_filter_used = False
+    # APPLY FREE FILTERS
+    for payload_key, (db_field, operator) in FREE_FILTERS.items():
+        if payload.get(payload_key):
+            query[db_field] = {operator: payload[payload_key]}
 
-    # --------------------
-    # FREE FILTERS
-    # --------------------
-    if payload.get("cities"):
-        query["country"] = {"$in": payload["cities"]}
+    # APPLY PREMIUM FILTERS
+    used_premium_filter = any(payload.get(k) for k in PREMIUM_FILTERS)
 
-    if payload.get("genders"):
-        query["gender"] = {"$in": payload["genders"]}
-
-    # --------------------
-    # PREMIUM FILTERS
-    # --------------------
-    if payload.get("status"):
-        premium_filter_used = True
-        if is_premium:
-            query["marital_status"] = {"$in": payload["status"]}
-
-    if payload.get("orientations"):
-        premium_filter_used = True
-        if is_premium:
-            query["sexual_orientation"] = {"$in": payload["orientations"]}
-
-    if payload.get("age"):
-        premium_filter_used = True
-        if is_premium:
-            today = date.today()
-            birthdate_query = {}
-
-            if payload["age"].get("min"):
-                birthdate_query["$lte"] = today.replace(
-                    year=today.year - payload["age"]["min"]
-                )
-
-            if payload["age"].get("max"):
-                birthdate_query["$gte"] = today.replace(
-                    year=today.year - payload["age"]["max"]
-                )
-
-            if birthdate_query:
-                query["birthdate"] = birthdate_query
-
-    if premium_filter_used and not is_premium:
+    if used_premium_filter and not is_premium:
         return response.error_message(
-            translate_message("PREMIUM_MEMBERSHIP_REQUIRED_FOR_THESE_FILTERS", lang),
+            translate_message("PREMIUM_REQUIRED_FOR_FILTERS", lang),
             status_code=403,
-            data={
-                "premium_required": True
-            }
+            data={"premium_required": True}
         )
 
-    # --------------------
-    # Pagination
-    # --------------------
-    page = payload.get("page", 1)
-    limit = payload.get("limit", 10)
-    skip = (page - 1) * limit
+    if is_premium:
+        for payload_key, (db_field, operator) in PREMIUM_FILTERS.items():
+            value = payload.get(payload_key)
+            if not value:
+                continue
 
+            if operator == "$in":
+                query[db_field] = {"$in": value}
+
+            elif operator == "range":
+                today = date.today()
+                birthdate_query = {}
+
+                if value.get("min"):
+                    birthdate_query["$lte"] = today.replace(
+                        year=today.year - value["min"]
+                    )
+
+                if value.get("max"):
+                    birthdate_query["$gte"] = today.replace(
+                        year=today.year - value["max"]
+                    )
+
+                if birthdate_query:
+                    query[db_field] = birthdate_query
+
+    # QUERY WITH PAGINATION
     cursor = (
         onboarding_collection
         .find(query)
-        .skip(skip)
-        .limit(limit)
+        .skip(pagination.skip)
+        .limit(pagination.limit)
     )
 
     results = []
 
     async for onboarding in cursor:
         user = await user_collection.find_one(
-            {
-                "_id": ObjectId(onboarding["user_id"]),
-                "is_deleted": {"$ne": True}
-            }
+            {"_id": ObjectId(onboarding["user_id"]), "is_deleted": {"$ne": True}}
         )
         if not user:
             continue
-
-        profile_photo = await get_profile_photo_url({"_id": user["_id"]})
 
         birthdate = onboarding.get("birthdate")
 
@@ -502,15 +480,17 @@ async def search_profiles_controller(
             "name": user.get("username"),
             "age": age,
             "city": onboarding.get("country"),
-            "profile_photo": profile_photo,
+            "profile_photo": await get_profile_photo_url({"_id": user["_id"]}),
             "is_verified": user.get("is_verified", False),
-            "login_status": user.get("login_status", None)
+            "login_status": user.get("login_status")
         })
 
     return response.success_message(
         translate_message("SEARCH_RESULTS_FETCHED", lang),
         data=[{
             "results": results,
-            "premium_required": premium_filter_used and not is_premium
+            "page": pagination.page,
+            "page_size": pagination.page_size,
+            "premium_required": False
         }]
     )

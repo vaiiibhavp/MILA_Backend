@@ -5,6 +5,7 @@ from api.controller.profile_view_controller import *
 from core.utils.permissions import UserPermission
 from schemas.response_schema import Response
 from typing import List, Optional
+from core.utils.pagination import *
 
 router = APIRouter(prefix="/view", tags=["User Profile"])
 
@@ -121,8 +122,14 @@ async def send_gift(
 @router.post("/search/profiles", response_model=Response)
 async def search_profiles(
     payload: dict,
+    pagination: StandardResultsSetPagination = Depends(pagination_params),
     current_user: dict = Depends(UserPermission(["user"])),
     lang: str = Query("en")
 ):
-    return await search_profiles_controller(payload, current_user, lang)
+    return await search_profiles_controller(
+        payload=payload,
+        current_user=current_user,
+        pagination=pagination,
+        lang=lang
+    )
 

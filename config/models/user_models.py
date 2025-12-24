@@ -47,6 +47,17 @@ class PyObjectId(str):
         json_schema["format"] = "objectId"
         return json_schema
 
+FREE_FILTERS = {
+    "cities": ("country", "$in"),
+    "genders": ("gender", "$in"),
+}
+
+PREMIUM_FILTERS = {
+    "status": ("marital_status", "$in"),
+    "orientations": ("sexual_orientation", "$in"),
+    "age": ("birthdate", "range"),
+}
+
 # User Role Enum for validation
 class UserRole(str, Enum):
     ADMIN = "admin"
