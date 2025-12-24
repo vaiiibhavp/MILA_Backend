@@ -29,3 +29,11 @@ class LoginStatus(str, Enum):
 class TransactionType(str, Enum):
     SUBSCRIPTION_TRANSACTION = "subscription_transaction"
     TOKEN_TRANSACTION = "token_transaction"
+
+class GiftStatusEnum(str, Enum):
+    active = "active"
+    inactive = "inactive"
+
+class GiftTypeEnum(str, Enum):
+    emoji = "emoji"
+    image = "image"

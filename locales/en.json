@@ -201,6 +201,13 @@
   "IMAGE_UNLOCKED_SUCCESSFULLY": "Image unlocked successfully",
   "GALLERY_FETCHED_SUCCESSFULLY": "Gallery fetched successfully",
 
+  "CANNOT_SEND_GIFT_TO_SELF": "Cannot send gift to self",
+  "GIFT_NOT_FOUND": "Gift nor found",
+  "GIFT_SENT_SUCCESSFULLY": "Gift send successfully",
+
+  "PREMIUM_MEMBERSHIP_REQUIRED_FOR_THESE_FILTERS": "Premium membership required for these filters",
+  "SEARCH_RESULTS_FETCHED": "Search results fetched",
+
   "-------------5-------------":"-------------5-------------",
   "REFRESH_TOKEN_NOT_FOUND": "Refresh token not found",
   "REFRESH_TOKEN_BLACKLISTED": "The refresh token is blacklisted",

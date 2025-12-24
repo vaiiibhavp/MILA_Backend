@@ -203,6 +203,13 @@
   "IMAGE_UNLOCKED_SUCCESSFULLY": "Image déverrouillée avec succès",
   "GALLERY_FETCHED_SUCCESSFULLY": "Galerie récupérée avec succès",
 
+  "CANNOT_SEND_GIFT_TO_SELF": "Impossible de s'envoyer un cadeau à soi-même",
+  "GIFT_NOT_FOUND": "Cadeau introuvable",
+  "GIFT_SENT_SUCCESSFULLY": "Cadeau envoyé avec succès",
+
+  "PREMIUM_MEMBERSHIP_REQUIRED_FOR_THESE_FILTERS": "L'abonnement Premium est requis pour ces filtres.",
+  "SEARCH_RESULTS_FETCHED": "Résultats de la recherche récupérés",
+
   "-------------5-------------":"-------------5-------------",
 
   "REFRESH_TOKEN_NOT_FOUND": "Jeton de rafraîchissement introuvable",

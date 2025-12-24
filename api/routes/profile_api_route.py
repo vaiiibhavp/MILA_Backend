@@ -68,3 +68,61 @@ async def get_profile_gallery_route(
         viewer=current_user,
         lang=lang
     )
+
+@router.post(
+    "/{profile_user_id}/send-gift",
+    response_model=Response
+)
+async def send_gift(
+    profile_user_id: str,
+    payload: dict,
+    current_user: dict = Depends(UserPermission(allowed_roles=["user"])),
+    lang: str = Query("en")
+):
+    """
+    Send a virtual gift to another user's profile.
+
+    This endpoint allows a logged-in user to send a gift to the profile they
+    are currently viewing.
+
+    Flow & Rules:
+    - User cannot send a gift to their own profile
+    - Gift must exist and be active
+    - Sender must have sufficient token balance
+    - Gift token value is deducted from sender
+    - Gift token value is credited to receiver
+    - Token transaction history is recorded for both users
+
+    Request Body:
+    - gift_id (string): ID of the gift to send
+
+    Path Params:
+    - profile_user_id (string): User ID of the profile receiving the gift
+
+    Query Params:
+    - lang (string, optional): Language code for localized messages (default: "en")
+
+    Auth:
+    - Requires authenticated user with role "user"
+
+    Response:
+    - gift_id
+    - gift_name
+    - tokens_deducted
+    - sender_remaining_tokens
+    """
+    return await send_gift_to_profile(
+        profile_user_id=profile_user_id,
+        gift_id=payload.get("gift_id"),
+        viewer=current_user,
+        lang=lang
+    )
+
+@router.post("/search/profiles", response_model=Response)
+async def search_profiles(
+    payload: dict,
+    current_user: dict = Depends(UserPermission(["user"])),
+    lang: str = Query("en")
+):
+    return await search_profiles_controller(payload, current_user, lang)
+

@@ -62,6 +62,7 @@ class FileType(str, Enum):
     SELFIE = "selfie"
     PUBLIC_GALLERY = "public_gallery"
     PRIVATE_GALLERY = "private_gallery"
+    GIFT = "gift"
 
 # ---- Files model ----
 class Files(BaseModel):
