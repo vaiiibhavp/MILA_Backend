@@ -8,10 +8,12 @@ from api.controller.files_controller import save_file, generate_file_url, get_pr
 from datetime import date, datetime
 from services.translation import translate_message
 from core.utils.helper import serialize_datetime_fields
+from config.basic_config import settings
 from config.models.user_models import Files, FileType
 
 response = CustomResponseMixin()
 
+VERIFICATION_REWARD_TOKENS=settings.VERIFICATION_REWARD_TOKENS
 
 async def get_user_profile_controller(current_user: dict, lang: str = "en"):
     """
@@ -21,7 +23,7 @@ async def get_user_profile_controller(current_user: dict, lang: str = "en"):
         {"_id": ObjectId(current_user["_id"])}
     )
     if not user:
-        return response.error_message(translate_message("User not found", lang=lang), data=[], status_code=404)
+        return response.error_message(translate_message("USER_NOT_FOUND", lang=lang), data=[], status_code=404)
 
     onboarding = await onboarding_collection.find_one(
         {"user_id": str(user["_id"])}
@@ -45,8 +47,7 @@ async def get_user_profile_controller(current_user: dict, lang: str = "en"):
 
     private_gallery_locked = membership_type == "free"
 
-    tokens = user.get("tokens", 0) if onboarding else 0
-
+    tokens = user.get("tokens", 0)
     profile_photo_url = await get_profile_photo_url(current_user)
 
     profile_data = [{
@@ -54,7 +55,7 @@ async def get_user_profile_controller(current_user: dict, lang: str = "en"):
             "age": age,
             "email": user.get("email"),
             "profile_photo": profile_photo_url,
-            "about": onboarding.get("bio"),
+            "about": onboarding.get("bio") if onboarding else None,
             "screen_state": screen_state,
             "verification": {
                 "status": verification_status,
@@ -88,7 +89,7 @@ async def get_user_profile_controller(current_user: dict, lang: str = "en"):
     profile_data = serialize_datetime_fields(profile_data)
 
     return response.success_message(
-        translate_message("Profile fetched successfully", lang=lang),
+        translate_message("PROFILE_FETCHED_SUCCESSFULLY", lang=lang),
         data=profile_data,
         status_code=200
     )
@@ -102,11 +103,11 @@ async def upload_public_gallery_controller(images, current_user, lang: str = "en
     """
 
     if not images:
-        return response.error_message(translate_message("No images provided", lang=lang), data=[], status_code=400)
+        return response.error_message(translate_message("PUBLIC_GALLERY_IMAGES_REQUIRED", lang=lang), data=[], status_code=400)
 
     if len(images) > 5:
         return response.error_message(
-            translate_message("Maximum 5 public gallery images allowed", lang=lang),
+            translate_message("PUBLIC_GALLERY_MAX_LIMIT_EXCEEDED", lang=lang),
             data=[],
             status_code=400
         )
@@ -135,26 +136,27 @@ async def upload_public_gallery_controller(images, current_user, lang: str = "en
             "file_id": file_id,
             "uploaded_at": datetime.utcnow()
         })
-        
-        await onboarding_collection.update_one(
-            {"user_id": str(current_user["_id"])},
-            {
-                "$push": {"public_gallery": {"$each": public_items}},
-                "$setOnInsert": {
-                    "user_id": str(current_user["_id"]),
-                    "created_at": datetime.utcnow()
-                },
-                "$set": {"updated_at": datetime.utcnow()}
+
+    await onboarding_collection.update_one(
+        {"user_id": str(current_user["_id"])},
+        {
+            "$push": {"public_gallery": {"$each": public_items}},
+            "$setOnInsert": {
+                "user_id": str(current_user["_id"]),
+                "created_at": datetime.utcnow()
             },
-            upsert=True
-        )
+            "$set": {"updated_at": datetime.utcnow()}
+        },
+        upsert=True
+    )
+
     response_data = serialize_datetime_fields({
             "count": len(public_items),
             "items": public_items
         })
 
     return response.success_message(
-        translate_message("Public gallery images uploaded successfully", lang=lang),
+        translate_message("PUBLIC_GALLERY_IMAGES_UPLOADED_SUCCESSFULLY", lang=lang),
         data=[response_data],
         status_code=200
     )
@@ -167,10 +169,33 @@ async def upload_private_gallery_controller(image, price, current_user, lang: st
     - Free users: max 3 images
     - Premium users: max 20 images
     """
+    if len(image) > 1:
+        return response.error_message(
+            translate_message(
+                "PLEASE_SELECT_ONE_IMAGE_AT_A_TIME_WITH_ITS_PRICE",
+                lang=lang
+            ),
+            data=[],
+            status_code=400
+        )
+
+    if not image:
+        return response.error_message(
+            translate_message("IMAGE_REQUIRED", lang=lang),
+            data=[],
+            status_code=400
+        )
+
+    if price is None:
+        return response.error_message(
+            translate_message("PRICE_REQUIRED", lang=lang),
+            data=[],
+            status_code=400
+        )
 
     if price <= 0:
         return response.error_message(
-            translate_message("Price must be greater than zero", lang=lang),
+            translate_message("PRICE_MUST_BE_GREATER_THAN_ZERO", lang=lang),
             data=[],
             status_code=400
         )
@@ -187,14 +212,16 @@ async def upload_private_gallery_controller(image, price, current_user, lang: st
 
     if existing_count >= max_limit:
         return response.error_message(
-            translate_message(f"Private gallery limit reached. Upgrade to premium to add more photos.", lang=lang),
+            translate_message("PRIVATE_GALLERY_LIMIT_REACHED_UPGRADE_TO_PREMIUM_TO_ADD_MORE_PHOTOS", lang=lang),
             data=[],
             status_code=403 if membership == "free" else 400,
         )
 
+    single_image = image[0]
+
     public_url, storage_key, backend = await save_file(
-        file_obj=image,
-        file_name=image.filename,
+        file_obj=single_image,
+        file_name=single_image.filename,
         user_id=str(current_user["_id"]),
         file_type="private_gallery"
     )
@@ -234,7 +261,7 @@ async def upload_private_gallery_controller(image, price, current_user, lang: st
     })
 
     return response.success_message(
-        translate_message("Private gallery image uploaded successfully", lang=lang),
+        translate_message("PRIVATE_GALLERY_IMAGE_UPLOADED_SUCCESSFULLY", lang=lang),
         data=[response_data],
         status_code=200
     )
@@ -281,7 +308,7 @@ async def get_public_gallery_controller(current_user, lang: str = "en"):
     })
 
     return response.success_message(
-        translate_message("Public gallery fetched successfully", lang=lang),
+        translate_message("PUBLIC_GALLERY_FETCHED_SUCCESSFULLY", lang=lang),
         data=[response_data],
         status_code=200
     )
@@ -331,7 +358,7 @@ async def get_private_gallery_controller(current_user, lang: str = "en"):
     })
 
     return response.success_message(
-        translate_message("Private gallery fetched successfully", lang=lang),
+        translate_message("PRIVATE_GALLERY_FETCHED_SUCCESSFULLY", lang=lang),
         data=[response_data],
         status_code=200
     )

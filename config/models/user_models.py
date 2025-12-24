@@ -201,3 +201,28 @@ async def get_user_details(
         condition,
         projection
     )
+
+async def get_users_list(
+    condition: Dict[str, Any],
+    fields: Optional[List[str]] = None,
+    skip: int = 0,
+    limit: int = 10
+):
+    projection = None
+    if fields:
+        projection = {field: 1 for field in fields}
+        if "_id" not in fields:
+            projection["_id"] = 0
+
+    cursor = (
+        user_collection
+        .find(condition, projection)
+        .skip(skip)
+        .limit(limit)
+        .sort("created_at", -1)
+    )
+
+    users = await cursor.to_list(length=limit)
+    total = await user_collection.count_documents(condition)
+
+    return users, total

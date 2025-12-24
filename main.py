@@ -6,7 +6,7 @@ from api.routes import (
     user_profile_api, files_api,
     subscription_plan_route,google_auth_api,
     apple_auth_api , onboarding_route,adminauth_route,
-    profile_api, token_history_route
+    profile_api, token_history_route, profile_api_route
 )
 
 from core.utils.exceptions import CustomValidationError, custom_validation_error_handler, validation_exception_handler
@@ -208,6 +208,8 @@ app.include_router(google_auth_api.router, prefix="/api/google-auth")
 app.include_router(apple_auth_api.router, prefix="/api/apple-auth")
 app.include_router(profile_api.router, prefix="/api/user")
 app.include_router(token_history_route.api_router, prefix="/api/tokens", tags=["Tokens"])
+app.include_router(profile_api_route.router, prefix="/api/profile")
+
 # Scheduler Instance
 scheduler = BackgroundScheduler()
 
@@ -295,14 +297,19 @@ async def shutdown_event():
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     errors = exc.errors()
-    
-    # Extract field names and error messages
-    formatted_errors = {err["loc"][-1]: err["msg"] for err in errors}  
+
+    # Extract field -> message mapping
+    formatted_errors = {
+        err["loc"][-1]: err["msg"].replace("Value error, ", "")
+        for err in errors
+    }
+
+    # Pick the first error message for top-level message
+    first_error_message = next(iter(formatted_errors.values()))
 
     return JSONResponse(
         content={
-            "message": "Validation Error",
-            "data": {"errors": formatted_errors},  # More readable error structure
+            "message": first_error_message,
             "success": False
         },
         status_code=422  # Use 422 for validation errors

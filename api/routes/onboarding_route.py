@@ -377,3 +377,28 @@ async def upload_selfie(
         translate_message("SELFIE_UPLOADED_SUCCESS", lang),
         data=response_data
     )
+
+@router.get("/onboarding/steps")
+async def get_onboarding_steps(
+    current_user: dict = Depends(get_current_user),
+    lang: str = "en"
+):
+    return await get_onboarding_steps_by_user_id(
+        user_id=str(current_user["_id"]),
+        lang=lang
+    )
+
+@router.get("/country-list")
+async def get_country_list(
+    current_user:dict = Depends(get_current_user),
+    lang : str = "en"
+):
+    return await list_of_country()
+ 
+ 
+@router.get("/intrest-category-list")
+async def get_intrest_categories(
+    current_user:dict = Depends(get_current_user),
+    lang : str = "en"
+):
+    return await intrest_and_categories()

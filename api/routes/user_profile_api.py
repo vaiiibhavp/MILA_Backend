@@ -7,7 +7,7 @@ from schemas.user_schemas import *
 from api.controller.user_auth import *
 from schemas.response_schema import Response
 from core.utils.permissions import UserPermission, AdminPermission
-from core.utils.pagination import StandardResultsSetPagination
+from core.utils.pagination import StandardResultsSetPagination, pagination_params
 import time
 from fastapi import Body
 
@@ -54,46 +54,65 @@ async def user_profile_route(request: Request, current_user: dict = Depends(User
     return await get_user_profile_details(request,current_user,lang)
 
 @router.post("/register", response_model=Response)
-async def signup_user(payload: Signup):
-    return await signup_controller(payload)
+async def signup_user(payload: Signup, lang: str = Query(None)):
+    return await signup_controller(payload, lang)
 
 @router.post("/verify-email")
-async def verify_otp(payload: VerifyOTP):
-    return await verify_signup_otp_controller(payload)
+async def verify_otp(payload: VerifyOTP, lang: str = Query(None)):
+    return await verify_signup_otp_controller(payload, lang)
 
 @router.post("/resend-otp")
-async def resend_otp(payload: ResendOTP):
-    return await resend_otp_controller(payload)
+async def resend_otp(payload: ResendOTP, lang: str = Query(None)):
+    return await resend_otp_controller(payload, lang)
 
 @router.post("/login", response_model=Response)
-async def login_user(payload: LoginRequest):
+async def login_user(payload: LoginRequest, lang: str = Query(None)):
     """
     User login API (with optional 2FA OTP)
     """
-    return await login_controller(payload)
+    return await login_controller(payload, lang)
 
 @router.post("/login/verify-otp", response_model=Response)
-async def verify_login_otp(payload: VerifyLoginOtpRequest):
+async def verify_login_otp(payload: VerifyLoginOtpRequest, lang: str = Query(None)):
     """
     Verify OTP for login (2FA)
     """
-    return await verify_login_otp_controller(payload)
+    return await verify_login_otp_controller(payload, lang)
 
 @router.post("/login/resend-otp", response_model=Response)
-async def resend_login_otp(payload: ResendOtpRequest):
+async def resend_login_otp(payload: ResendOtpRequest, lang: str = Query(None)):
     """
     Resend Login OTP
     """
-    return await resend_login_otp_controller(payload)
+    return await resend_login_otp_controller(payload, lang)
 
 @router.post("/forgot-password", response_model=Response)
-async def send_reset_password_otp(payload: ForgotPasswordRequest):
-    return await send_reset_password_otp_controller(payload)
+async def send_reset_password_otp(payload: ForgotPasswordRequest, lang: str = Query(None)):
+    return await send_reset_password_otp_controller(payload, lang)
 
 @router.post("/verify-reset-otp", response_model=Response)
-async def verify_reset_password_otp(payload: VerifyResetOtpRequest):
-    return await verify_reset_password_otp_controller(payload)
+async def verify_reset_password_otp(payload: VerifyResetOtpRequest, lang: str = Query(None)):
+    return await verify_reset_password_otp_controller(payload, lang)
 
 @router.post("/password-reset", response_model=Response)
-async def reset_password(payload: ResetPasswordRequest):
-    return await reset_password_controller(payload)
+async def reset_password(payload: ResetPasswordRequest, lang: str = Query(None)):
+    return await reset_password_controller(payload, lang)
+
+@router.get("/{user_id}", response_model=Response)
+async def get_user_by_id(
+    user_id: str,
+    current_user: dict = Depends(UserPermission(allowed_roles=["admin", "user"])),
+    lang: str = Query(None)
+):
+    return await get_user_by_id_controller(user_id, lang)
+
+@router.get("", response_model=Response)
+async def get_all_users(
+    pagination: StandardResultsSetPagination = Depends(pagination_params),
+    current_user: dict = Depends(UserPermission(allowed_roles=["admin", "user"])),
+    lang: str = Query(None)
+):
+    """
+    Get all users (Admin only) with standard pagination
+    """
+    return await get_all_users_controller(pagination, lang)

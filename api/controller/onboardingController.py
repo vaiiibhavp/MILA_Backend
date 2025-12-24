@@ -10,12 +10,20 @@ from config.db_config import (
     onboarding_collection,
     file_collection,
     user_collection,
+    countries_collection,
+    interest_categories_collection
 )
+from core.utils.response_mixin import CustomResponseMixin
+from core.utils.helper import serialize_datetime_fields
 from api.controller.files_controller import generate_file_url
 from core.utils.helper import convert_objectid_to_str
+from services.translation import translate_message
 
 MIN_GALLERY_IMAGES = 1
 MAX_GALLERY_IMAGES = 3
+
+
+response = CustomResponseMixin()
 
 def calculate_age(dob: date) -> int:
     today = date.today()
@@ -72,8 +80,8 @@ async def save_onboarding_step(user_id: str, payload: Dict[str, Any]) -> Dict[st
         raise HTTPException(500, "Unable to save onboarding data")
 
     REQUIRED_FIELDS = [
-        "birthdate", "gender", "sexual_orientation", "marital_status", "city",
-        "passions", "interested_in", "preferred_city",
+        "birthdate", "gender", "sexual_orientation", "marital_status", "country",
+        "passions", "interested_in", "preferred_country",
         "images", "selfie_image"
     ]
 
@@ -244,3 +252,122 @@ async def get_basic_user_profile(user_id: str) -> Dict[str, Any]:
         "interested_in": onboarding_data.get("interested_in"),
     }
     return profile
+
+async def get_onboarding_details(
+    condition: Dict[str, Any],
+    fields: Optional[List[str]] = None
+):
+    projection = None
+    if fields:
+        projection = {field: 1 for field in fields}
+        if "_id" not in fields:
+            projection["_id"] = 0
+
+    return await onboarding_collection.find_one(condition, projection)
+
+
+async def get_onboarding_steps_by_user_id(user_id: str, lang: str = "en"):
+    onboarding = await get_onboarding_details(
+        condition={"user_id": user_id},
+        fields=[
+            "birthdate",
+            "gender",
+            "sexual_orientation",
+            "bio",
+            "passions",
+            "country",
+            "preferred_country",
+            "interested_in",
+            "marital_status",
+            "sexual_preferences",
+            "images",
+            "selfie_image", 
+            "onboarding_completed"
+        ]
+    )
+
+    if not onboarding:
+        return response.error_message(
+            translate_message("ONBOARDING_NOT_FOUND", lang),
+            status_code=404
+        )
+
+    def serialize(value):
+        return value.isoformat() if hasattr(value, "isoformat") else value
+
+    steps = [
+        {"key": "birthdate", "value": serialize(onboarding.get("birthdate"))},
+        {"key": "gender", "value": onboarding.get("gender")},
+        {"key": "sexual_orientation", "value": onboarding.get("sexual_orientation")},
+        {"key": "bio", "value": onboarding.get("bio")},
+        {"key": "passions", "value": onboarding.get("passions", [])},
+        {"key": "country", "value": onboarding.get("country")},
+        {"key": "preferred_country", "value": onboarding.get("preferred_country", [])},
+        {"key": "interested_in", "value": onboarding.get("interested_in", [])},
+        {"key": "marital_status", "value": onboarding.get("marital_status")},
+        {"key": "sexual_preferences", "value": onboarding.get("sexual_preferences", [])},
+        {"key": "images", "value": onboarding.get("images", [])},
+        {"key": "selfie_image", "value": onboarding.get("selfie_image")},
+    ]
+
+    return response.success_message(
+        translate_message("ONBOARDING_STEPS_FETCHED", lang),
+        data={
+            "user_id": user_id,
+            "onboarding_completed": onboarding.get("onboarding_completed", False),
+            "steps": steps
+        }
+    )
+
+
+async def list_of_country():
+    total = await countries_collection.count_documents({})
+ 
+    if total == 0:
+        return {
+            "count": 0,
+            "results": [],
+            "message": "No countries found (DB or collection mismatch)"
+        }
+ 
+    cursor = countries_collection.find(
+        {},
+        {"name": 1, "code": 1}
+    ).sort("name", 1)
+ 
+    countries = await cursor.to_list(length=None)
+ 
+    results = []
+    for c in countries:
+        results.append({
+            "id": str(c["_id"]),
+            "name": c.get("name"),
+            "code": c.get("code")
+        })
+ 
+    return {
+        "count": len(results),
+        "results": results
+    }
+ 
+ 
+async def intrest_and_categories():
+    cursor = interest_categories_collection.find(
+        {},
+        {"category": 1, "options": 1}
+    )
+ 
+    data = await cursor.to_list(length=None)
+ 
+    results = []
+    for item in data:
+        results.append({
+            "id": str(item["_id"]),
+            "category": item.get("category"),
+            "options": item.get("options", [])
+        })
+ 
+    return {
+        "count": len(results),
+        "results": results
+    }

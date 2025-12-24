@@ -10,7 +10,7 @@ from core.utils.core_enums import MembershipType, MembershipStatus, TokenTransac
 from config.db_config import transaction_collection, system_config_collection, user_collection
 from config.models.transaction_models import store_transaction_details, update_transaction_details
 from bson import ObjectId
-from services.user_token_history import create_user_token_history
+from config.models.user_token_history_model import create_user_token_history
 from schemas.user_token_history_schema import CreateTokenHistory
 
 client = Tron(network=settings.WALLET_NETWORK)

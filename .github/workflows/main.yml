@@ -1,0 +1,44 @@
+name: MILA Backend - Main Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -e
+
+            echo "🚀 Connected to MILA Backend Server"
+
+            # SSH agent for GitHub SSH authentication
+            eval "$(ssh-agent -s)"
+            # ssh-add ~/.ssh/common_key
+
+            cd /home/projects/mila-backend
+
+            BRANCH=${{ github.ref_name }}
+            echo "📌 Deploying branch: $BRANCH"
+
+            git fetch origin
+            git checkout $BRANCH
+            git pull origin $BRANCH
+
+            echo "🐳 Building & running MILA Backend"
+            docker compose -f docker-compose.yml up -d --build
+
+            echo "✅ MILA Backend Main deployment completed"
