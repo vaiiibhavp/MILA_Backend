@@ -278,6 +278,8 @@
    "ERROR_WHILE_UPLOADING_SELFIE": "Erreur lors du téléversement du selfie",
   "SELFIE_UPLOADED_SUCCESS": "Selfie téléversé avec succès",
   "ERROR_WHILE_UPLOADING_FILE": "Erreur lors du téléversement du fichier",
-  "ERROR_WHILE_FETCHING_USER_DETAILS": "Erreur lors de la récupération des détails de l’utilisateur"
+  "ERROR_WHILE_FETCHING_USER_DETAILS": "Erreur lors de la récupération des détails de l’utilisateur",
+    "ERROR_WHILE_FETCHING_HOME_SUGGESTIONS": "Erreur lors de la récupération des suggestions de la page d’accueil",
+  "USER_ALREADY_IN_FAVORITES": "L’utilisateur est déjà dans les favoris"
 
 }

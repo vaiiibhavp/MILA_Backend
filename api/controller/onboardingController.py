@@ -269,7 +269,7 @@ async def get_basic_user_profile(user_id: str, lang: str = "en") -> Dict[str, An
 
         return response.success_message(
             translate_message("USER_BASIC_PROFILE", lang),
-            data=profile
+            data=[profile]
         )
 
     except Exception as e:
@@ -315,6 +315,7 @@ async def get_onboarding_steps_by_user_id(user_id: str, lang: str = "en"):
     if not onboarding:
         return response.error_message(
             translate_message("ONBOARDING_NOT_FOUND", lang),
+            data=[],
             status_code=404
         )
 
@@ -548,7 +549,8 @@ async def upload_onboarding_image(
 
         return response.success_message(
             translate_message("FILE_UPLOADED_SUCCESS", lang),
-            data=response_data
+            data=[response_data],
+            status_code=200
         )
 
     except Exception as e:
@@ -610,7 +612,8 @@ async def upload_onboarding_selfie(
 
         return response.success_message(
             translate_message("SELFIE_UPLOADED_SUCCESS", lang),
-            data=response_data
+            data=[response_data],
+            status_code=200
         )
 
     except Exception as e:

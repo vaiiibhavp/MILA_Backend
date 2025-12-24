@@ -39,7 +39,8 @@ async def add_to_fav(user_id: str, favorite_user_id: str, lang: str = "en"):
     if existing_fav:
         return response.error_message(
             translate_message("USER_ALREADY_IN_FAVORITES", lang),
-            status_code=409
+            data=[],
+            status_code=200
         )
 
     await favorite_collection.update_one(
@@ -61,7 +62,7 @@ async def add_to_fav(user_id: str, favorite_user_id: str, lang: str = "en"):
 
     return response.success_message(
         translate_message("USER_ADDED_TO_FAVORITES", lang),
-        data=response_data
+        data=[response_data]
     )
 
 
@@ -95,7 +96,8 @@ async def like_user(user_id: str, liked_user_id: str, lang: str = "en"):
     if already_liked:
         return response.error_message(
             translate_message("USER_ALREADY_LIKED", lang),
-            status_code=409
+            data = [],
+            status_code=200
         )
 
     # Add like
@@ -153,6 +155,7 @@ async def pass_user(user_id: str, passed_user_id: str, lang: str = "en"):
     if user_id == passed_user_id:
         return response.error_message(
             translate_message("CANNOT_PASS_SELF", lang),
+            data = [],
             status_code=400
         )
 
@@ -164,6 +167,7 @@ async def pass_user(user_id: str, passed_user_id: str, lang: str = "en"):
     if not passed_user:
         return response.error_message(
             translate_message("USER_NOT_FOUND", lang),
+            data =[],
             status_code=404
         )
 
@@ -176,7 +180,8 @@ async def pass_user(user_id: str, passed_user_id: str, lang: str = "en"):
     if already_passed:
         return response.error_message(
             translate_message("USER_ALREADY_PASSED", lang),
-            status_code=409
+            data = [],
+            status_code=200
         )
 
     # Store pass
@@ -265,7 +270,7 @@ async def get_users_who_liked_me(user_id: str, lang: str = "en"):
 
     return response.success_message(
         translate_message("LIKED_USERS_FETCHED", lang),
-        data=users
+        data=[users]
     )
 
 
@@ -280,6 +285,7 @@ async def get_user_login_status_internal(user_id: str, lang: str = "en"):
     except Exception:
         return response.error_message(
             translate_message("INVALID_USER_ID", lang),
+            data = [],
             status_code=400
         )
 
