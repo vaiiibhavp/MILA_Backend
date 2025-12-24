@@ -20,12 +20,12 @@ async def store_transaction_details(doc:TransactionCreateModel):
     return doc
 
 
-async def get_existing_transaction(txn_id: str, lang:str) -> Optional[Dict[str, Any]]:
+async def get_existing_transaction(tron_txn_id: str, lang:str) -> Optional[Dict[str, Any]]:
     """
     validate transaction id is existed in payment details
     """
     transaction =  await transaction_collection.find_one(
-        {"payment_details.txn_id": txn_id},
+        {"payment_details.tron_txn_id": tron_txn_id},
         {"payment_details.$": 1}  # return
     )
     if transaction is not None:

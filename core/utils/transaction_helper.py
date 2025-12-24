@@ -99,7 +99,7 @@ async def get_transaction_details(txn_id:str, lang:str) -> dict:
     contracts = tx_details.get("raw_data", {}).get("contract", [])
 
     parsed = {
-        "txid": txn_id,
+        "tron_txn_id": txn_id,
         "status": None,
         "from": None,
         "contract_address": None,

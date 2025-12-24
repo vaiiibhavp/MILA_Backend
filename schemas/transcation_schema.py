@@ -5,10 +5,10 @@ from typing import Optional, List, Union
 from core.utils.core_enums import TransactionStatus, TransactionType
 
 class TransactionRequestModel(BaseModel):
-    txn_id: str
+    tron_txn_id: str
     plan_id: str
 
-    @field_validator("txn_id", "plan_id")
+    @field_validator("tron_txn_id", "plan_id")
     def not_empty(cls, value):
         if not value or not value.strip():
             raise ValueError("Field cannot be empty")
@@ -21,7 +21,7 @@ class TransactionRequestModel(BaseModel):
         return v
 
 class PaymentDetailsModel(BaseModel):
-    txn_id: str = Field(alias="txid")
+    tron_txn_id: str = Field(alias="tron_txn_id")
     status: str
     txn_from: str = Field(alias="from")
     contract_address: str
@@ -49,10 +49,14 @@ class TransactionCreateModel(BaseModel):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class CompleteTransactionRequestModel(BaseModel):
-    txn_id: str
-    subscription_id: str
+    tron_txn_id: str = Field(
+        description="Tron USDT transaction value. "
+    )
+    subscription_id: str = Field(
+        description="Subscription plan Id. "
+    )
 
-    @field_validator("txn_id", "subscription_id")
+    @field_validator("tron_txn_id", "subscription_id")
     def not_empty(cls, value):
         if not value or not value.strip():
             raise ValueError("Field cannot be empty")

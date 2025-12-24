@@ -40,9 +40,9 @@ async def transaction_verify(request: TransactionRequestModel,user_id:str, lang:
     Validate transaction details associated with subscription plans
     """
     try:
-        await get_existing_transaction(request.txn_id, lang=lang)
+        await get_existing_transaction(request.tron_txn_id, lang=lang)
 
-        transaction_details = await get_transaction_details(request.txn_id, lang=lang)
+        transaction_details = await get_transaction_details(request.tron_txn_id, lang=lang)
 
         # Fetch subscription plan details
         plan_data = await get_subscription_plan(request.plan_id, lang=lang)
