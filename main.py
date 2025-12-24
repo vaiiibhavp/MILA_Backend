@@ -6,7 +6,9 @@ from api.routes import (
     user_profile_api, files_api,
     subscription_plan_route,google_auth_api,
     apple_auth_api , onboarding_route,adminauth_route,
-    profile_api, token_history_route, profile_api_route
+    profile_api, token_history_route, profile_api_route ,
+    userPass_route
+
 )
 
 from core.utils.exceptions import CustomValidationError, custom_validation_error_handler, validation_exception_handler
@@ -209,7 +211,7 @@ app.include_router(apple_auth_api.router, prefix="/api/apple-auth")
 app.include_router(profile_api.router, prefix="/api/user")
 app.include_router(token_history_route.api_router, prefix="/api/tokens", tags=["Tokens"])
 app.include_router(profile_api_route.router, prefix="/api/profile")
-
+app.include_router(userPass_route.router)
 # Scheduler Instance
 scheduler = BackgroundScheduler()
 
@@ -243,6 +245,12 @@ async def init_scheduler():
         else:
             print("[SUCCESS] Database initialized successfully")
 
+            #  CREATE INDEXES HERE
+            try:
+                await create_indexes()
+                print("[SUCCESS] Database indexes created")
+            except Exception as index_error:
+                print(f"[ERROR] Index creation failed: {index_error}")
             try:
                 await create_indexes()
                 await seed_admin()

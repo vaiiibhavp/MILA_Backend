@@ -17,20 +17,24 @@ from core.utils.response_mixin import CustomResponseMixin
 from core.utils.helper import serialize_datetime_fields
 from api.controller.files_controller import generate_file_url
 from core.utils.helper import convert_objectid_to_str
+from fastapi import HTTPException , status
+from bson import ObjectId
+from datetime import datetime
+from core.utils.response_mixin import CustomResponseMixin
+from fastapi import UploadFile
+from api.controller.files_controller import save_file
+from config.models.user_models import Files
+from core.utils.helper import serialize_datetime_fields
 from services.translation import translate_message
+from core.utils.age_calculation import calculate_age
+
+response = CustomResponseMixin()
 
 MIN_GALLERY_IMAGES = 1
 MAX_GALLERY_IMAGES = 3
 
 
 response = CustomResponseMixin()
-
-def calculate_age(dob: date) -> int:
-    today = date.today()
-    return today.year - dob.year - (
-        (today.month, today.day) < (dob.month, dob.day)
-    )
-
 
 def normalize_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
     ## Use inbuild function for this 
@@ -203,55 +207,77 @@ async def format_onboarding_response(onboarding_doc: Dict[str, Any]) -> Dict[str
 
     return response
 
-async def get_basic_user_profile(user_id: str) -> Dict[str, Any]:
+async def get_basic_user_profile(user_id: str, lang: str = "en") -> Dict[str, Any]:
     """
     Basic profile for list views:
       - username
       - bio
       - age
-      - city
-      - interested_in (preferences)
+      - country
+      - interested_in
     """
-
-    onboarding_data = await onboarding_collection.find_one(
-        {"user_id": user_id},
-        {
-            "_id": 0,
-            "bio": 1,
-            "birthdate": 1,
-            "city": 1,
-            "interested_in": 1,
-        },
-    )
-
-    if not onboarding_data:
-        raise HTTPException(status_code=404, detail="Failed to fetch user details")
-
     try:
-        user = await user_collection.find_one(
-            {"_id": ObjectId(user_id)},
-            {"_id": 0, "username": 1},
+        onboarding_data = await onboarding_collection.find_one(
+            {"user_id": user_id},
+            {
+                "_id": 0,
+                "bio": 1,
+                "birthdate": 1,
+                "country": 1,
+                "interested_in": 1,
+            },
         )
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid user_id format")
 
-    username = user.get("username") if user else None
+        if not onboarding_data:
+            return response.raise_exception(
+                translate_message("FAILED_TO_FETCH_USER_DETAILS", lang),
+                data=[],
+                status_code=404
+            )
 
-    birthdate_value = onboarding_data.get("birthdate")
-    age = None
+        try:
+            user = await user_collection.find_one(
+                {"_id": ObjectId(user_id)},
+                {"_id": 0, "username": 1},
+            )
+        except Exception:
+            return response.raise_exception(
+                translate_message("INVALID_USER_ID", lang),
+                data=[],
+                status_code=400
+            )
 
-    if birthdate_value:
-        dob = birthdate_value.date() if isinstance(birthdate_value, datetime) else birthdate_value
-        age = calculate_age(dob)
+        username = user.get("username") if user else None
 
-    profile = {
-        "username": username,
-        "bio": onboarding_data.get("bio"),
-        "age": age,
-        "city": onboarding_data.get("city"),
-        "interested_in": onboarding_data.get("interested_in"),
-    }
-    return profile
+        birthdate_value = onboarding_data.get("birthdate")
+        age = None
+        if birthdate_value:
+            dob = (
+                birthdate_value.date()
+                if isinstance(birthdate_value, datetime)
+                else birthdate_value
+            )
+            age = calculate_age(dob)
+
+        profile = serialize_datetime_fields({
+            "username": username,
+            "bio": onboarding_data.get("bio"),
+            "age": age,
+            "country": onboarding_data.get("country"),
+            "interested_in": onboarding_data.get("interested_in"),
+        })
+
+        return response.success_message(
+            translate_message("USER_BASIC_PROFILE", lang),
+            data=[profile]
+        )
+
+    except Exception as e:
+        return response.raise_exception(
+            translate_message("ERROR_WHILE_FETCHING_USER_PROFILE", lang),
+            data=str(e),
+            status_code=500
+        )
 
 async def get_onboarding_details(
     condition: Dict[str, Any],
@@ -289,6 +315,7 @@ async def get_onboarding_steps_by_user_id(user_id: str, lang: str = "en"):
     if not onboarding:
         return response.error_message(
             translate_message("ONBOARDING_NOT_FOUND", lang),
+            data=[],
             status_code=404
         )
 
@@ -312,62 +339,286 @@ async def get_onboarding_steps_by_user_id(user_id: str, lang: str = "en"):
 
     return response.success_message(
         translate_message("ONBOARDING_STEPS_FETCHED", lang),
-        data={
+        data=[{
             "user_id": user_id,
             "onboarding_completed": onboarding.get("onboarding_completed", False),
             "steps": steps
-        }
+        }]
     )
 
 
-async def list_of_country():
-    total = await countries_collection.count_documents({})
+async def list_of_country(lang: str = "en"):
+    try:
+        total = await countries_collection.count_documents({})
+
+        if total == 0:
+            return response.success_message(
+                translate_message("NO_COUNTRIES_FOUND", lang),
+                data=[{
+                    "count": 0,
+                    "results": []
+                }]
+            )
+
+        cursor = countries_collection.find(
+            {},
+            {"name": 1, "code": 1}
+        ).sort("name", 1)
+
+        countries = await cursor.to_list(length=None)
+
+        results = [
+            {
+                "id": str(c["_id"]),
+                "name": c.get("name"),
+                "code": c.get("code")
+            }
+            for c in countries
+        ]
+
+        return response.success_message(
+            translate_message("COUNTRY_LIST_FETCHED", lang),
+            data=[{
+                "count": len(results),
+                "results": results
+            }]
+        )
+
+    except Exception as e:
+        return response.raise_exception(
+            translate_message("ERROR_WHILE_FETCHING_COUNTRY_LIST", lang),
+            data=str(e),
+            status_code=500
+        )
+
  
-    if total == 0:
-        return {
-            "count": 0,
-            "results": [],
-            "message": "No countries found (DB or collection mismatch)"
-        }
- 
-    cursor = countries_collection.find(
-        {},
-        {"name": 1, "code": 1}
-    ).sort("name", 1)
- 
-    countries = await cursor.to_list(length=None)
- 
-    results = []
-    for c in countries:
-        results.append({
-            "id": str(c["_id"]),
-            "name": c.get("name"),
-            "code": c.get("code")
+async def intrest_and_categories(lang: str = "en"):
+    try:
+        cursor = interest_categories_collection.find(
+            {},
+            {"category": 1, "options": 1}
+        )
+
+        data = await cursor.to_list(length=None)
+
+        results = [
+            {
+                "id": str(item["_id"]),
+                "category": item.get("category"),
+                "options": item.get("options", [])
+            }
+            for item in data
+        ]
+
+        return response.success_message(
+            translate_message("INTEREST_CATEGORIES_FETCHED", lang),
+            data=[{
+                "count": len(results),
+                "results": results
+            }]
+        )
+
+    except Exception as e:
+        return response.raise_exception(
+            translate_message("ERROR_WHILE_FETCHING_INTEREST_CATEGORIES", lang),
+            data=str(e),
+            status_code=500
+        )
+
+
+
+async def fetch_user_by_id(user_id: str, lang: str):
+    try:
+        user_data = await onboarding_collection.find_one(
+            {"user_id": user_id},
+            {
+                "_id": 0,
+                "bio": 1,
+                "passions": 1,
+                "country": 1,
+                "birthdate": 1,
+                "tokens": 1,
+            }
+        )
+
+        if not user_data:
+            return response.raise_exception(
+                translate_message("FAILED_TO_FETCH_USER_DETAILS", lang),
+                data=[],
+                status_code=500
+            )
+
+        user = await user_collection.find_one(
+            {"_id": ObjectId(user_id)},
+            {
+                "_id": 0,
+                "username": 1,
+                "is_verified": 1,
+                "profile_photo_id": 1,
+                "login_status": 1
+            }
+        )
+
+        if not user:
+            return response.raise_exception(
+                translate_message("USER_NOT_FOUND", lang),
+                data=[],
+                status_code=404
+            )
+
+        # Age calculation
+        age = None
+        if user_data.get("birthdate"):
+            dob = (
+                user_data["birthdate"].date()
+                if hasattr(user_data["birthdate"], "date")
+                else user_data["birthdate"]
+            )
+            age = calculate_age(dob)
+
+        # Profile photo
+        profile_photo = None
+        if user.get("profile_photo_id"):
+            file_doc = await file_collection.find_one(
+                {"_id": ObjectId(user["profile_photo_id"])},
+                {"storage_key": 1, "storage_backend": 1}
+            )
+
+            if file_doc:
+                url = await generate_file_url(
+                    storage_key=file_doc["storage_key"],
+                    backend=file_doc.get("storage_backend")
+                )
+                profile_photo = {
+                    "id": str(file_doc["_id"]),
+                    "url": url
+                }
+
+        return serialize_datetime_fields({
+            "user_id": user_id,
+            "username": user.get("username"),
+            "is_verified": user.get("is_verified"),
+            "status": user.get("login_status"),
+            "bio": user_data.get("bio"),
+            "age": age,
+            "country": user_data.get("country"),
+            "tokens": user_data.get("tokens"),
+            "passions": user_data.get("passions"),
+            "profile_photo": profile_photo
         })
- 
-    return {
-        "count": len(results),
-        "results": results
-    }
- 
- 
-async def intrest_and_categories():
-    cursor = interest_categories_collection.find(
-        {},
-        {"category": 1, "options": 1}
-    )
- 
-    data = await cursor.to_list(length=None)
- 
-    results = []
-    for item in data:
-        results.append({
-            "id": str(item["_id"]),
-            "category": item.get("category"),
-            "options": item.get("options", [])
+
+    except Exception as e:
+        return response.raise_exception(
+            translate_message("ERROR_WHILE_FETCHING_USER_DETAILS", lang),
+            data=str(e),
+            status_code=500
+        )
+
+async def upload_onboarding_image(
+    file: UploadFile,
+    current_user: dict
+):
+    try:
+        lang = current_user.get("language", "en")
+        user_id = str(current_user["_id"])
+
+        public_url, storage_key, backend = await save_file(
+            file_obj=file,
+            file_name=file.filename,
+            user_id=user_id,
+            file_type="profile_photo",
+        )
+
+        file_doc = Files(
+            storage_key=storage_key,
+            storage_backend=backend,
+            file_type="profile_photo",
+            uploaded_by=user_id,
+            uploaded_at=datetime.utcnow(),
+        )
+
+        inserted = await file_collection.insert_one(
+            file_doc.model_dump(by_alias=True)
+        )
+
+        response_data = serialize_datetime_fields({
+            "file_id": str(inserted.inserted_id),
+            "storage_key": storage_key,
+            "url": public_url,
         })
- 
-    return {
-        "count": len(results),
-        "results": results
-    }
+
+        return response.success_message(
+            translate_message("FILE_UPLOADED_SUCCESS", lang),
+            data=[response_data],
+            status_code=200
+        )
+
+    except Exception as e:
+        return response.raise_exception(
+            translate_message("ERROR_WHILE_UPLOADING_FILE", lang),
+            data=str(e),
+            status_code=500
+        )
+
+async def upload_onboarding_selfie(
+    file: UploadFile,
+    current_user: dict
+):
+    try:
+        lang = current_user.get("language", "en")
+        user_id = str(current_user["_id"])
+
+        onboarding = await onboarding_collection.find_one({"user_id": user_id})
+        old_selfie_id = onboarding.get("selfie_image") if onboarding else None
+
+        public_url, storage_key, backend = await save_file(
+            file_obj=file,
+            file_name=file.filename,
+            user_id=user_id,
+            file_type="selfie",
+        )
+
+        file_doc = Files(
+            storage_key=storage_key,
+            storage_backend=backend,
+            file_type="selfie",
+            uploaded_by=user_id,
+            uploaded_at=datetime.utcnow(),
+        )
+
+        inserted = await file_collection.insert_one(
+            file_doc.model_dump(by_alias=True)
+        )
+        new_file_id = str(inserted.inserted_id)
+
+        # Soft delete old selfie
+        if old_selfie_id:
+            await file_collection.update_one(
+                {"_id": ObjectId(old_selfie_id)},
+                {"$set": {"is_deleted": True}}
+            )
+
+        await onboarding_collection.update_one(
+            {"user_id": user_id},
+            {"$set": {"selfie_image": new_file_id}},
+            upsert=True
+        )
+
+        response_data = serialize_datetime_fields({
+            "file_id": new_file_id,
+            "storage_key": storage_key,
+            "url": public_url,
+        })
+
+        return response.success_message(
+            translate_message("SELFIE_UPLOADED_SUCCESS", lang),
+            data=[response_data],
+            status_code=200
+        )
+
+    except Exception as e:
+        return response.raise_exception(
+            translate_message("ERROR_WHILE_UPLOADING_SELFIE", lang),
+            data=str(e),
+            status_code=500
+        )

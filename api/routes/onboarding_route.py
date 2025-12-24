@@ -180,98 +180,18 @@ async def get_basic_user_profile_route(
     user_id: str,
     current_user: dict = Depends(get_current_user)
 ):
-    """
-    API wrapper for get_basic_user_profile()
-    Returns response using success_message() helper.
-    """
-
     lang = current_user.get("language", "en")
+    return await get_basic_user_profile(user_id=user_id, lang=lang)
 
-    data = await get_basic_user_profile(user_id)
-
-    # Serialize datetime safely (age is int so safe)
-    serialized = serialize_datetime_fields(data)
-
-    return response.success_message(
-        translate_message("USER_BASIC_PROFILE", lang),
-        data=serialized
-    )
 
 @router.post("/onboarding/add-images")
 async def upload_image(
     file: UploadFile = File(...),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
-    """
-    Upload a gallery image for the user's onboarding profile.
-
-    Purpose:
-    ----------
-    Allows the authenticated user to upload one onboarding gallery image.
-    Each upload returns file metadata including file_id and a public URL.
-    These file IDs must later be sent in `/onboarding/add-details` as
-    `"images": ["fileId1", "fileId2", ...]`.
-
-    Workflow:
-    ----------
-    1. Authenticate user:
-       - Extracts user_id from JWT.
-       - If invalid, FastAPI will block the request before reaching controller.
-
-    2. Save file to storage (LOCAL or S3):
-       - Uses `save_file()` helper.
-       - Generates:
-            * `public_url`: URL accessible by client
-            * `storage_key`: path inside storage system
-            * backend (LOCAL / S3)
-
-    3. Save metadata in file_collection:
-       - Inserts a new document with:
-            * storage_key
-            * backend
-            * file_type = "onboarding_image"
-            * uploaded_by = user_id
-            * uploaded_at timestamp
-
-    4. Return upload result:
-       {
-           "message": "File uploaded successfully",
-           "file_id": "<mongo_id>",
-           "storage_key": "onboarding_image/<user>/<timestamp>.png",
-           "url": "http://127.0.0.1:8080/uploads/onboarding_image/...png"
-       }
-
-    """
-
-    lang = current_user.get("language", "en")
-    user_id = str(current_user["_id"])
-
-    public_url, storage_key, backend = await save_file(
-        file_obj=file,
-        file_name=file.filename,
-        user_id=user_id,
-        file_type="profile_photo",
-    )
-
-    file_doc = Files(
-        storage_key=storage_key,
-        storage_backend=backend,
-        file_type="profile_photo",
-        uploaded_by=user_id,
-        uploaded_at=datetime.utcnow(),
-    )
-
-    inserted = await file_collection.insert_one(file_doc.model_dump(by_alias=True))
-    file_id = str(inserted.inserted_id)
-
-    response_data = serialize_datetime_fields({
-        "file_id": file_id,
-        "storage_key": storage_key,
-        "url": public_url,
-    })
-    return response.success_message(
-        translate_message("FILE_UPLOADED_SUCCESS", lang),
-        data=response_data
+    return await upload_onboarding_image(
+        file=file,
+        current_user=current_user
     )
 
 
@@ -280,102 +200,9 @@ async def upload_selfie(
     file: UploadFile = File(...),
     current_user: dict = Depends(get_current_user),
 ):
-    """
-    Upload or replace the user's selfie image for onboarding verification.
-
-    Purpose:
-    ----------
-    Handles uploading a selfie image that will be used for identity verification.
-    A user may upload a selfie multiple times — the previous selfie (if any)
-    is automatically soft-deleted (`is_deleted = True`).
-
-    Workflow:
-    ----------
-    1. Authenticate user:
-       - Extracts user_id from JWT.
-
-    2. Fetch existing onboarding document:
-       - Checks if the user already has a selfie stored.
-       - If yes → old selfie file is soft-deleted after new upload.
-
-    3. Save selfie image:
-       - Uses `save_file()` helper.
-       - Creates a storage_key inside `/selfie/<userid>/<timestamp>.ext`
-       - Returns:
-            * public_url
-            * storage_key
-            * backend
-
-    4. Save metadata in file_collection:
-       - Creates a new record with:
-            * file_type = "selfie"
-            * uploaded_by = user_id
-            * uploaded_at timestamp
-
-    5. Soft-delete the previous selfie:
-       - If an old selfie exists → set `is_deleted: true`.
-
-    6. Update onboarding document:
-       - `selfie_image` field is set to the new file_id.
-       - Upsert ensures the record is created if it doesn't exist yet.
-
-    7. Response returned:
-       {
-           "message": "Selfie uploaded successfully",
-           "file_id": "<mongo_file_id>",
-           "storage_key": "selfie/<user>/<timestamp>.jpg",
-           "url": "http://127.0.0.1:8080/uploads/selfie/...jpg"
-       }
-    """
-
-    lang = current_user.get("language", "en")
-    user_id = str(current_user["_id"])
-
-    onboarding = await onboarding_collection.find_one({"user_id": user_id})
-    old_selfie_id = onboarding.get("selfie_image") if onboarding else None
-
-    public_url, storage_key, backend = await save_file(
-        file_obj=file,
-        file_name=file.filename,
-        user_id=user_id,
-        file_type="selfie",
-    )
-
-    file_doc = Files(
-        storage_key=storage_key,
-        storage_backend=backend,
-        file_type="profile_photo",
-        uploaded_by=user_id,
-        uploaded_at=datetime.utcnow(),
-    )
-
-    inserted = await file_collection.insert_one(file_doc.model_dump(by_alias=True))
-    new_file_id = str(inserted.inserted_id)
-
-    if old_selfie_id:
-        try:
-            await file_collection.update_one(
-                {"_id": ObjectId(old_selfie_id)},
-                {"$set": {"is_deleted": True}}
-            )
-        except Exception:
-            pass
-
-    await onboarding_collection.update_one(
-        {"user_id": user_id},
-        {"$set": {"profile_photos": new_file_id}},
-        upsert=True
-    )
-
-    response_data = serialize_datetime_fields({
-        "file_id": new_file_id,
-        "storage_key": storage_key,
-        "url": public_url,
-    })
-
-    return response.success_message(
-        translate_message("SELFIE_UPLOADED_SUCCESS", lang),
-        data=response_data
+    return await upload_onboarding_selfie(
+        file=file,
+        current_user=current_user
     )
 
 @router.get("/onboarding/steps")
@@ -390,15 +217,16 @@ async def get_onboarding_steps(
 
 @router.get("/country-list")
 async def get_country_list(
-    current_user:dict = Depends(get_current_user),
-    lang : str = "en"
+    current_user: dict = Depends(get_current_user),
+    lang: str = "en"
 ):
-    return await list_of_country()
- 
+    return await list_of_country(lang=lang)
+
  
 @router.get("/intrest-category-list")
 async def get_intrest_categories(
-    current_user:dict = Depends(get_current_user),
-    lang : str = "en"
+    current_user: dict = Depends(get_current_user),
+    lang: str = "en"
 ):
-    return await intrest_and_categories()
+    return await intrest_and_categories(lang=lang)
+
