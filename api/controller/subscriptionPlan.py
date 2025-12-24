@@ -94,9 +94,9 @@ async def validate_remaining_transaction_payment(request: CompleteTransactionReq
         Validate remaining transaction payment details associated with subscription plans
         """
     try:
-        await get_existing_transaction(request.txn_id, lang=lang)
+        await get_existing_transaction(request.tron_txn_id, lang=lang)
 
-        transaction_details = await get_transaction_details(request.txn_id, lang=lang)
+        transaction_details = await get_transaction_details(request.tron_txn_id, lang=lang)
 
 
         partial_payment_data = await get_subscription_payment_details(request.subscription_id, lang=lang)
