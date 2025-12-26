@@ -10,7 +10,6 @@ from config.models.user_models import PyObjectId
 class GenderEnum(str, Enum):
     male = "male"
     female = "female"
-    non_binary = "non_binary"
     transgender = "transgender"
 
 
@@ -18,9 +17,7 @@ class SexualOrientationEnum(str, Enum):
     straight = "straight"
     gay = "gay"
     bisexual = "bisexual"
-    asexual = "asexual"
-    demisexual = "demisexual"
-    pansexual = "pansexual"
+
 
 
 class MaritalStatusEnum(str, Enum):
@@ -34,6 +31,17 @@ class InterestedInEnum(str , Enum):
     male = "male"
     female = "female"
     gay = "gay"
+
+class SexualPreferenceEnum(str, Enum):
+    heterosexual = "Heterosexual"
+    homosexual = "Homosexual"
+    bisexual = "Bisexual"
+    libertine = "Libertine"
+    bdsm = "BDSM"
+    curious = "Curious"
+    dominatrix = "Dominatrix"
+    submissive = "Submissive"
+    fetishist = "Fetishist"
 
 class PublicGalleryItem(BaseModel):
     image_url: str
@@ -58,8 +66,8 @@ class OnboardingModel(BaseModel):
     bio: Optional[str] = None
 
     passions: List[str] = []
-    interested_in: Optional[List[InterestedInEnum]] = None
-    sexual_preferences: List[str] = []
+    interested_in: Optional[InterestedInEnum] = None
+    sexual_preferences: List[SexualPreferenceEnum] = []
 
     tokens : Optional[int] = None
     public_gallery : Optional[List[PrivateGalleryItem]] = None
@@ -89,9 +97,8 @@ class OnboardingStepUpdate(BaseModel):
     country: Optional[str] = None
     bio: Optional[str] = None
     passions: Optional[List[str]] = None
-    interested_in: Optional[List[InterestedInEnum]] = None
-    sexual_preferences: Optional[List[str]] = None
-    tokens : Optional[int] = None
+    interested_in: Optional[InterestedInEnum] = None
+    sexual_preferences: Optional[List[SexualPreferenceEnum]] = None
     public_gallery : Optional[List[PublicGalleryItem]] = None
     private_gallery : Optional[List[PrivateGalleryItem]] = None
     preferred_country: Optional[List[str]] = None
@@ -102,27 +109,32 @@ class OnboardingStepUpdate(BaseModel):
     @field_validator("birthdate", mode="before")
     @classmethod
     def validate_birthdate(cls, value):
-        if value is None:
-            return None
+        if value is None or (isinstance(value, str) and not value.strip()):
+            raise ValueError("Birthdate is required")
 
         if isinstance(value, datetime):
             parsed = value
+
         elif isinstance(value, date):
             parsed = datetime.combine(value, datetime.min.time())
+
         elif isinstance(value, str):
-            for fmt in ("%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d"):
-                try:
-                    parsed = datetime.strptime(value, fmt)
-                    break
-                except ValueError:
-                    pass
-            else:
-                raise ValueError("birthdate must be in DD-MM-YYYY or DD/MM/YYYY format")
+            try:
+                # STRICT: only DD/MM/YYYY allowed
+                parsed = datetime.strptime(value.strip(), "%d/%m/%Y")
+            except ValueError:
+                raise ValueError("Birthdate must be in DD/MM/YYYY format")
+
         else:
             raise ValueError("Invalid birthdate value")
+
         today = datetime.utcnow().date()
+
+        if parsed.date() > today:
+            raise ValueError("Birthdate cannot be a future date")
+
         if parsed.date() == today:
-            raise ValueError("birthdate cannot be today's date")
+            raise ValueError("Birthdate cannot be today's date")
 
         return parsed
 
@@ -178,7 +190,6 @@ class OnboardingStepUpdate(BaseModel):
         if not isinstance(value, bool):
             raise ValueError("onboarding_completed must be boolean")
         return value
-
 
     class Config:
         use_enum_values = True

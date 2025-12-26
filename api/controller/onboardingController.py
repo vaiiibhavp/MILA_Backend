@@ -63,53 +63,172 @@ async def get_onboarding(user_id: str) -> Optional[Dict[str, Any]]:
     return convert_objectid_to_str(data) if data else None
 
 
-async def save_onboarding_step(user_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+async def save_onboarding_step(
+    user_id: str,
+    payload: Dict[str, Any],
+    lang: str = "en"
+):
     payload = normalize_payload(payload)
     payload["updated_at"] = datetime.utcnow()
 
-    set_on_insert = {
-        "user_id": user_id,
-        "created_at": datetime.utcnow(),
-        "onboarding_completed": False,
-    }
+    user_doc = await user_collection.find_one(
+        {"_id": ObjectId(user_id)},
+        {"membership_type": 1}
+    )
+
+    if not user_doc:
+        return response.raise_exception(
+            translate_message("INVALID_USER", lang),
+            data=[],
+            status_code=401
+        )
+
+    is_premium_user = user_doc.get("membership_type") == "premium"
+
+    if not is_premium_user and "sexual_preferences" in payload:
+        return response.raise_exception(
+            translate_message("SEXUAL_PREFERENCES_PREMIUM_ONLY", lang),
+            data=[],
+            status_code=403
+        )
+
+    if "images" in payload:
+        images = payload.get("images") or []
+
+        if len(images) != len(set(images)):
+            return response.raise_exception(
+                translate_message("DUPLICATE_IMAGE_IDS", lang),
+                data=[images],
+                status_code=400
+            )
+
+        if len(images) < MIN_GALLERY_IMAGES:
+            return response.raise_exception(
+                translate_message("MIN_IMAGES_REQUIRED", lang),
+                data=[],
+                status_code=400
+            )
+
+        if len(images) > MAX_GALLERY_IMAGES:
+            return response.raise_exception(
+                translate_message("MAX_IMAGES_EXCEEDED", lang),
+                data=[],
+                status_code=400
+            )
+
+        for fid in images:
+            if not ObjectId.is_valid(fid):
+                return response.raise_exception(
+                    translate_message("INVALID_IMAGE_ID", lang),
+                    data=[],
+                    status_code=400
+                )
+
+            file_exists = await file_collection.find_one(
+                {"_id": ObjectId(fid), "is_deleted": False}
+            )
+            if not file_exists:
+                return response.raise_exception(
+                    translate_message("IMAGE_NOT_FOUND", lang),
+                    data=[],
+                    status_code=400
+                )
+
+    if payload.get("country"):
+        cid = payload["country"]
+
+        if not ObjectId.is_valid(cid):
+            return response.raise_exception(
+                translate_message("INVALID_COUNTRY_ID", lang),
+                data=[],
+                status_code=400
+            )
+
+        if not await countries_collection.find_one({"_id": ObjectId(cid)}):
+            return response.raise_exception(
+                translate_message("COUNTRY_NOT_FOUND", lang),
+                data=[],
+                status_code=400
+            )
+
+    if payload.get("preferred_country"):
+        preferred = payload["preferred_country"]
+
+        if not isinstance(preferred, list):
+            return response.raise_exception(
+                translate_message("PREFERRED_COUNTRY_MUST_BE_LIST", lang),
+                data=[],
+                status_code=400
+            )
+
+        unique_ids = set(preferred)
+
+        for cid in unique_ids:
+            if not ObjectId.is_valid(cid):
+                return response.raise_exception(
+                    translate_message("INVALID_COUNTRY_ID", lang),
+                    data=[],
+                    status_code=400
+                )
+
+        count = await countries_collection.count_documents({
+            "_id": {"$in": [ObjectId(cid) for cid in unique_ids]}
+        })
+
+        if count != len(unique_ids):
+            return response.raise_exception(
+                translate_message("PREFERRED_COUNTRY_NOT_FOUND", lang),
+                data=[],
+                status_code=400
+            )
+
+    if payload.get("country"):
+        payload["country"] = ObjectId(payload["country"])
+
+    if payload.get("preferred_country"):
+        payload["preferred_country"] = [
+            ObjectId(cid) for cid in payload["preferred_country"]
+        ]
+
+    if payload.get("images"):
+        payload["images"] = [
+            ObjectId(fid) for fid in payload["images"]
+        ]
+
+    if payload.get("selfie_image"):
+        payload["selfie_image"] = ObjectId(payload["selfie_image"])
 
     doc = await onboarding_collection.find_one_and_update(
-        {"user_id": user_id},
-        {"$set": payload, "$setOnInsert": set_on_insert},
+        {"user_id": ObjectId(user_id)},
+        {
+            "$set": payload,
+            "$setOnInsert": {
+                "user_id": ObjectId(user_id),
+                "created_at": datetime.utcnow(),
+                "onboarding_completed": False,
+            }
+        },
         upsert=True,
         return_document=ReturnDocument.AFTER,
     )
 
     if not doc:
-        raise HTTPException(500, "Unable to save onboarding data")
-
-    REQUIRED_FIELDS = [
-        "birthdate", "gender", "sexual_orientation", "marital_status", "country",
-        "passions", "interested_in", "preferred_country",
-        "images", "selfie_image"
-    ]
-
-    all_filled = True
-
-    for key in REQUIRED_FIELDS:
-        value = doc.get(key)
-
-        if value is None:
-            all_filled = False
-            break
-
-        if isinstance(value, list) and len(value) == 0:
-            all_filled = False
-            break
-
-    if all_filled and not doc.get("onboarding_completed"):
-        doc = await onboarding_collection.find_one_and_update(
-            {"_id": doc["_id"]},
-            {"$set": {"onboarding_completed": True}},
-            return_document=ReturnDocument.AFTER,
+        return response.raise_exception(
+            translate_message("ONBOARDING_SAVE_FAILED", lang),
+            data=[],
+            status_code=500
         )
+    formatted = await format_onboarding_response(doc)
 
-    return convert_objectid_to_str(doc)
+    return response.success_message(
+        translate_message("ONBOARDING_SAVED", lang),
+        data=[
+            serialize_datetime_fields({
+                "onboarding_completed": doc.get("onboarding_completed", False),
+                "onboarding": formatted
+            })
+        ]
+    )
 
 async def format_onboarding_response(onboarding_doc: Dict[str, Any]) -> Dict[str, Any]:
     """
