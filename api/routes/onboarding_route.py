@@ -69,109 +69,21 @@ async def handle_onboarding(
     payload: OnboardingStepUpdate,
     current_user: dict = Depends(get_current_user),
 ):
-    """
-    Add or update onboarding details for the authenticated user.
-
-    Workflow:
-    ----------
-    1. Validate authenticated user
-       - Extracts the logged-in user's ID from JWT.
-       - Returns 401 error if user is invalid.
-
-    2. Validate incoming payload
-       - Only updates fields that are present in the request (exclude_unset=True).
-       
-    3. Validate gallery images (if provided)
-       - Ensures at least 1 and at most 3 images.
-       - Ensures each image ID is a valid Mongo ObjectId.
-       - Ensures each image exists inside the file_collection and is not deleted.
-
-    4. Validate selfie image (if provided)
-       - Ensures selfie ID is a valid Mongo ObjectId.
-       - Ensures selfie image exists in file storage.
-
-    5. Save onboarding data
-       - Calls `save_onboarding_step()` to upsert (create/update) the onboarding record.
-       - Converts date formats, enums, and sets created_at / updated_at timestamps.
-
-    6. Format onboarding response
-       - Replaces image IDs with objects: {file_id, url}.
-       - Generates a public URL for each file using `generate_file_url()`.
-       - Removes internal fields like user_id from the output.
-
-    7. If onboarding is completed
-       - Adds a success message at the top of the response:
-         { "message": "Onboarding completed successfully.", ... }
-
-    Returns:
-    ----------
-    A fully formatted onboarding profile including:
-        - Basic details (bio, birthdate, gender, etc.)
-        - Structured image list → { file_id, url }
-        - Structured selfie image → { file_id, url }
-        - created_at, updated_at timestamps
-        - onboarding_completed flag
-        - onboarding record id
-    """
-    lang = current_user.get("language", "en")
     user_id = str(current_user["_id"])
+    lang = current_user.get("language", "en")
+
     if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid user")
+        return response.raise_exception(
+            translate_message("INVALID_USER", lang),
+            status_code=401
+        )
 
     payload_dict = payload.model_dump(exclude_unset=True)
 
-    if "images" in payload_dict:
-        new_images = payload_dict.get("images") or []
-
-        if len(new_images) != len(set(new_images)):
-            raise HTTPException(400, "Duplicate image IDs are not allowed.")
-
-        if len(new_images) < MIN_GALLERY_IMAGES:
-            raise HTTPException(400, f"At least {MIN_GALLERY_IMAGES} image(s) required")
-
-        if len(new_images) > MAX_GALLERY_IMAGES:
-            raise HTTPException(400, f"Maximum {MAX_GALLERY_IMAGES} images allowed")
-
-        for fid in new_images:
-            if not ObjectId.is_valid(fid):
-                raise HTTPException(400, f"Invalid image ID format: {fid}")
-
-            file_doc = await file_collection.find_one(
-                {"_id": ObjectId(fid), "is_deleted": False}
-            )
-            if not file_doc:
-                raise HTTPException(400, f"Image not found in storage: {fid}")
-
-    if "selfie_image" in payload_dict and payload_dict["selfie_image"]:
-        selfie_id = payload_dict["selfie_image"]
-
-        if not ObjectId.is_valid(selfie_id):
-            raise HTTPException(400, f"Invalid selfie image ID: {selfie_id}")
-
-        selfie_doc = await file_collection.find_one(
-            {"_id": ObjectId(selfie_id), "is_deleted": False}
-        )
-        if not selfie_doc:
-            raise HTTPException(400, f"Selfie image not found: {selfie_id}")
-
-        if "images" in payload_dict and selfie_id in payload_dict.get("images", []):
-            raise HTTPException(400, "Selfie image cannot be added to gallery images.")
-
-    updated_doc = await save_onboarding_step(user_id, payload_dict)
-
-    if isinstance(updated_doc, list) and len(updated_doc) > 0:
-        updated_doc = updated_doc[0]
-
-    formatted = await format_onboarding_response(updated_doc)
-
-    response_data = serialize_datetime_fields({
-        "onboarding_completed": updated_doc.get("onboarding_completed", False),
-        "onboarding": formatted
-    })
-
-    return response.success_message(
-        translate_message("ONBOARDING_SAVED", lang),
-        data=response_data
+    return await save_onboarding_step(
+        user_id=user_id,
+        payload=payload_dict,
+        lang=lang
     )
 
 
