@@ -68,6 +68,19 @@ async def save_onboarding_step(
     payload: Dict[str, Any],
     lang: str = "en"
 ):
+    REQUIRED_FIELDS = [
+        "birthdate",
+        "gender",
+        "sexual_orientation",
+        "marital_status",
+        "country",
+        "passions",
+        "interested_in",
+        "preferred_country",
+        "images",
+        "selfie_image"
+    ]
+
     payload = normalize_payload(payload)
     payload["updated_at"] = datetime.utcnow()
 
@@ -124,15 +137,16 @@ async def save_onboarding_step(
                     status_code=400
                 )
 
-            file_exists = await file_collection.find_one(
+            if not await file_collection.find_one(
                 {"_id": ObjectId(fid), "is_deleted": False}
-            )
-            if not file_exists:
+            ):
                 return response.raise_exception(
                     translate_message("IMAGE_NOT_FOUND", lang),
                     data=[],
                     status_code=400
                 )
+
+        payload["images"] = images
 
     if payload.get("country"):
         cid = payload["country"]
@@ -150,6 +164,8 @@ async def save_onboarding_step(
                 data=[],
                 status_code=400
             )
+
+        payload["country"] = cid
 
     if payload.get("preferred_country"):
         preferred = payload["preferred_country"]
@@ -182,28 +198,26 @@ async def save_onboarding_step(
                 status_code=400
             )
 
-    if payload.get("country"):
-        payload["country"] = ObjectId(payload["country"])
-
-    if payload.get("preferred_country"):
-        payload["preferred_country"] = [
-            ObjectId(cid) for cid in payload["preferred_country"]
-        ]
-
-    if payload.get("images"):
-        payload["images"] = [
-            ObjectId(fid) for fid in payload["images"]
-        ]
+        payload["preferred_country"] = list(unique_ids)
 
     if payload.get("selfie_image"):
-        payload["selfie_image"] = ObjectId(payload["selfie_image"])
+        fid = payload["selfie_image"]
+
+        if not ObjectId.is_valid(fid):
+            return response.raise_exception(
+                translate_message("INVALID_IMAGE_ID", lang),
+                data=[],
+                status_code=400
+            )
+
+        payload["selfie_image"] = fid
 
     doc = await onboarding_collection.find_one_and_update(
-        {"user_id": ObjectId(user_id)},
+        {"user_id": user_id},
         {
             "$set": payload,
             "$setOnInsert": {
-                "user_id": ObjectId(user_id),
+                "user_id": user_id,
                 "created_at": datetime.utcnow(),
                 "onboarding_completed": False,
             }
@@ -218,6 +232,23 @@ async def save_onboarding_step(
             data=[],
             status_code=500
         )
+
+    completed = True
+    for field in REQUIRED_FIELDS:
+        if field not in doc or doc.get(field) in (None, "", []):
+            completed = False
+            break
+
+    if completed and len(doc.get("images", [])) < MIN_GALLERY_IMAGES:
+        completed = False
+
+    if completed and not doc.get("onboarding_completed"):
+        await onboarding_collection.update_one(
+            {"_id": doc["_id"]},
+            {"$set": {"onboarding_completed": True}}
+        )
+        doc["onboarding_completed"] = True
+
     formatted = await format_onboarding_response(doc)
 
     return response.success_message(
@@ -327,15 +358,14 @@ async def format_onboarding_response(onboarding_doc: Dict[str, Any]) -> Dict[str
     return response
 
 async def get_basic_user_profile(user_id: str, lang: str = "en") -> Dict[str, Any]:
-    """
-    Basic profile for list views:
-      - username
-      - bio
-      - age
-      - country
-      - interested_in
-    """
     try:
+        if not ObjectId.is_valid(user_id):
+            return response.raise_exception(
+                translate_message("INVALID_USER_ID", lang),
+                data=[],
+                status_code=400
+            )
+
         onboarding_data = await onboarding_collection.find_one(
             {"user_id": user_id},
             {
@@ -354,19 +384,19 @@ async def get_basic_user_profile(user_id: str, lang: str = "en") -> Dict[str, An
                 status_code=404
             )
 
-        try:
-            user = await user_collection.find_one(
-                {"_id": ObjectId(user_id)},
-                {"_id": 0, "username": 1},
-            )
-        except Exception:
+        user = await user_collection.find_one(
+            {"_id": ObjectId(user_id)},
+            {"_id": 0, "username": 1},
+        )
+
+        if not user:
             return response.raise_exception(
-                translate_message("INVALID_USER_ID", lang),
+                translate_message("USER_NOT_FOUND", lang),
                 data=[],
-                status_code=400
+                status_code=404
             )
 
-        username = user.get("username") if user else None
+        username = user.get("username")
 
         birthdate_value = onboarding_data.get("birthdate")
         age = None
@@ -378,23 +408,41 @@ async def get_basic_user_profile(user_id: str, lang: str = "en") -> Dict[str, An
             )
             age = calculate_age(dob)
 
-        profile = serialize_datetime_fields({
+        country_out = None
+        country_id = onboarding_data.get("country")
+
+        if country_id and ObjectId.is_valid(country_id):
+            country_doc = await countries_collection.find_one(
+                {"_id": ObjectId(country_id)},
+                {"_id": 1, "name": 1}
+            )
+
+            if country_doc:
+                country_out = {
+                    "id": str(country_doc["_id"]),
+                    "name": country_doc.get("name"),
+                }
+
+        profile = {
             "username": username,
             "bio": onboarding_data.get("bio"),
             "age": age,
-            "country": onboarding_data.get("country"),
+            "country": country_out,
             "interested_in": onboarding_data.get("interested_in"),
-        })
+        }
 
         return response.success_message(
             translate_message("USER_BASIC_PROFILE", lang),
             data=[profile]
         )
 
+    except HTTPException:
+        raise
+
     except Exception as e:
         return response.raise_exception(
             translate_message("ERROR_WHILE_FETCHING_USER_PROFILE", lang),
-            data=str(e),
+            data={},
             status_code=500
         )
 
@@ -426,7 +474,7 @@ async def get_onboarding_steps_by_user_id(user_id: str, lang: str = "en"):
             "marital_status",
             "sexual_preferences",
             "images",
-            "selfie_image", 
+            "selfie_image",
             "onboarding_completed"
         ]
     )
@@ -438,29 +486,64 @@ async def get_onboarding_steps_by_user_id(user_id: str, lang: str = "en"):
             status_code=404
         )
 
+    formatted = await format_onboarding_response(onboarding)
+
+    country_out = None
+    country_id = formatted.get("country")
+
+    if country_id:
+        try:
+            country_doc = await countries_collection.find_one(
+                {"_id": ObjectId(country_id)}
+            )
+        except Exception:
+            country_doc = None
+
+        if country_doc:
+            country_out = {
+                "id": str(country_doc["_id"]),
+                "name": country_doc.get("name")
+            }
+
+    preferred_country_out = []
+    preferred_ids = formatted.get("preferred_country", [])
+
+    if preferred_ids:
+        cursor = countries_collection.find(
+            {"_id": {"$in": [ObjectId(cid) for cid in preferred_ids if ObjectId.is_valid(cid)]}}
+        )
+        async for doc in cursor:
+            preferred_country_out.append({
+                "id": str(doc["_id"]),
+                "name": doc.get("name")
+            })
+
     def serialize(value):
         return value.isoformat() if hasattr(value, "isoformat") else value
 
     steps = [
-        {"key": "birthdate", "value": serialize(onboarding.get("birthdate"))},
-        {"key": "gender", "value": onboarding.get("gender")},
-        {"key": "sexual_orientation", "value": onboarding.get("sexual_orientation")},
-        {"key": "bio", "value": onboarding.get("bio")},
-        {"key": "passions", "value": onboarding.get("passions", [])},
-        {"key": "country", "value": onboarding.get("country")},
-        {"key": "preferred_country", "value": onboarding.get("preferred_country", [])},
-        {"key": "interested_in", "value": onboarding.get("interested_in", [])},
-        {"key": "marital_status", "value": onboarding.get("marital_status")},
-        {"key": "sexual_preferences", "value": onboarding.get("sexual_preferences", [])},
-        {"key": "images", "value": onboarding.get("images", [])},
-        {"key": "selfie_image", "value": onboarding.get("selfie_image")},
+        {"key": "birthdate", "value": serialize(formatted.get("birthdate"))},
+        {"key": "gender", "value": formatted.get("gender")},
+        {"key": "sexual_orientation", "value": formatted.get("sexual_orientation")},
+        {"key": "bio", "value": formatted.get("bio")},
+        {"key": "passions", "value": formatted.get("passions", [])},
+
+        {"key": "country", "value": country_out},
+        {"key": "preferred_country", "value": preferred_country_out},
+
+        {"key": "interested_in", "value": formatted.get("interested_in", [])},
+        {"key": "marital_status", "value": formatted.get("marital_status")},
+        {"key": "sexual_preferences", "value": formatted.get("sexual_preferences", [])},
+
+        {"key": "images", "value": formatted.get("images", [])},
+        {"key": "selfie_image", "value": formatted.get("selfie_image")},
     ]
 
     return response.success_message(
         translate_message("ONBOARDING_STEPS_FETCHED", lang),
         data=[{
             "user_id": user_id,
-            "onboarding_completed": onboarding.get("onboarding_completed", False),
+            "onboarding_completed": formatted.get("onboarding_completed", False),
             "steps": steps
         }]
     )
@@ -633,42 +716,47 @@ async def fetch_user_by_id(user_id: str, lang: str):
             status_code=500
         )
 
-async def upload_onboarding_image(
-    file: UploadFile,
+async def upload_onboarding_images(
+    images: List[UploadFile],
     current_user: dict
 ):
     try:
         lang = current_user.get("language", "en")
         user_id = str(current_user["_id"])
 
-        public_url, storage_key, backend = await save_file(
-            file_obj=file,
-            file_name=file.filename,
-            user_id=user_id,
-            file_type="profile_photo",
-        )
+        uploaded_files = []
 
-        file_doc = Files(
-            storage_key=storage_key,
-            storage_backend=backend,
-            file_type="profile_photo",
-            uploaded_by=user_id,
-            uploaded_at=datetime.utcnow(),
-        )
+        for file in images:
+            public_url, storage_key, backend = await save_file(
+                file_obj=file,
+                file_name=file.filename,
+                user_id=user_id,
+                file_type="profile_photo",
+            )
 
-        inserted = await file_collection.insert_one(
-            file_doc.model_dump(by_alias=True)
-        )
+            file_doc = Files(
+                storage_key=storage_key,
+                storage_backend=backend,
+                file_type="profile_photo",
+                uploaded_by=user_id,
+                uploaded_at=datetime.utcnow(),
+            )
 
-        response_data = serialize_datetime_fields({
-            "file_id": str(inserted.inserted_id),
-            "storage_key": storage_key,
-            "url": public_url,
-        })
+            inserted = await file_collection.insert_one(
+                file_doc.model_dump(by_alias=True)
+            )
+
+            uploaded_files.append(
+                serialize_datetime_fields({
+                    "file_id": str(inserted.inserted_id),
+                    "storage_key": storage_key,
+                    "url": public_url,
+                })
+            )
 
         return response.success_message(
             translate_message("FILE_UPLOADED_SUCCESS", lang),
-            data=[response_data],
+            data=[uploaded_files],
             status_code=200
         )
 

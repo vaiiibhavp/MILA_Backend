@@ -59,7 +59,7 @@ async def fetch_onboarding(
 
     return response.success_message(
         translate_message("ONBOARDING_FETCHED", lang),
-        data=formatted
+        data=[formatted]
     )
 
 
@@ -97,12 +97,12 @@ async def get_basic_user_profile_route(
 
 
 @router.post("/onboarding/add-images")
-async def upload_image(
-    file: UploadFile = File(...),
+async def upload_images(
+    images: List[UploadFile] = File(...),
     current_user: dict = Depends(get_current_user),
 ):
-    return await upload_onboarding_image(
-        file=file,
+    return await upload_onboarding_images(
+        images=images,
         current_user=current_user
     )
 
