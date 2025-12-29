@@ -297,5 +297,11 @@
   "PREFERRED_COUNTRY_MUST_BE_LIST":"preferred Country must be in list",
   "PREFERRED_COUNTRY_NOT_FOUND":"preferred Country not found",
   "ONBOARDING_SAVE_FAILED":"Onboarding saved failed",
-  "ONBOARDING_SAVED":"Onboarding completed"
+  "ONBOARDING_SAVED":"Onboarding completed",
+
+  "BASIC_PROFILE_FETCHED_SUCCESSFULLY": "Basic profile fetched successfully",
+  "LANGUAGE_UPDATED_SUCCESSFULLY": "Language updated successfully",
+
+  "PREMIUM_REQUIRED": "Premium required"
+
 }

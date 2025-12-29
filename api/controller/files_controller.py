@@ -94,7 +94,7 @@ async def generate_file_url(storage_key: str, backend: str):
     Generate fetch URL for an existing file.
     """
     if backend == "LOCAL":
-        return f"{BASE_URL}{storage_key}"
+        return f"{BASE_URL}/{storage_key}"
 
     elif backend == "S3":
         s3_client = boto3.client(

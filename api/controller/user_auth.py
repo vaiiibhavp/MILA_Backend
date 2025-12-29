@@ -1,25 +1,16 @@
+#controller/user_auth.py
+
 import asyncio
-from datetime import datetime, timedelta, date
-from io import BytesIO
+from datetime import datetime
 import json
-import re
-from typing import List, Optional
-import uuid
-import bcrypt
-import boto3
 from api.controller.files_controller import *
-from botocore.exceptions import ClientError
-from fastapi.responses import StreamingResponse
 from bson import ObjectId
 from core.utils.auth_utils import *
-from fastapi import Request, Header
+from fastapi import Request
 from jose import jwt,JWTError
-from config.models.user_models import PyObjectId, UserCreate, UserRole,  store_token
-from core.utils.helper import validate_pwd,validate_new_pwd,validate_confirm_new_password,serialize_datetime_fields,convert_objectid_to_str
-from core.utils.rate_limiter import rate_limit_check
+from core.utils.helper import serialize_datetime_fields,convert_objectid_to_str
 from schemas.user_schemas import *
 from config.db_config import *
-from tasks import send_password_reset_email_task, send_contact_us_email_task
 from core.utils.redis_helper import redis_client 
 from core.utils.pagination import StandardResultsSetPagination   
 from services.translation import translate_message
@@ -27,6 +18,8 @@ from core.templates.email_templates import *
 from core.utils.core_enums import *
 from bson import ObjectId
 from config.models.user_models import *
+from config.models.onboarding_model import *
+from core.utils.helper import *
 
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 REFRESH_TOKEN_EXPIRE_MINUTES =int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
@@ -318,36 +311,28 @@ async def resend_otp_controller(payload, lang):
 async def login_controller(payload: LoginRequest, lang):
     email = payload.email
     password = payload.password
-    remember = payload.remember_me
 
-    # Step 1: Check user exists
-    user = await user_collection.find_one({"email": email})
-    if not user:
-        return response.error_message(translate_message("INVALID_EMAIL_OR_PASSWORD", lang=lang), status_code=400)
+    user = await get_user_details(
+        condition={"email": email},
+        fields=[
+            "_id",
+            "email",
+            "username",
+            "password",
+            "two_factor_enabled",
+            "membership_type",
+            "is_verified"
+        ]
+    )
 
-    # Step 2: Validate password
     if not verify_password(password, user["password"]):
         return response.error_message(translate_message("INVALID_EMAIL_OR_PASSWORD", lang=lang), status_code=400)
 
     # Step 3: If 2FA disabled → return tokens immediately
     if not user.get("two_factor_enabled", True):
-        access_token, refresh_token = generate_login_tokens(user)
+        return await finalize_login_response(user, lang)
 
-        await user_collection.update_one(
-            {"_id": user["_id"]},
-            {
-                "$set": {
-                    "login_status": LoginStatus.ACTIVE,
-                    "last_login_at": datetime.utcnow()
-                }
-            }
-        )
-        return response.success_message(translate_message("LOGIN_SUCCESSFUL", lang=lang), data={
-            "access_token": access_token,
-            "refresh_token": refresh_token
-        }, status_code=200)
-
-    # Step 4: If 2FA enabled → generate OTP
+    # 2FA enabled → send OTP
     otp = generate_verification_code()
 
     await redis_client.setex(f"login:{email}:otp", 300, otp)
@@ -378,24 +363,9 @@ async def verify_login_otp_controller(payload, lang):
 
     user = await user_collection.find_one({"email": email})
 
-    access_token, refresh_token = generate_login_tokens(user)
-
-    await user_collection.update_one(
-        {"_id": user["_id"]},
-        {
-            "$set": {
-                "login_status": LoginStatus.ACTIVE,
-                "last_login_at": datetime.utcnow()
-            }
-        }
-    )
-    # Remove otp after success
     await redis_client.delete(f"login:{email}:otp")
 
-    return response.success_message(translate_message("LOGIN_SUCCESSFUL", lang=lang), data=[{
-        "access_token": access_token,
-        "refresh_token": refresh_token
-    }], status_code=200)
+    return await finalize_login_response(user, lang)
 
 async def resend_login_otp_controller(payload, lang):
     email = payload.email

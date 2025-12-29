@@ -37,3 +37,7 @@ class GiftStatusEnum(str, Enum):
 class GiftTypeEnum(str, Enum):
     emoji = "emoji"
     image = "image"
+
+class LanguageEnum(str, Enum):
+    EN = "en"
+    FR = "fr"

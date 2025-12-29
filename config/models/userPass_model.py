@@ -241,14 +241,20 @@ async def get_my_favorites(user_id: str, lang: str = "en"):
         data=users
     )
 
-#function to return the liked user list .
-async def get_users_who_liked_me(user_id: str, lang: str = "en"):
+async def get_liked_user_ids(user_id: str) -> list[str]:
+    """
+    Returns list of user_ids who liked the given user
+    """
     like_doc = await user_like_history.find_one(
         {"user_id": user_id},
-        {"_id": 0, "liked_by_user_ids": 1}
+        {"liked_by_user_ids": 1}
     )
 
-    liked_by_user_ids = like_doc.get("liked_by_user_ids", []) if like_doc else []
+    return like_doc.get("liked_by_user_ids", []) if like_doc else []
+
+#function to return the liked user list .
+async def get_users_who_liked_me(user_id: str, lang: str = "en"):
+    liked_by_user_ids = await get_liked_user_ids(user_id)
 
     if not liked_by_user_ids:
         return response.success_message(

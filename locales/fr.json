@@ -298,6 +298,10 @@
   "PREFERRED_COUNTRY_MUST_BE_LIST": "Le pays préféré doit être une liste",
   "PREFERRED_COUNTRY_NOT_FOUND": "Pays préféré introuvable",
   "ONBOARDING_SAVE_FAILED": "Échec de l’enregistrement de l’onboarding",
-  "ONBOARDING_SAVED": "Onboarding terminé avec succès"
+  "ONBOARDING_SAVED": "Onboarding terminé avec succès",
+
+  "BASIC_PROFILE_FETCHED_SUCCESSFULLY": "Profil de base récupéré avec succès",
+  "LANGUAGE_UPDATED_SUCCESSFULLY": "Langue mise à jour avec succès",
+  "PREMIUM_REQUIRED": "Prime requise"  
 
 }

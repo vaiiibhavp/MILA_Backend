@@ -2,10 +2,11 @@
 
 from pydantic import BaseModel, field_validator
 from pydantic import Field
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import date, datetime
 from enum import Enum
 from config.models.user_models import PyObjectId
+from config.db_config import *
 
 class GenderEnum(str, Enum):
     male = "male"
@@ -193,3 +194,22 @@ class OnboardingStepUpdate(BaseModel):
 
     class Config:
         use_enum_values = True
+
+async def get_onboarding_details(
+    condition: Dict[str, Any],
+    fields: Optional[List[str]] = None
+):
+    projection = None
+    if fields:
+        projection = {field: 1 for field in fields}
+        if "_id" not in fields:
+            projection["_id"] = 0
+
+    return await onboarding_collection.find_one(condition, projection)
+
+async def get_onboarding_completed_status(user_id: str) -> bool:
+    onboarding = await get_onboarding_details(
+        condition={"user_id": user_id},
+        fields=["onboarding_completed"]
+    )
+    return onboarding.get("onboarding_completed", False) if onboarding else False

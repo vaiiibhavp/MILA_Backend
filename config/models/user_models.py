@@ -1,3 +1,5 @@
+#user_model.py
+
 from pydantic import BaseModel, EmailStr, Field, model_validator,field_validator
 from typing import Optional, Union, Any, Callable, Dict, List
 from pydantic import GetJsonSchemaHandler
@@ -103,7 +105,8 @@ class UserCreate(BaseModel):
     two_factor_enabled: bool = Field(default=True)
     tokens : Optional[int] = None
     membership_trans_id : Optional[str] = None
- 
+    language : Optional[str] = None
+    
     def update_user(self, updated_data: dict):
         """Method to update user and set the updated_at field."""
         self.__dict__.update(updated_data)

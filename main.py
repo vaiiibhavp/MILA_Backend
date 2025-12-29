@@ -7,7 +7,7 @@ from api.routes import (
     subscription_plan_route,google_auth_api,
     apple_auth_api , onboarding_route,adminauth_route,
     profile_api, token_history_route, profile_api_route ,
-    userPass_route
+    userPass_route, like_route_api
 
 )
 
@@ -215,6 +215,8 @@ app.include_router(profile_api.router, prefix="/api/user")
 app.include_router(token_history_route.api_router, prefix="/api/tokens", tags=["Tokens"])
 app.include_router(profile_api_route.router, prefix="/api/profile")
 app.include_router(userPass_route.router)
+app.include_router(like_route_api.router, prefix="/api/premium")
+
 # Scheduler Instance
 scheduler = BackgroundScheduler()
 
