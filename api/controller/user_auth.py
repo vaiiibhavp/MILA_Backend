@@ -219,7 +219,7 @@ async def signup_controller(payload: Signup, lang):
     await send_email(payload.email, subject, body, is_html)
 
     return response.success_message(translate_message("OTP_SENT_SUCCESSFULLY", lang=lang), 
-                                    data=[{"otp": otp}], status_code=200)
+                                    data=[], status_code=200)
 
 async def verify_signup_otp_controller(payload, lang):
     email = payload.email
@@ -306,7 +306,7 @@ async def resend_otp_controller(payload, lang):
     await send_email(email, subject, body, is_html=True)
 
     return response.success_message(translate_message("NEW_OTP_SENT_TO_EMAIL", lang=lang),
-                                    data= [{"otp": otp}], status_code=200)
+                                    data= [], status_code=200)
 
 async def login_controller(payload: LoginRequest, lang):
     email = payload.email
@@ -342,9 +342,7 @@ async def login_controller(payload: LoginRequest, lang):
 
     return response.success_message(
         translate_message("LOGIN_OTP_SENT", lang=lang),
-        data=[{
-            "otp_required": True,
-            "otp": otp}],
+        data=[],
         status_code=200    
     )
 
@@ -385,7 +383,7 @@ async def resend_login_otp_controller(payload, lang):
 
     return response.success_message(
         translate_message("NEW_OTP_SENT_TO_EMAIL", lang=lang),
-        data=[{"otp": otp}],
+        data=[],
         status_code=200)
 
 async def send_reset_password_otp_controller(payload: ForgotPasswordRequest, lang):
@@ -407,7 +405,7 @@ async def send_reset_password_otp_controller(payload: ForgotPasswordRequest, lan
 
     await send_email(email, subject, body, is_html=True)
 
-    return response.success_message(translate_message("NEW_OTP_SENT_TO_EMAIL", lang=lang), data=[{"otp": otp}], status_code=200)
+    return response.success_message(translate_message("NEW_OTP_SENT_TO_EMAIL", lang=lang), data=[], status_code=200)
 
 async def verify_reset_password_otp_controller(payload, lang):
     email = payload.email

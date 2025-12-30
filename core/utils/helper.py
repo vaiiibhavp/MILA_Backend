@@ -170,10 +170,10 @@ async def finalize_login_response(user: dict, lang: str):
 
     return response.success_message(
         translate_message("LOGIN_SUCCESSFUL", lang=lang),
-        data={
+        data=[{
             "access_token": access_token,
             "refresh_token": refresh_token,
             "onboarding_completed": onboarding_completed
-        },
+        }],
         status_code=200
     )
