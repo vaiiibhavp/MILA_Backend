@@ -21,3 +21,15 @@ async def get_likes(
         pagination=pagination,
         lang=lang
     )
+
+@router.get("/profile/visits", response_model=Response)
+async def get_profile_visits(
+    pagination: StandardResultsSetPagination = Depends(pagination_params),
+    current_user: dict = Depends(UserPermission(["user"])),
+    lang: str = Query("en")
+):
+    return await get_users_who_visited_my_profile(
+        current_user=current_user,
+        pagination=pagination,
+        lang=lang
+    )

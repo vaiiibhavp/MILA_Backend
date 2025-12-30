@@ -302,6 +302,9 @@
 
   "BASIC_PROFILE_FETCHED_SUCCESSFULLY": "Profil de base récupéré avec succès",
   "LANGUAGE_UPDATED_SUCCESSFULLY": "Langue mise à jour avec succès",
-  "PREMIUM_REQUIRED": "Prime requise"  
+  "PREMIUM_REQUIRED": "Prime requise",
 
+  "-------------6-------------":"-------------6-------------",
+  "NO_PROFILE_VIEWS_FOUND": "Aucune vue de profil trouvée",
+  "PROFILE_VISITS_FETCHED": "visites de profil récupérées"
 }

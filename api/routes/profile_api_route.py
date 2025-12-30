@@ -19,7 +19,11 @@ async def get_profile(
     """
     Get logged-in user's profile details
     """
-    return await get_profile_controller(user_id, lang)
+    return await get_profile_controller(
+        user_id=user_id,
+        viewer=current_user,
+        lang=lang
+    )
 
 @router.get(
     "/{profile_user_id}/private-gallery/image/{image_id}",

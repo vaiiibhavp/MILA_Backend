@@ -302,6 +302,8 @@
   "BASIC_PROFILE_FETCHED_SUCCESSFULLY": "Basic profile fetched successfully",
   "LANGUAGE_UPDATED_SUCCESSFULLY": "Language updated successfully",
 
-  "PREMIUM_REQUIRED": "Premium required"
-
+  "PREMIUM_REQUIRED": "Premium required",
+  "-------------6-------------":"-------------6-------------",
+  "NO_PROFILE_VIEWS_FOUND": "No profile views found",
+  "PROFILE_VISITS_FETCHED": "Profile visits fetched"
 }

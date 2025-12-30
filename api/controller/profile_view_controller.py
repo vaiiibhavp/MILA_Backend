@@ -1,7 +1,7 @@
 #profile_view_controller.py:
 
 from bson import ObjectId
-from config.db_config import user_collection, onboarding_collection, file_collection, gift_collection
+from config.db_config import profile_view_history, user_collection, onboarding_collection, file_collection, gift_collection
 from core.utils.response_mixin import CustomResponseMixin
 from core.utils.age_calculation import calculate_age
 from api.controller.files_controller import get_profile_photo_url, generate_file_url
@@ -17,7 +17,7 @@ from core.utils.pagination import StandardResultsSetPagination
 response = CustomResponseMixin()
 
 
-async def get_profile_controller(user_id: str, lang: str = "en"):
+async def get_profile_controller(user_id: str, viewer: dict, lang: str = "en"):
     """
     Fetch profile using User + Onboarding data
     """
@@ -27,6 +27,22 @@ async def get_profile_controller(user_id: str, lang: str = "en"):
     if not user:
         return response.error_message(translate_message("USER_NOT_FOUND", lang=lang), data=[], status_code=404)
 
+    # RECORD PROFILE VIEW
+    if viewer and str(viewer["_id"]) != user_id:
+        await profile_view_history.update_one(
+            {"user_id": user_id},
+            {
+                "$addToSet": {
+                    "viewed_by_user_ids": {
+                        "user_id": str(viewer["_id"]),
+                        "viewed_at": datetime.utcnow()
+                    }
+                },
+                "$set": {"updated_at": datetime.utcnow()}
+            },
+            upsert=True
+        )
+        
     onboarding = await onboarding_collection.find_one(
         {"user_id": str(user["_id"])}
     )

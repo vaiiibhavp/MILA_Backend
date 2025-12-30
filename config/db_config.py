@@ -90,6 +90,7 @@ favorite_collection = db["favorite_collection"]
 user_match_history = db["users_matched_history"]
 user_passed_hostory = db["user_passed_history"]
 gift_collection = db["gifts"]
+profile_view_history = db["profile_view_history"]
 
 async def create_indexes():
     """
