@@ -299,12 +299,23 @@
   "PREFERRED_COUNTRY_NOT_FOUND": "Pays préféré introuvable",
   "ONBOARDING_SAVE_FAILED": "Échec de l’enregistrement de l’onboarding",
   "ONBOARDING_SAVED": "Onboarding terminé avec succès",
-
   "BASIC_PROFILE_FETCHED_SUCCESSFULLY": "Profil de base récupéré avec succès",
   "LANGUAGE_UPDATED_SUCCESSFULLY": "Langue mise à jour avec succès",
   "PREMIUM_REQUIRED": "Prime requise",
 
   "-------------6-------------":"-------------6-------------",
   "NO_PROFILE_VIEWS_FOUND": "Aucune vue de profil trouvée",
-  "PROFILE_VISITS_FETCHED": "visites de profil récupérées"
+  "PROFILE_VISITS_FETCHED": "visites de profil récupérées",
+  "CANNOT_BLOCK_SELF": "Impossible de se bloquer soi-même",
+  "USER_ALREADY_BLOCKED": "Utilisateur déjà bloqué",
+  "USER_BLOCKED_SUCCESSFULLY": "Utilisateur bloqué avec succès",
+  "CANNOT_REPORT_SELF": "Impossible de se signaler soi-même",
+  "USER_ALREADY_REPORTED": "Utilisateur déjà signalé",
+  "USER_REPORTED_SUCCESSFULLY": "Utilisateur signalé avec succès",
+  "BLOCKED_USERS_FETCHED": "Utilisateurs bloqués récupérés avec succès",
+  "FAILED_TO_FETCH_BLOCKED_USERS": "Échec de la récupération des utilisateurs bloqués",
+  "REPORTED_USERS_FETCHED": "Utilisateurs signalés récupérés",
+  "FAILED_TO_FETCH_REPORTED_USERS": "Échec de la récupération des utilisateurs signalés"
+
+
 }

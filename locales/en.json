@@ -298,12 +298,21 @@
   "PREFERRED_COUNTRY_NOT_FOUND":"preferred Country not found",
   "ONBOARDING_SAVE_FAILED":"Onboarding saved failed",
   "ONBOARDING_SAVED":"Onboarding completed",
-
   "BASIC_PROFILE_FETCHED_SUCCESSFULLY": "Basic profile fetched successfully",
   "LANGUAGE_UPDATED_SUCCESSFULLY": "Language updated successfully",
 
   "PREMIUM_REQUIRED": "Premium required",
   "-------------6-------------":"-------------6-------------",
   "NO_PROFILE_VIEWS_FOUND": "No profile views found",
-  "PROFILE_VISITS_FETCHED": "Profile visits fetched"
+  "PROFILE_VISITS_FETCHED": "Profile visits fetched",
+  "CANNOT_BLOCK_SELF":"Cannot block self",
+  "USER_ALREADY_BLOCKED":"User already blocked",
+  "USER_BLOCKED_SUCCESSFULLY":"User blocked successfully",
+  "CANNOT_REPORT_SELF":"Cannot report self",
+  "USER_ALREADY_REPORTED":"User already reported",
+  "USER_REPORTED_SUCCESSFULLY":"User reported successfully",
+  "BLOCKED_USERS_FETCHED":"Blocked users fetched successfully",
+  "FAILED_TO_FETCH_BLOCKED_USERS":"Failed to fetch blocked users",
+  "REPORTED_USERS_FETCHED":"Reported users fetched",
+  "FAILED_TO_FETCH_REPORTED_USERS":"Failed to fetch reported users"
 }
