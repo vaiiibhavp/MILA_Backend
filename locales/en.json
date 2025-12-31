@@ -216,7 +216,7 @@
   "USER_ID_NOT_FOUND": "User ID not found",
   "LOGOUT_SUCCESSFUL": "Logout successful",
   "TOKEN_REFRESHED_SUCCESSFULLY": "Token refreshed successfully",
-
+  "USER_NOT_REGISTERED": "User not registered",
   "INVALID_OR_MISSING_TOKEN": "Invalid or missing token",
   "INVALID_TOKEN_EMAIL_NOT_FOUND": "Invalid token: email not found",
   "INVALID_OR_EXPIRED_TOKEN": "Invalid or expired token",
@@ -314,5 +314,15 @@
   "BLOCKED_USERS_FETCHED":"Blocked users fetched successfully",
   "FAILED_TO_FETCH_BLOCKED_USERS":"Failed to fetch blocked users",
   "REPORTED_USERS_FETCHED":"Reported users fetched",
-  "FAILED_TO_FETCH_REPORTED_USERS":"Failed to fetch reported users"
+  "FAILED_TO_FETCH_REPORTED_USERS":"Failed to fetch reported users",
+
+  "-------------7-------------":"-------------7-------------",
+  "EDIT_PROFILE_DATA_FETCHED_SUCCESSFULLY": "Edit profile data fetched successfully",
+  "PROFILE_UPDATED_SUCCESSFULLY": "Profile updated successfully",
+  "ALREADY_VERIFIED": "Already verified",
+  "SELFIE_REQUIRED": "Selfie required",
+  "SELFIE_SUBMITTED_FOR_VERIFICATION": "Selfie submitted for verification",
+  "NO_VERIFICATION_SELFIE_FOUND": "No verification selfie found",
+  "FILE_NOT_FOUND": "File not found",
+  "VERIFICATION_SELFIE_FETCHED": "Verification selfie fetched"
 }

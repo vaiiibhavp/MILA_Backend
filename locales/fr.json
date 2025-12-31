@@ -245,6 +245,7 @@
   "INCORRECT_OTP": "OTP incorrect",
   "LOGIN_USER_NOT_FOUND": "Utilisateur introuvable",
   "LOGIN_NEW_OTP_SENT": "Un nouvel OTP a été envoyé à votre adresse e-mail",
+  "USER_NOT_REGISTERED": "Utilisateur non enregistré",
 
   "NO_ACCOUNT_FOUND_WITH_EMAIL": "Aucun compte trouvé avec cette adresse e-mail",
   "RESET_PASSWORD_OTP_SENT": "OTP envoyé à votre adresse e-mail",
@@ -315,7 +316,16 @@
   "BLOCKED_USERS_FETCHED": "Utilisateurs bloqués récupérés avec succès",
   "FAILED_TO_FETCH_BLOCKED_USERS": "Échec de la récupération des utilisateurs bloqués",
   "REPORTED_USERS_FETCHED": "Utilisateurs signalés récupérés",
-  "FAILED_TO_FETCH_REPORTED_USERS": "Échec de la récupération des utilisateurs signalés"
+  "FAILED_TO_FETCH_REPORTED_USERS": "Échec de la récupération des utilisateurs signalés",
 
-
+  "-------------7-------------":"-------------7-------------",
+  "EDIT_PROFILE_DATA_FETCHED_SUCCESSFULLY": "Données du profil modifié récupérées avec succès",
+  "PROFILE_UPDATED_SUCCESSFULLY": "Profil mis à jour avec succès",
+  "ALREADY_VERIFIED": "Déjà vérifié",
+  "SELFIE_REQUIRED": "Selfie requis",
+  "SELFIE_SUBMITTED_FOR_VERIFICATION": "Selfie soumise pour vérification",
+  "NO_VERIFICATION_SELFIE_FOUND": "Aucun selfie de vérification trouvé",
+  "FILE_NOT_FOUND": "Fichier introuvable",
+  "VERIFICATION_SELFIE_FETCHED": "Selfie de vérification récupérée"
+  
 }
