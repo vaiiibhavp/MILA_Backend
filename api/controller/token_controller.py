@@ -34,7 +34,7 @@ async def get_user_token_details(
         token_plans = convert_objectid_to_str(token_plans)
         data = TokenHistoryResponse(
             history=token_history,
-            available_tokens=available_tokens.get("tokens", "0"),
+            available_tokens=str(available_tokens.get("tokens", "0")),
             token_plans=token_plans
         ).model_dump()
         data = serialize_datetime_fields(data)

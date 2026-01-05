@@ -10,6 +10,11 @@ from services.translation import translate_message
 from core.utils.helper import serialize_datetime_fields
 from config.basic_config import settings
 from config.models.user_models import Files, FileType
+from api.controller.onboardingController import *
+from services.profile_fetch_service import *
+from services.profile_mapper import *
+from schemas.language_schema import *
+from services.gallery_service import *
 
 response = CustomResponseMixin()
 
@@ -42,8 +47,11 @@ async def get_user_profile_controller(current_user: dict, lang: str = "en"):
     else:
         screen_state = "unverified_pending"
 
-    public_gallery = onboarding.get("public_gallery", []) if onboarding else []
-    private_gallery = onboarding.get("private_gallery", []) if onboarding else []
+    public_gallery_raw = onboarding.get("public_gallery", []) if onboarding else []
+    private_gallery_raw = onboarding.get("private_gallery", []) if onboarding else []
+
+    public_gallery = await resolve_gallery_items(public_gallery_raw)
+    private_gallery = await resolve_gallery_items(private_gallery_raw)
 
     private_gallery_locked = membership_type == "free"
 
@@ -115,49 +123,27 @@ async def upload_public_gallery_controller(images, current_user, lang: str = "en
     public_items = []
 
     for image in images:
-        public_url, storage_key, backend = await save_file(
+        item = await create_and_store_file(
             file_obj=image,
-            file_name=image.filename,
             user_id=str(current_user["_id"]),
-            file_type="public_gallery"
+            file_type=FileType.PUBLIC_GALLERY
         )
+        public_items.append(item)
 
-        file_doc = Files(
-            storage_key=storage_key,
-            storage_backend=backend,
-            file_type=FileType.PUBLIC_GALLERY,
-            uploaded_by=str(current_user["_id"])
-        )
-
-        result = await file_collection.insert_one(file_doc.dict(by_alias=True))
-        file_id = str(result.inserted_id)
-
-        public_items.append({
-            "file_id": file_id,
-            "uploaded_at": datetime.utcnow()
-        })
-
-    await onboarding_collection.update_one(
-        {"user_id": str(current_user["_id"])},
-        {
-            "$push": {"public_gallery": {"$each": public_items}},
-            "$setOnInsert": {
-                "user_id": str(current_user["_id"]),
-                "created_at": datetime.utcnow()
-            },
-            "$set": {"updated_at": datetime.utcnow()}
-        },
-        upsert=True
+    await append_gallery_items(
+        user_id=str(current_user["_id"]),
+        gallery_field="public_gallery",
+        items=public_items
     )
 
-    response_data = serialize_datetime_fields({
-            "count": len(public_items),
-            "items": public_items
-        })
+    resolved_items = await resolve_gallery_items(public_items)
 
     return response.success_message(
-        translate_message("PUBLIC_GALLERY_IMAGES_UPLOADED_SUCCESSFULLY", lang=lang),
-        data=[response_data],
+        translate_message("PUBLIC_GALLERY_IMAGES_UPLOADED_SUCCESSFULLY", lang),
+        data=[serialize_datetime_fields({
+            "count": len(resolved_items),
+            "items": resolved_items
+        })],
         status_code=200
     )
 
@@ -179,24 +165,9 @@ async def upload_private_gallery_controller(image, price, current_user, lang: st
             status_code=400
         )
 
-    if not image:
+    if price is None or price <= 0:
         return response.error_message(
-            translate_message("IMAGE_REQUIRED", lang=lang),
-            data=[],
-            status_code=400
-        )
-
-    if price is None:
-        return response.error_message(
-            translate_message("PRICE_REQUIRED", lang=lang),
-            data=[],
-            status_code=400
-        )
-
-    if price <= 0:
-        return response.error_message(
-            translate_message("PRICE_MUST_BE_GREATER_THAN_ZERO", lang=lang),
-            data=[],
+            translate_message("PRICE_MUST_BE_GREATER_THAN_ZERO", lang),
             status_code=400
         )
 
@@ -206,8 +177,7 @@ async def upload_private_gallery_controller(image, price, current_user, lang: st
     )
 
     existing_count = len(onboarding.get("private_gallery", [])) if onboarding else 0
-    membership = current_user.get("membership_type")
-
+    membership = current_user.get("membership_type", "free")
     max_limit = 3 if membership == "free" else 20
 
     if existing_count >= max_limit:
@@ -217,52 +187,32 @@ async def upload_private_gallery_controller(image, price, current_user, lang: st
             status_code=403 if membership == "free" else 400,
         )
 
-    single_image = image[0]
-
-    public_url, storage_key, backend = await save_file(
-        file_obj=single_image,
-        file_name=single_image.filename,
+    base_item = await create_and_store_file(
+        file_obj=image[0],
         user_id=str(current_user["_id"]),
-        file_type="private_gallery"
+        file_type=FileType.PRIVATE_GALLERY
     )
 
-    file_doc = Files(
-        storage_key=storage_key,
-        storage_backend=backend,
-        file_type=FileType.PRIVATE_GALLERY,
-        uploaded_by=str(current_user["_id"])
-    )
-
-    result = await file_collection.insert_one(file_doc.dict(by_alias=True))
-    file_id = str(result.inserted_id)
-
-    # Store reference in onboarding
     private_item = {
-        "file_id": file_id,
-        "price": price,
-        "uploaded_at": datetime.utcnow()
+        **base_item,
+        "price": price
     }
 
-    await onboarding_collection.update_one(
-        {"user_id": str(current_user["_id"])},
-        {
-            "$push": {"private_gallery": private_item},
-            "$setOnInsert": {
-                "user_id": str(current_user["_id"]),
-                "created_at": datetime.utcnow()
-            },
-            "$set": {"updated_at": datetime.utcnow()}
-        },
-        upsert=True
+    await append_gallery_items(
+        user_id=str(current_user["_id"]),
+        gallery_field="private_gallery",
+        items=[private_item]
     )
-    response_data = serialize_datetime_fields({
-        **private_item,
-        "remaining_slots": max_limit - (existing_count + 1)
-    })
+
+    resolved = await resolve_gallery_items([private_item])
 
     return response.success_message(
-        translate_message("PRIVATE_GALLERY_IMAGE_UPLOADED_SUCCESSFULLY", lang=lang),
-        data=[response_data],
+        translate_message("PRIVATE_GALLERY_IMAGE_UPLOADED_SUCCESSFULLY", lang),
+        data=[serialize_datetime_fields({
+            **resolved[0],
+            "price": price,
+            "remaining_slots": max_limit - (existing_count + 1)
+        })],
         status_code=200
     )
 
@@ -274,37 +224,11 @@ async def get_public_gallery_controller(current_user, lang: str = "en"):
 
     gallery = onboarding.get("public_gallery", []) if onboarding else []
 
-    result = []
-
-    for item in gallery:
-        file_id = item.get("file_id")
-        if not file_id:
-            continue
-
-        file_doc = await file_collection.find_one(
-            {
-                "_id": ObjectId(file_id),
-                "is_deleted": {"$ne": True}
-            }
-        )
-
-        if not file_doc:
-            continue
-
-        image_url = await generate_file_url(
-            storage_key=file_doc["storage_key"],
-            backend=file_doc["storage_backend"]
-        )
-
-        result.append({
-            "file_id": file_id,
-            "url": image_url,
-            "uploaded_at": item.get("uploaded_at")
-        })
+    items = await resolve_gallery_items(gallery)
 
     response_data = serialize_datetime_fields({
-        "count": len(result),
-        "items": result
+        "count": len(items),
+        "items": items
     })
 
     return response.success_message(
@@ -324,41 +248,68 @@ async def get_private_gallery_controller(current_user, lang: str = "en"):
     membership = current_user.get("membership_type", "free")
     max_limit = 3 if membership == "free" else 20
 
-    result = []
-
-    for item in gallery:
-        file_id = item.get("file_id")
-        if not file_id:
-            continue
-
-        file_doc = await file_collection.find_one(
-            {
-                "_id": ObjectId(file_id),
-                "is_deleted": {"$ne": True}
-            }
-        )
-
-        if not file_doc:
-            continue
-
-        image_url = await generate_file_url(
-            storage_key=file_doc["storage_key"],
-            backend=file_doc["storage_backend"]
-        )
-
-        result.append({
-            "file_id": file_id,
-            "url": image_url,
-            "uploaded_at": item.get("uploaded_at")
-        })
+    items = await resolve_gallery_items(gallery)
 
     response_data = serialize_datetime_fields({
-        "count": len(result),
-        "items": result
+        "count": len(items),
+        "items": items,
+        "max_limit": max_limit
     })
 
     return response.success_message(
         translate_message("PRIVATE_GALLERY_FETCHED_SUCCESSFULLY", lang=lang),
         data=[response_data],
+        status_code=200
+    )
+
+async def get_basic_profile_details_controller(
+    current_user: dict,
+    lang: str = "en"
+):
+    """
+    Fetch complete basic profile details for logged-in user (Basic Info View)
+    """
+    user, onboarding = await fetch_basic_profile_data(str(current_user["_id"]))
+
+    if not user:
+        return response.error_message(
+            translate_message("USER_NOT_FOUND", lang),
+            status_code=404
+        )
+
+    profile_photo = await get_profile_photo_url(
+        {"_id": ObjectId(current_user["_id"])}
+    )
+
+    data = build_basic_profile_response(
+        user=user,
+        onboarding=onboarding,
+        profile_photo=profile_photo
+    )
+
+    return response.success_message(
+        translate_message("BASIC_PROFILE_FETCHED_SUCCESSFULLY", lang),
+        data=[serialize_datetime_fields(data)],
+        status_code=200
+    )
+
+async def change_language_controller(
+    payload: ChangeLanguageRequest,
+    current_user: dict,
+    lang: str = "en"
+):
+    """
+    Change application language for logged-in user(Change Language)
+    """
+    await user_collection.update_one(
+        {"_id": ObjectId(current_user["_id"])},
+        {"$set": {"language": payload.language.value}}
+    )
+
+    return response.success_message(
+        translate_message("LANGUAGE_UPDATED_SUCCESSFULLY", lang),
+        data=[{
+            "language": payload.language.value
+        }],
         status_code=200
     )

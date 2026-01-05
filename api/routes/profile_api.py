@@ -5,6 +5,7 @@ from api.controller.profile_controller import *
 from core.utils.permissions import UserPermission
 from schemas.response_schema import Response
 from typing import List, Optional
+from schemas.language_schema import *
 
 router = APIRouter(prefix="/profile", tags=["User Profile"])
 
@@ -72,3 +73,27 @@ async def get_private_gallery(
     Get user's private gallery
     """
     return await get_private_gallery_controller(current_user, lang=lang)
+
+@router.get(
+    "/basic-details",
+    response_model=Response
+)
+async def get_basic_profile_details(
+    current_user: dict = Depends(UserPermission(["user"])),
+    lang: str = Query("en")
+):
+    return await get_basic_profile_details_controller(
+        current_user=current_user,
+        lang=lang
+    )
+
+@router.put(
+    "/change-language",
+    response_model=Response
+)
+async def change_language(
+    payload: ChangeLanguageRequest,
+    current_user: dict = Depends(UserPermission(["user"])),
+    lang: str = Query("en")
+):
+    return await change_language_controller(payload, current_user, lang)

@@ -25,6 +25,10 @@ from config.basic_config import settings
 from config.models.user_models import *
 from dateutil.relativedelta import relativedelta
 from typing import Optional, Tuple
+from services.translation import translate_message
+from core.utils.core_enums import *
+from config.models.onboarding_model import *
+from core.utils.auth_utils import *
 
 load_dotenv()
 
@@ -141,3 +145,35 @@ def get_membership_period(validity_value: int, validity_unit: str, current_expir
     end_date = start_date + unit_map[validity_unit]
 
     return start_date, end_date
+
+async def finalize_login_response(user: dict, lang: str):
+    """
+    Common login finalization logic:
+    - generate tokens
+    - update login status
+    - fetch onboarding completion
+    - return standardized response
+    """
+    access_token, refresh_token = generate_login_tokens(user)
+
+    await user_collection.update_one(
+        {"_id": user["_id"]},
+        {
+            "$set": {
+                "login_status": LoginStatus.ACTIVE,
+                "last_login_at": datetime.utcnow()
+            }
+        }
+    )
+
+    onboarding_completed = await get_onboarding_completed_status(str(user["_id"]))
+
+    return response.success_message(
+        translate_message("LOGIN_SUCCESSFUL", lang=lang),
+        data=[{
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "onboarding_completed": onboarding_completed
+        }],
+        status_code=200
+    )

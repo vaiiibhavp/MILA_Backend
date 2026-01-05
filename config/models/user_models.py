@@ -1,3 +1,5 @@
+#user_model.py
+
 from pydantic import BaseModel, EmailStr, Field, model_validator,field_validator
 from typing import Optional, Union, Any, Callable, Dict, List
 from pydantic import GetJsonSchemaHandler
@@ -47,6 +49,17 @@ class PyObjectId(str):
         json_schema["format"] = "objectId"
         return json_schema
 
+FREE_FILTERS = {
+    "cities": ("country", "$in"),
+    "genders": ("gender", "$in"),
+}
+
+PREMIUM_FILTERS = {
+    "status": ("marital_status", "$in"),
+    "orientations": ("sexual_orientation", "$in"),
+    "age": ("birthdate", "range"),
+}
+
 # User Role Enum for validation
 class UserRole(str, Enum):
     ADMIN = "admin"
@@ -62,6 +75,7 @@ class FileType(str, Enum):
     SELFIE = "selfie"
     PUBLIC_GALLERY = "public_gallery"
     PRIVATE_GALLERY = "private_gallery"
+    GIFT = "gift"
 
 # ---- Files model ----
 class Files(BaseModel):
@@ -91,7 +105,8 @@ class UserCreate(BaseModel):
     two_factor_enabled: bool = Field(default=True)
     tokens : Optional[int] = None
     membership_trans_id : Optional[str] = None
- 
+    language : Optional[str] = None
+    
     def update_user(self, updated_data: dict):
         """Method to update user and set the updated_at field."""
         self.__dict__.update(updated_data)
