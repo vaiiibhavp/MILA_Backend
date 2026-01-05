@@ -30,6 +30,8 @@ async def get_profile_controller(user_id: str, viewer: dict, lang: str = "en"):
     if not user:
         return response.error_message(translate_message("USER_NOT_FOUND", lang=lang), data=[], status_code=404)
 
+    recipient_lang = user.get("lang", "en")
+
     # RECORD PROFILE VIEW
     if viewer and str(viewer["_id"]) != user_id:
         await profile_view_history.update_one(
@@ -52,8 +54,8 @@ async def get_profile_controller(user_id: str, viewer: dict, lang: str = "en"):
                 recipient_id=user_id,
                 recipient_type=NotificationRecipientType.USER,
                 notification_type=NotificationType.PROFILE_VIEW,
-                title="Someone viewed your profile",
-                message="A user just viewed your profile",
+                title=translate_message("SOMEONE_VIEWED_YOUR_PROFILE", recipient_lang),
+                message=translate_message("A_USER_JUST_VIEWED_YOUR_PROFILE", recipient_lang),
                 reference={
                     "entity": "profile_viewers",
                     "entity_id": None
