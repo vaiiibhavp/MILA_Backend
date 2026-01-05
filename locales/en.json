@@ -340,5 +340,6 @@
   "FCM_TOKEN_DEACTIVATED": "FCM token deactivated",
   "FCM_TOKEN_DELETED": "FCM token deleted", 
   "SOMEONE_VIEWED_YOUR_PROFILE": "Someone viewed your profile",
-  "A_USER_JUST_VIEWED_YOUR_PROFILE": "A user just viewed your profile"
+  "A_USER_JUST_VIEWED_YOUR_PROFILE": "A user just viewed your profile",
+  "ACCOUNT_DELETED_SUCCESSFULLY": "Account deleted successfully"
 }

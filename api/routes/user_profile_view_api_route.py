@@ -84,3 +84,10 @@ async def read_all_notifications(
         current_user=current_user,
         lang=lang
     )
+
+@router.delete("/delete-account")
+async def delete_account(
+    current_user: dict = Depends(UserPermission(["user"])),
+    lang: str = Query("en")
+):
+    return await delete_account_controller(current_user, lang)

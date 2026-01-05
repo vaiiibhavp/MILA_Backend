@@ -315,3 +315,20 @@ async def mark_all_notifications_read(current_user, lang):
         translate_message("ALL_NOTIFICATION_MARKED_AS_READ", lang),
         status_code=200
     )
+
+async def delete_account_controller(current_user: dict, lang: str):
+    await user_collection.update_one(
+        {"_id": current_user["_id"]},
+        {
+            "$set": {
+                "is_deleted": True,
+                "deleted_at": datetime.utcnow(),
+                "deleted_by": "user"
+            }
+        }
+    )
+
+    return response.success_message(
+        translate_message("ACCOUNT_DELETED_SUCCESSFULLY", lang),
+        status_code=200
+    )

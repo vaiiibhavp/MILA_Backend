@@ -343,6 +343,7 @@
   "FCM_TOKEN_DEACTIVATED": "Jeton FCM désactivé",
   "FCM_TOKEN_DELETED": "Jeton FCM supprimé",
   "SOMEONE_VIEWED_YOUR_PROFILE": "Quelqu'un a consulté votre profil",
-  "A_USER_JUST_VIEWED_YOUR_PROFILE": "Un utilisateur vient de consulter votre profil"  
+  "A_USER_JUST_VIEWED_YOUR_PROFILE": "Un utilisateur vient de consulter votre profil",
+  "ACCOUNT_DELETED_SUCCESSFULLY": "Compte supprimé avec succès"
 
 }
