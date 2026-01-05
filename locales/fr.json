@@ -341,7 +341,22 @@
   "DEVICE_TOKEN_REQUIRED": "Jeton d'appareil requis",
   "FCM_TOKEN_NOT_FOUND": "Jeton FCM introuvable",
   "FCM_TOKEN_DEACTIVATED": "Jeton FCM désactivé",
-  "FCM_TOKEN_DELETED": "Jeton FCM supprimé"
-  
+  "FCM_TOKEN_DELETED": "Jeton FCM supprimé",
+
+  "USERS_FETCHED_SUCCESSFULLY": "Utilisateurs récupérés avec succès",
+
+  "MINIMUM_WITHDRAWN_TOKENS_REQUIRED": "Un minimum de {required_tokens} jetons est requis pour effectuer un retrait.",
+  "INSUFFICIENT_AMOUNT": "Jetons insuffisants.",
+  "TOKEN_WITHDRAWAL_ALREADY_PENDING" : "Vous avez déjà une demande de retrait de jetons en attente. Veuillez patienter jusqu'à son traitement.",
+  "WITHDRAWAL_REQUEST_SUBMITTED": "Demande de retrait soumise avec succès.",
+  "WITHDRAWAL_REQUEST_PROCESSING_ERROR" : "Nous ne sommes pas en mesure de traiter votre demande de retrait pour le moment. Veuillez réessayer plus tard.",
+
+  "VERIFICATION_QUEUE_FETCHED_SUCCESSFULLY": "File de vérification récupérée avec succès",
+  "FAILED_TO_FETCH_VERIFICATION_QUEUE": "Échec de la récupération de la file de vérification",
+  "USER_ALREADY_VERIFIED": "Utilisateur déjà vérifié",
+  "USER_VERIFICATION_APPROVED": "Vérification de l’utilisateur approuvée",
+  "USER_ALREADY_APPROVED": "Utilisateur déjà approuvé",
+  "USER_VERIFICATION_REJECTED": "Vérification de l’utilisateur rejetée",
+  "APPROVED_VERIFICATION_COUNT_FETCHED": "Nombre de vérifications approuvées récupéré"
 
 }

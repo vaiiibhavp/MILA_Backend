@@ -57,3 +57,8 @@ class NotificationType(str, Enum):
     SUBSCRIPTION_EXPIRY = "subscription_expiry"
     REPORT = "report"
     BLOCK = "block"
+
+class VerificationStatusEnum(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
