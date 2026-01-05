@@ -341,7 +341,8 @@
   "DEVICE_TOKEN_REQUIRED": "Jeton d'appareil requis",
   "FCM_TOKEN_NOT_FOUND": "Jeton FCM introuvable",
   "FCM_TOKEN_DEACTIVATED": "Jeton FCM désactivé",
-  "FCM_TOKEN_DELETED": "Jeton FCM supprimé"
-  
+  "FCM_TOKEN_DELETED": "Jeton FCM supprimé",
+  "SOMEONE_VIEWED_YOUR_PROFILE": "Quelqu'un a consulté votre profil",
+  "A_USER_JUST_VIEWED_YOUR_PROFILE": "Un utilisateur vient de consulter votre profil"  
 
 }
