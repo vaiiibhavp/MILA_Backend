@@ -315,7 +315,7 @@
   "BLOCKED_USERS_FETCHED": "Utilisateurs bloqués récupérés avec succès",
   "FAILED_TO_FETCH_BLOCKED_USERS": "Échec de la récupération des utilisateurs bloqués",
   "REPORTED_USERS_FETCHED": "Utilisateurs signalés récupérés",
-  "FAILED_TO_FETCH_REPORTED_USERS": "Échec de la récupération des utilisateurs signalés"
+  "FAILED_TO_FETCH_REPORTED_USERS": "Échec de la récupération des utilisateurs signalés",
   "USERS_FETCHED_SUCCESSFULLY": "Utilisateurs récupérés avec succès",
 
    "MINIMUM_WITHDRAWN_TOKENS_REQUIRED": "Un minimum de {required_tokens} jetons est requis pour effectuer un retrait.",
