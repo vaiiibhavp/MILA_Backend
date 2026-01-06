@@ -3,11 +3,11 @@ from typing import Optional, Dict, Any, List
 
 from pymongo import ReturnDocument
 
-from core.utils.core_enums import TransactionStatus
+from core.utils.core_enums import TransactionStatus, TransactionType
 from core.utils.pagination import StandardResultsSetPagination
 from schemas.transcation_schema import TransactionCreateModel, TransactionUpdateModel, TokenWithdrawTransactionCreateModel
 from config.db_config import transaction_collection, withdraw_token_transaction_collection
-from core.utils.helper import convert_objectid_to_str, convert_datetime_to_date
+from core.utils.helper import convert_objectid_to_str, convert_datetime_to_date, serialize_datetime_fields
 from services.translation import translate_message
 from core.utils.response_mixin import CustomResponseMixin
 from datetime import datetime,timezone
@@ -106,6 +106,59 @@ async def get_withdraw_token_transactions(user_id: str, pagination:StandardResul
             "paid_amount": str(doc["paid_amount"]),
             "tokens": doc["tokens"],
             "created_at": convert_datetime_to_date(doc["created_at"], '%d-%m-%Y'),
+        })
+
+    return transactions
+
+async def get_subscription_transactions(user_id: str, pagination:StandardResultsSetPagination) -> List[Dict[str, Any]]:
+    """
+        Get all subscription transactions for a user,
+        sorted by latest created_at.
+    """
+    pipeline = [
+        {
+            "$match": {
+                "user_id": ObjectId(user_id),
+                "trans_type": TransactionType.SUBSCRIPTION_TRANSACTION.value
+            }
+        },
+        {
+            "$lookup": {
+                "from": "subscription_plan",  # collection name
+                "localField": "plan_id",
+                "foreignField": "_id",
+                "as": "plan_details"
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$plan_details",
+                "preserveNullAndEmptyArrays": True
+            }
+        },
+        {"$sort": {"updated_at": -1}},
+        {"$skip": pagination.skip},
+        {"$limit": pagination.limit}
+    ]
+    cursor = transaction_collection.aggregate(pipeline)
+    docs = await cursor.to_list(length=pagination.limit)
+    transactions: list[dict] = []
+    for doc in docs:
+        doc = serialize_datetime_fields(doc)
+        transactions.append({
+            "id": convert_objectid_to_str(doc["_id"]),
+            "user_id": user_id,
+            "plan_id": convert_objectid_to_str(doc["plan_id"]),
+            "plan_title": (
+                doc["plan_details"]["title"]
+                if doc.get("plan_details") else None
+            ),
+            "amount": doc["plan_amount"],
+            "paid_amount": doc["paid_amount"],
+            "remaining_amount": doc["remaining_amount"],
+            "status": doc["status"],
+            "tokens": doc["tokens"],
+            "created_at": doc["updated_at"],
         })
 
     return transactions

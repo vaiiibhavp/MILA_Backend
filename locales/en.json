@@ -355,6 +355,9 @@
   "SOMEONE_VIEWED_YOUR_PROFILE": "Someone viewed your profile",
   "A_USER_JUST_VIEWED_YOUR_PROFILE": "A user just viewed your profile",
   "USER_ID_REQUIRED":"User id required",
-  "PLEASE_ENTER_VALID_REPORT_REASON":"Please enter valid report reason"
+  "PLEASE_ENTER_VALID_REPORT_REASON":"Please enter valid report reason",
+
+  "SUBSCRIPTION_TRANSACTIONS_FETCHED": "Subscription transactions fetched successfully.",
+  "ERROR_WHILE_FETCHING_SUBSCRIPTION_TRANSACTIONS":"An error occurred while fetching subscription transactions."
 
 }

@@ -2,6 +2,7 @@ from fastapi import Request
 
 from config import settings
 from core.utils.exceptions import CustomValidationError
+from core.utils.pagination import StandardResultsSetPagination
 from services.translation import translate_message
 from core.utils.response_mixin import CustomResponseMixin
 from core.utils.helper import serialize_datetime_fields, convert_objectid_to_str
@@ -12,7 +13,8 @@ from schemas.transcation_schema import TransactionRequestModel, CompleteTransact
 from core.utils.core_enums import TransactionStatus, TransactionType
 
 response = CustomResponseMixin()
-from config.models.transaction_models import store_transaction_details, get_existing_transaction, get_subscription_payment_details, update_transaction_details
+from config.models.transaction_models import store_transaction_details, get_existing_transaction, \
+    get_subscription_payment_details, update_transaction_details, get_subscription_transactions
 from config.models.subscription_plan_models import get_subscription_plan
 
 
@@ -148,5 +150,38 @@ async def validate_remaining_transaction_payment(request: CompleteTransactionReq
             data=str(e),
             status_code=500
         )
+
+async def fetch_subscription_transactions(
+        user_id:str,
+        lang:str,
+        pagination:StandardResultsSetPagination
+):
+    """
+        Fetches the subscription transaction history for a user.
+
+        This function retrieves a paginated list of subscription transactions
+        associated with the specified user and returns a localized success response.
+        If an error occurs during retrieval, it returns an appropriate error response.
+
+        :param user_id: Unique identifier of the user whose subscription transactions
+                        are being retrieved.
+        :param lang: Language code used for localized response messages.
+        :param pagination: Pagination configuration for limiting and offsetting results.
+        :return: Success response containing the user's subscription transaction history
+             or an error response if the operation fails.
+    """
+    try:
+        subscription_trans_history = await get_subscription_transactions(user_id=user_id,pagination=pagination)
+        return response.success_message(
+            translate_message("SUBSCRIPTION_TRANSACTIONS_FETCHED", lang=lang),
+            data=subscription_trans_history
+        )
+    except Exception as e:
+        return response.raise_exception(
+            translate_message("ERROR_WHILE_FETCHING_SUBSCRIPTION_TRANSACTIONS", lang=lang),
+            data=str(e),
+            status_code=500
+        )
+
 
 

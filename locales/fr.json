@@ -363,6 +363,9 @@
   "A_USER_JUST_VIEWED_YOUR_PROFILE": "Un utilisateur vient de consulter votre profil",
   "ACCOUNT_DELETED_SUCCESSFULLY": "Compte supprimé avec succès",
   "USER_ID_REQUIRED": "L’identifiant de l’utilisateur est requis",
-  "PLEASE_ENTER_VALID_REPORT_REASON": "Veuillez saisir une raison de signalement valide"
+  "PLEASE_ENTER_VALID_REPORT_REASON": "Veuillez saisir une raison de signalement valide",
+
+  "SUBSCRIPTION_TRANSACTIONS_FETCHED": "Transactions d'abonnement récupérées avec succès.",
+  "ERROR_WHILE_FETCHING_SUBSCRIPTION_TRANSACTIONS":"Une erreur s'est produite lors de la récupération des transactions d'abonnement."
 
 }
