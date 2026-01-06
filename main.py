@@ -8,7 +8,8 @@ from api.routes import (
     apple_auth_api , onboarding_route,adminauth_route,
     profile_api, token_history_route, profile_api_route ,
     userPass_route, like_route_api, block_report_route, user_profile_view_api_route,
-    fcm_route
+    fcm_route,
+    verification_routes
 )
 
 from core.utils.exceptions import CustomValidationError, custom_validation_error_handler, validation_exception_handler
@@ -222,6 +223,8 @@ app.include_router(profile_api_route.router, prefix="/api/profile")
 app.include_router(userPass_route.router)
 app.include_router(like_route_api.router, prefix="/api/premium")
 app.include_router(user_profile_view_api_route.router, prefix="/api/edit")
+app.include_router(verification_routes.router)
+
 app.include_router(block_report_route.router)
 app.include_router(fcm_route.router, prefix="/api/fcm")
 

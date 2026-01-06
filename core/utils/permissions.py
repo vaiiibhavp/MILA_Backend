@@ -1,7 +1,7 @@
 from fastapi import HTTPException, Security,Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt,JWTError
-from config.db_config import user_collection
+from config.db_config import user_collection , admin_collection
 import os
 from fastapi.responses import JSONResponse
 from .response_mixin import CustomResponseMixin
@@ -28,7 +28,7 @@ class AdminPermission:
         try:
             # Decode the JWT token
             payload = jwt.decode(credentials.credentials, SECRET_ACCESS_KEY, algorithms=[ALGORITHM])
-            user = await user_collection.find_one({"email": payload["sub"]})
+            user = await admin_collection.find_one({"email": payload["sub"]})
 
             if not user:
                 raise HTTPException(status_code=401, detail="Invalid user")
