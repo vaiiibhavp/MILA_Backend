@@ -14,7 +14,7 @@ router = APIRouter(prefix="/view", tags=["User Profile"])
 async def get_profile(
     user_id: str,
     current_user: dict = Depends(UserPermission(allowed_roles=["user"])),
-    lang: str = Query(None)
+    lang: str = Query("en")
 ):
     """
     Get logged-in user's profile details

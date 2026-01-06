@@ -13,7 +13,7 @@ router = APIRouter(prefix="/profile", tags=["User Profile"])
 @router.get("", response_model=Response)
 async def get_user_profile(
     current_user: dict = Depends(UserPermission(allowed_roles=["user"])),
-    lang: str = Query(None)
+    lang: str = Query("en")
 ):
     """
     Get logged-in user's profile details
@@ -24,7 +24,7 @@ async def get_user_profile(
 async def upload_public_gallery(
     images: List[UploadFile] = File(...),
     current_user: dict = Depends(UserPermission(["user"])),
-    lang: str = Query(None)
+    lang: str = Query("en")
 
 ):
     """
@@ -41,7 +41,7 @@ async def upload_private_gallery(
     image: List[UploadFile] = File(...),
     price: Optional[int] = Form(None),
     current_user: dict = Depends(UserPermission(["user"])),
-    lang: str = Query(None)
+    lang: str = Query("en")
 ):
     """
     Upload single image with price to private gallery
@@ -56,7 +56,7 @@ async def upload_private_gallery(
 @router.get("/get_public_gallery", response_model=Response)
 async def get_public_gallery(
     current_user: dict = Depends(UserPermission(["user"])),
-    lang: str = Query(None)
+    lang: str = Query("en")
 ):
     """
     Get user's public gallery
@@ -67,7 +67,7 @@ async def get_public_gallery(
 @router.get("/get_private_gallery", response_model=Response)
 async def get_private_gallery(
     current_user: dict = Depends(UserPermission(["user"])),
-    lang: str = Query(None)
+    lang: str = Query("en")
 ):
     """
     Get user's private gallery

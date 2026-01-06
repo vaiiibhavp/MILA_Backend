@@ -1,7 +1,7 @@
 #profile_view_controller.py:
 
 from bson import ObjectId
-from config.db_config import profile_view_history, user_collection, onboarding_collection, file_collection, gift_collection
+from config.db_config import private_gallery_purchases_collection, profile_view_history, user_collection, onboarding_collection, file_collection, gift_collection
 from core.utils.response_mixin import CustomResponseMixin
 from core.utils.age_calculation import calculate_age
 from api.controller.files_controller import get_profile_photo_url, generate_file_url
@@ -13,6 +13,9 @@ from schemas.user_token_history_schema import CreateTokenHistory
 from config.models.user_models import *
 from core.utils.core_enums import *
 from core.utils.pagination import StandardResultsSetPagination
+from core.utils.core_enums import MembershipType, NotificationType, NotificationRecipientType
+from services.notification_service import send_notification
+from services.premium_guard import require_premium
 
 response = CustomResponseMixin()
 
@@ -26,6 +29,8 @@ async def get_profile_controller(user_id: str, viewer: dict, lang: str = "en"):
     )
     if not user:
         return response.error_message(translate_message("USER_NOT_FOUND", lang=lang), data=[], status_code=404)
+
+    recipient_lang = user.get("lang", "en")
 
     # RECORD PROFILE VIEW
     if viewer and str(viewer["_id"]) != user_id:
@@ -42,7 +47,22 @@ async def get_profile_controller(user_id: str, viewer: dict, lang: str = "en"):
             },
             upsert=True
         )
-        
+        is_premium = require_premium(user, lang) is None
+
+        if is_premium:
+            await send_notification(
+                recipient_id=user_id,
+                recipient_type=NotificationRecipientType.USER,
+                notification_type=NotificationType.PROFILE_VIEW,
+                title=translate_message("SOMEONE_VIEWED_YOUR_PROFILE", recipient_lang),
+                message=translate_message("A_USER_JUST_VIEWED_YOUR_PROFILE", recipient_lang),
+                reference={
+                    "entity": "profile_viewers",
+                    "entity_id": None
+                },
+                sender_user_id=str(viewer["_id"]),
+                send_push=True
+            )
     onboarding = await onboarding_collection.find_one(
         {"user_id": str(user["_id"])}
     )
@@ -257,6 +277,18 @@ async def buy_private_gallery_image(
         )
     )
 
+    await private_gallery_purchases_collection.insert_one({
+        "buyer_id": str(viewer["_id"]),
+        "owner_id": profile_user_id,
+
+        "file_id": image_id,
+        "storage_key": image["storage_key"],
+        "storage_backend": image["storage_backend"],
+
+        "price": price,
+        "purchased_at": datetime.utcnow(),
+        "is_active": True
+    })
     return response.success_message(
         translate_message("IMAGE_UNLOCKED_SUCCESSFULLY", lang),
         data=[{
@@ -276,32 +308,88 @@ async def get_profile_gallery(
     )
 
     if not onboarding:
-        return response.error_message("PROFILE_NOT_FOUND", status_code=404)
+        return response.error_message(
+            translate_message("PROFILE_NOT_FOUND", lang),
+            status_code=404
+        )
 
-    unlocked_images = set(viewer.get("unlocked_images", []))
+    viewer_id = str(viewer["_id"])
 
-    # Public gallery
+    # Fetch purchases for this profile
+    purchases = await private_gallery_purchases_collection.find(
+        {
+            "buyer_id": viewer_id,
+            "owner_id": profile_user_id,
+            "is_active": True
+        }
+    ).to_list(length=100)
+
+    purchased_map = {
+        p["file_id"]: p for p in purchases
+    }
+
+    # PUBLIC GALLERY (unchanged)
     public_gallery = []
     for img in onboarding.get("public_gallery", []):
-        file_doc = await file_collection.find_one({"_id": ObjectId(img["file_id"])})
-        url = await generate_file_url(file_doc["storage_key"], file_doc["storage_backend"])
+        file_doc = await file_collection.find_one(
+            {"_id": ObjectId(img["file_id"])}
+        )
+        if not file_doc:
+            continue
+
+        url = await generate_file_url(
+            file_doc["storage_key"],
+            file_doc["storage_backend"]
+        )
+
         public_gallery.append({
             "image_id": img["file_id"],
             "image_url": url,
             "type": "public"
         })
 
-    # Private gallery
+    # PRIVATE GALLERY (current owner images)
     private_gallery = []
+    owner_image_ids = set()
+
     for img in onboarding.get("private_gallery", []):
-        file_doc = await file_collection.find_one({"_id": ObjectId(img["file_id"])})
-        url = await generate_file_url(file_doc["storage_key"], file_doc["storage_backend"])
+        owner_image_ids.add(img["file_id"])
+
+        file_doc = await file_collection.find_one(
+            {"_id": ObjectId(img["file_id"])}
+        )
+        if not file_doc:
+            continue
+
+        url = await generate_file_url(
+            file_doc["storage_key"],
+            file_doc["storage_backend"]
+        )
 
         private_gallery.append({
             "image_id": img["file_id"],
             "image_url": url,
             "price": int(img.get("price", 0)),
-            "is_unlocked": img["file_id"] in unlocked_images
+            "is_unlocked": img["file_id"] in purchased_map
+        })
+
+    # ADD PURCHASED BUT DELETED IMAGES
+    for file_id, purchase in purchased_map.items():
+        if file_id in owner_image_ids:
+            continue  # already shown above
+
+        url = await generate_file_url(
+            purchase["storage_key"],
+            purchase["storage_backend"]
+        )
+
+        private_gallery.append({
+            "image_id": file_id,
+            "image_url": url,
+            "price": purchase["price"],
+            "is_unlocked": True,
+            "deleted_by_owner": True,
+            "purchased_at": purchase["purchased_at"]
         })
 
     return response.success_message(

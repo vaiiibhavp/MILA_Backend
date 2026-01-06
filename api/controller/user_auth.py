@@ -209,7 +209,7 @@ async def signup_controller(payload: Signup, lang):
     # Store OTP for 5 minutes
     await redis_client.setex(
         f"signup:{payload.email}:otp",
-        300,
+        60,
         otp
     )
 
@@ -325,6 +325,12 @@ async def login_controller(payload: LoginRequest, lang):
         ]
     )
 
+    if not user:
+        return response.error_message(
+            translate_message("USER_NOT_REGISTERED", lang=lang),
+            status_code=400
+        )
+    
     if not verify_password(password, user["password"]):
         return response.error_message(translate_message("INVALID_EMAIL_OR_PASSWORD", lang=lang), status_code=400)
 
@@ -335,7 +341,7 @@ async def login_controller(payload: LoginRequest, lang):
     # 2FA enabled → send OTP
     otp = generate_verification_code()
 
-    await redis_client.setex(f"login:{email}:otp", 300, otp)
+    await redis_client.setex(f"login:{email}:otp", 60, otp)
 
     subject, body = login_verification_template(user["username"], otp)
     await send_email(email, subject, body, is_html=True)

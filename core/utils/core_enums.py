@@ -42,3 +42,23 @@ class GiftTypeEnum(str, Enum):
 class LanguageEnum(str, Enum):
     EN = "en"
     FR = "fr"
+
+class NotificationRecipientType(str, Enum):
+    USER = "user"
+    ADMIN = "admin"
+
+class NotificationType(str, Enum):
+    REGISTRATION = "registration"
+    PROFILE_VERIFICATION = "profile_verification"
+    MATCH = "match"
+    MESSAGE = "message"
+    PROFILE_VIEW = "profile_view"
+    SUBSCRIPTION = "subscription"
+    SUBSCRIPTION_EXPIRY = "subscription_expiry"
+    REPORT = "report"
+    BLOCK = "block"
+
+class VerificationStatusEnum(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"

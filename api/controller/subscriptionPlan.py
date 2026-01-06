@@ -1,5 +1,6 @@
 from fastapi import Request
 
+from config import settings
 from core.utils.exceptions import CustomValidationError
 from services.translation import translate_message
 from core.utils.response_mixin import CustomResponseMixin
@@ -26,7 +27,7 @@ async def get_subscription_list(request: Request, lang: str = "en"):
         subscription_list = convert_objectid_to_str(subscription_docs)
         return response.success_message(
             translate_message("SUBSCRIPTION_PLAN_FETCHED", lang=lang),
-            data=subscription_list
+            data=[{"subscription_plan": subscription_list, "wallet_address": settings.ADMIN_WALLET_ADDRESS}],
         )
     except Exception as e:
         return response.raise_exception(

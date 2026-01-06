@@ -7,7 +7,9 @@ from api.routes import (
     subscription_plan_route,google_auth_api,
     apple_auth_api , onboarding_route,adminauth_route,
     profile_api, token_history_route, profile_api_route ,
-    userPass_route, like_route_api, block_report_route
+    userPass_route, like_route_api, block_report_route, user_profile_view_api_route,
+    fcm_route,
+    verification_routes
 )
 
 from core.utils.exceptions import CustomValidationError, custom_validation_error_handler, validation_exception_handler
@@ -28,6 +30,9 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from config.db_seeder.AdminSeeder import seed_admin
 from config.db_seeder.SubscriptionPlanSeeder import seed_subscription_plan
 
+from core.firebase import init_firebase
+
+init_firebase()
 
 from starlette.middleware.base import BaseHTTPMiddleware
 app = FastAPI()
@@ -37,7 +42,8 @@ UPLOAD_DIR = os.getenv("UPLOAD_DIR")
 
 PUBLIC_GALLERY_DIR = os.path.join(UPLOAD_DIR, "public_gallery")
 PRIVATE_GALLERY_DIR = os.path.join(UPLOAD_DIR, "private_gallery")
-PROFILE_PHOTO_DIR = os.path.join(UPLOAD_DIR, "profile_photos")
+PROFILE_PHOTO_DIR = os.path.join(UPLOAD_DIR, "profile_photo")
+SELFIE_DIR = os.path.join(UPLOAD_DIR, "selfie")
 GIFTS_DIR = os.path.join(UPLOAD_DIR, "gift")
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -45,12 +51,13 @@ os.makedirs(PUBLIC_GALLERY_DIR, exist_ok=True)
 os.makedirs(PRIVATE_GALLERY_DIR, exist_ok=True)
 os.makedirs(PROFILE_PHOTO_DIR, exist_ok=True)
 os.makedirs(GIFTS_DIR, exist_ok=True)
+os.makedirs(SELFIE_DIR, exist_ok=True)
 
 app.mount("/public_gallery", StaticFiles(directory=PUBLIC_GALLERY_DIR))
 app.mount("/private_gallery", StaticFiles(directory=PRIVATE_GALLERY_DIR))
-app.mount("/profile_photos", StaticFiles(directory=PROFILE_PHOTO_DIR))
+app.mount("/profile_photo", StaticFiles(directory=PROFILE_PHOTO_DIR))
 app.mount("/gifts", StaticFiles(directory=GIFTS_DIR))
-
+app.mount("/selfie", StaticFiles(directory=SELFIE_DIR), name="selfie")
 
 # Health check endpoints
 @app.get("/health")
@@ -215,8 +222,12 @@ app.include_router(token_history_route.api_router, prefix="/api/tokens", tags=["
 app.include_router(profile_api_route.router, prefix="/api/profile")
 app.include_router(userPass_route.router)
 app.include_router(like_route_api.router, prefix="/api/premium")
+app.include_router(user_profile_view_api_route.router, prefix="/api/edit")
+app.include_router(verification_routes.router)
 
 app.include_router(block_report_route.router)
+app.include_router(fcm_route.router, prefix="/api/fcm")
+
 # Scheduler Instance
 scheduler = BackgroundScheduler()
 

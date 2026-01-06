@@ -245,6 +245,7 @@
   "INCORRECT_OTP": "OTP incorrect",
   "LOGIN_USER_NOT_FOUND": "Utilisateur introuvable",
   "LOGIN_NEW_OTP_SENT": "Un nouvel OTP a été envoyé à votre adresse e-mail",
+  "USER_NOT_REGISTERED": "Utilisateur non enregistré",
 
   "NO_ACCOUNT_FOUND_WITH_EMAIL": "Aucun compte trouvé avec cette adresse e-mail",
   "RESET_PASSWORD_OTP_SENT": "OTP envoyé à votre adresse e-mail",
@@ -316,6 +317,32 @@
   "FAILED_TO_FETCH_BLOCKED_USERS": "Échec de la récupération des utilisateurs bloqués",
   "REPORTED_USERS_FETCHED": "Utilisateurs signalés récupérés",
   "FAILED_TO_FETCH_REPORTED_USERS": "Échec de la récupération des utilisateurs signalés",
+
+  "-------------7-------------":"-------------7-------------",
+  "EDIT_PROFILE_DATA_FETCHED_SUCCESSFULLY": "Données du profil modifié récupérées avec succès",
+  "PROFILE_UPDATED_SUCCESSFULLY": "Profil mis à jour avec succès",
+  "ALREADY_VERIFIED": "Déjà vérifié",
+  "SELFIE_REQUIRED": "Selfie requis",
+  "SELFIE_SUBMITTED_FOR_VERIFICATION": "Selfie soumise pour vérification",
+  "NO_VERIFICATION_SELFIE_FOUND": "Aucun selfie de vérification trouvé",
+  "FILE_NOT_FOUND": "Fichier introuvable",
+  "VERIFICATION_SELFIE_FETCHED": "Selfie de vérification récupérée",
+
+  "NOTIFICATION_FETCHED": "Notification récupérée",
+  "NOTIFICATION_NOT_FOUND": "Notification introuvable",
+  "NOTIFIATION_MARKED_AS_READ": "Notification marquée comme lue",
+  "ALL_NOTIFICATION_MARKED_AS_READ": "Toutes les notifications marquées comme lues",
+
+
+  "-------------8-------------":"-------------8-------------",
+
+  "FCM_TOKEN_REGISTERED": "Jeton FCM enregistré",
+  "FCM_TOKENS_FETCHED": "Jeton FCM récupéré",
+  "DEVICE_TOKEN_REQUIRED": "Jeton d'appareil requis",
+  "FCM_TOKEN_NOT_FOUND": "Jeton FCM introuvable",
+  "FCM_TOKEN_DEACTIVATED": "Jeton FCM désactivé",
+  "FCM_TOKEN_DELETED": "Jeton FCM supprimé",
+
   "USERS_FETCHED_SUCCESSFULLY": "Utilisateurs récupérés avec succès",
 
    "MINIMUM_WITHDRAWN_TOKENS_REQUIRED": "Un minimum de {required_tokens} jetons est requis pour effectuer un retrait.",
@@ -323,5 +350,17 @@
    "TOKEN_WITHDRAWAL_ALREADY_PENDING" : "Vous avez déjà une demande de retrait de jetons en attente. Veuillez patienter jusqu'à son traitement.",
    "WITHDRAWAL_REQUEST_SUBMITTED": "Demande de retrait soumise avec succès.",
    "WITHDRAWAL_REQUEST_PROCESSING_ERROR" : "Nous ne sommes pas en mesure de traiter votre demande de retrait pour le moment. Veuillez réessayer plus tard.",
-  "WITHDRAW_TRANSACTIONS_FETCHED": "Opérations de retrait récupérées avec succès."
+  "WITHDRAW_TRANSACTIONS_FETCHED": "Opérations de retrait récupérées avec succès.",
+
+  "VERIFICATION_QUEUE_FETCHED_SUCCESSFULLY": "File de vérification récupérée avec succès",
+  "FAILED_TO_FETCH_VERIFICATION_QUEUE": "Échec de la récupération de la file de vérification",
+  "USER_ALREADY_VERIFIED": "Utilisateur déjà vérifié",
+  "USER_VERIFICATION_APPROVED": "Vérification de l’utilisateur approuvée",
+  "USER_ALREADY_APPROVED": "Utilisateur déjà approuvé",
+  "USER_VERIFICATION_REJECTED": "Vérification de l’utilisateur rejetée",
+  "APPROVED_VERIFICATION_COUNT_FETCHED": "Nombre de vérifications approuvées récupéré",
+  "SOMEONE_VIEWED_YOUR_PROFILE": "Quelqu'un a consulté votre profil",
+  "A_USER_JUST_VIEWED_YOUR_PROFILE": "Un utilisateur vient de consulter votre profil",
+  "ACCOUNT_DELETED_SUCCESSFULLY": "Compte supprimé avec succès"
+
 }

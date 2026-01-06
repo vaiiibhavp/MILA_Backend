@@ -3,6 +3,7 @@
 from bson import ObjectId
 from config.models.user_models import get_user_details
 from config.models.onboarding_model import get_onboarding_details
+from datetime import datetime
 
 async def fetch_basic_profile_data(user_id: str):
     user = await get_user_details(
@@ -34,3 +35,19 @@ async def fetch_basic_profile_data(user_id: str):
     )
 
     return user, onboarding
+
+def format_notification(n):
+    created_at = n.get("created_at")
+
+    if isinstance(created_at, datetime):
+        created_at = created_at.isoformat()
+
+    return {
+        "id": str(n["_id"]),
+        "type": n["type"],
+        "title": n["title"],
+        "message": n["message"],
+        "reference": n.get("reference"),
+        "is_read": n.get("is_read", False),
+        "created_at": created_at
+    }

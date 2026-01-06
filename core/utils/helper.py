@@ -29,6 +29,8 @@ from services.translation import translate_message
 from core.utils.core_enums import *
 from config.models.onboarding_model import *
 from core.utils.auth_utils import *
+from enum import Enum
+from typing import List
 
 load_dotenv()
 
@@ -177,6 +179,12 @@ async def finalize_login_response(user: dict, lang: str):
         }],
         status_code=200
     )
+
+def enum_values(enum_cls: Enum) -> List[str]:
+    """
+    Extract enum values as a list of strings
+    """
+    return [e.value for e in enum_cls]
 
 def convert_datetime_to_date(obj, date_format="%Y-%m-%d"):
     """

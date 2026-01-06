@@ -8,6 +8,21 @@ from enum import Enum
 from config.models.user_models import PyObjectId
 from config.db_config import *
 
+
+BASIC_FIELDS = [
+    "bio",
+    "country",
+    "gender",
+    "sexual_orientation",
+    "marital_status"
+]
+
+INTEREST_FIELDS = [
+    "passions",
+    "interested_in",
+    "preferred_country"
+]
+
 class GenderEnum(str, Enum):
     male = "male"
     female = "female"

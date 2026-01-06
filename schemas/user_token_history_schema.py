@@ -13,7 +13,7 @@ class CreateTokenHistory(BaseModel):
     reason: str
     balance_before: str
     balance_after: str
-    txn_id: Optional[str]
+    txn_id: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class TokenHistory(BaseModel):
