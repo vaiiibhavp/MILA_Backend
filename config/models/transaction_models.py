@@ -1,12 +1,13 @@
 from bson import ObjectId
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 from pymongo import ReturnDocument
 
 from core.utils.core_enums import TransactionStatus
+from core.utils.pagination import StandardResultsSetPagination
 from schemas.transcation_schema import TransactionCreateModel, TransactionUpdateModel, TokenWithdrawTransactionCreateModel
 from config.db_config import transaction_collection, withdraw_token_transaction_collection
-from core.utils.helper import convert_objectid_to_str
+from core.utils.helper import convert_objectid_to_str, convert_datetime_to_date
 from services.translation import translate_message
 from core.utils.response_mixin import CustomResponseMixin
 from datetime import datetime,timezone
@@ -83,3 +84,28 @@ async def store_withdrawn_token_request(doc:TokenWithdrawTransactionCreateModel)
     result = await withdraw_token_transaction_collection.insert_one(doc)
     doc["_id"] = convert_objectid_to_str(result.inserted_id)
     return doc
+
+async def get_withdraw_token_transactions(user_id: str, pagination:StandardResultsSetPagination) -> List[Dict[str, Any]]:
+    """
+        Get all token withdrawal transactions for a user,
+        sorted by latest created_at.
+    """
+    cursor = ((withdraw_token_transaction_collection
+               .find({"user_id": ObjectId(user_id)})).sort("created_at", -1).skip(pagination.skip).limit(pagination.limit))
+    docs = await cursor.to_list(length=pagination.limit)
+    transactions: list[dict] = []
+    for doc in docs:
+        transactions.append({
+            "id": convert_objectid_to_str(doc["_id"]),
+            "user_id": user_id,
+            "amount": doc["request_amount"],
+            "status": doc["status"],
+            "wallet_address": doc["wallet_address"],
+            "platform_fee": str(doc["platform_fee"]),
+            "tron_fee": str(doc["tron_fee"]),
+            "paid_amount": str(doc["paid_amount"]),
+            "tokens": doc["tokens"],
+            "created_at": convert_datetime_to_date(doc["created_at"], '%d-%m-%Y'),
+        })
+
+    return transactions

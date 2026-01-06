@@ -327,7 +327,7 @@
   "NO_VERIFICATION_SELFIE_FOUND": "Aucun selfie de vérification trouvé",
   "FILE_NOT_FOUND": "Fichier introuvable",
   "VERIFICATION_SELFIE_FETCHED": "Selfie de vérification récupérée",
-  
+
   "NOTIFICATION_FETCHED": "Notification récupérée",
   "NOTIFICATION_NOT_FOUND": "Notification introuvable",
   "NOTIFIATION_MARKED_AS_READ": "Notification marquée comme lue",
@@ -345,11 +345,12 @@
 
   "USERS_FETCHED_SUCCESSFULLY": "Utilisateurs récupérés avec succès",
 
-  "MINIMUM_WITHDRAWN_TOKENS_REQUIRED": "Un minimum de {required_tokens} jetons est requis pour effectuer un retrait.",
-  "INSUFFICIENT_AMOUNT": "Jetons insuffisants.",
-  "TOKEN_WITHDRAWAL_ALREADY_PENDING" : "Vous avez déjà une demande de retrait de jetons en attente. Veuillez patienter jusqu'à son traitement.",
-  "WITHDRAWAL_REQUEST_SUBMITTED": "Demande de retrait soumise avec succès.",
-  "WITHDRAWAL_REQUEST_PROCESSING_ERROR" : "Nous ne sommes pas en mesure de traiter votre demande de retrait pour le moment. Veuillez réessayer plus tard.",
+   "MINIMUM_WITHDRAWN_TOKENS_REQUIRED": "Un minimum de {required_tokens} jetons est requis pour effectuer un retrait.",
+   "INSUFFICIENT_AMOUNT": "Jetons insuffisants.",
+   "TOKEN_WITHDRAWAL_ALREADY_PENDING" : "Vous avez déjà une demande de retrait de jetons en attente. Veuillez patienter jusqu'à son traitement.",
+   "WITHDRAWAL_REQUEST_SUBMITTED": "Demande de retrait soumise avec succès.",
+   "WITHDRAWAL_REQUEST_PROCESSING_ERROR" : "Nous ne sommes pas en mesure de traiter votre demande de retrait pour le moment. Veuillez réessayer plus tard.",
+  "WITHDRAW_TRANSACTIONS_FETCHED": "Opérations de retrait récupérées avec succès.",
 
   "VERIFICATION_QUEUE_FETCHED_SUCCESSFULLY": "File de vérification récupérée avec succès",
   "FAILED_TO_FETCH_VERIFICATION_QUEUE": "Échec de la récupération de la file de vérification",

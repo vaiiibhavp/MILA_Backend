@@ -185,3 +185,16 @@ def enum_values(enum_cls: Enum) -> List[str]:
     Extract enum values as a list of strings
     """
     return [e.value for e in enum_cls]
+
+def convert_datetime_to_date(obj, date_format="%Y-%m-%d"):
+    """
+     Recursively convert datetime objects to formatted date string.
+    """
+    if isinstance(obj, datetime):
+        return obj.strftime(date_format)
+    elif isinstance(obj, dict):
+        return {k: convert_datetime_to_date(v, date_format) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_datetime_to_date(item, date_format) for item in obj]
+    else:
+        return obj

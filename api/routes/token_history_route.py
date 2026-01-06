@@ -3,7 +3,7 @@ from fastapi import APIRouter,Depends,Request,Query
 from core.utils.pagination import StandardResultsSetPagination, pagination_params
 from core.utils.permissions import UserPermission
 from api.controller.token_controller import get_user_token_details, verify_token_purchase, \
-    validate_remaining_token_payment, request_withdrawn_token_amount
+    validate_remaining_token_payment, request_withdrawn_token_amount, fetch_withdraw_token_transactions
 from schemas.user_token_history_schema import (TokenTransactionRequestModel, CompleteTokenTransactionRequestModel,
     WithdrawnTokenRequestModel)
 
@@ -85,3 +85,20 @@ class TokenRoutes:
         user_id = str(current_user["_id"])
         lang = lang if lang in supported_langs else "en"
         return await request_withdrawn_token_amount(request, user_id, lang)
+
+    @api_router.get("/withdraw-transactions")
+    async def get_withdraw_transactions_history(
+            request: Request,
+            current_user: dict = Depends(UserPermission(allowed_roles=["user"])),
+            lang: str = Query(None),
+            pagination: StandardResultsSetPagination = Depends(pagination_params)
+    ):
+        """
+            Retrieves the token withdrawal transaction history for the authenticated user.
+
+            This endpoint returns a paginated list of token withdrawal transactions,
+            allowing users to view their withdrawal history with localized response messages.
+        """
+        user_id = str(current_user["_id"])
+        lang = lang if lang in supported_langs else "en"
+        return await fetch_withdraw_token_transactions(user_id=user_id, lang=lang, pagination=pagination)
