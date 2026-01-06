@@ -1,9 +1,8 @@
 from datetime import datetime
 from bson import ObjectId
-from fastapi import HTTPException
 from config.db_config import db
-from bson.errors import InvalidId
 from schemas.verification_schema import VerificationStatusEnum
+from core.utils.pagination import StandardResultsSetPagination
 from api.controller.files_controller import generate_file_url
 from core.utils.response_mixin import CustomResponseMixin
 from config.db_config import verification_collection , user_collection
@@ -15,12 +14,9 @@ async def get_verification_queue(
     status: str,
     lang: str = "en",
     search: str | None = None,
-    page: int = 1,
-    limit: int = 5
+    pagination: StandardResultsSetPagination = None
 ):
     try:
-        skip = (page - 1) * limit
-
         pipeline = [
             {
                 "$match": {
@@ -95,8 +91,8 @@ async def get_verification_queue(
         #  Pagination
         pipeline.extend([
             {"$sort": {"created_at": -1}},
-            {"$skip": skip},
-            {"$limit": limit}
+            {"$skip": pagination.skip},
+            {"$limit": pagination.limit}
         ])
 
         #  Final projection

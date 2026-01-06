@@ -6,8 +6,8 @@ from api.controller.verification_controller import (
     reject_verification,
     get_approved_verification
 )
-from core.auth import get_current_user
-from schemas.verification_schema import VerificationActionRequest , PaginationParams
+from core.utils.pagination import StandardResultsSetPagination, pagination_params
+from schemas.verification_schema import VerificationActionRequest
 from core.utils.permissions import AdminPermission
 
 router = APIRouter(prefix="/admin/verifications")
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/admin/verifications")
 async def fetch_verification_queue(
     status: Optional[str] = Query("pending"),
     search: Optional[str] = Query(None),
-    pagination: PaginationParams = Depends(),
+    pagination: StandardResultsSetPagination = Depends(pagination_params),
     lang: str = "en",
     admin: dict = Depends(AdminPermission(allowed_roles=["admin"]))
 ):
@@ -25,8 +25,7 @@ async def fetch_verification_queue(
         status=status,
         lang=lang,
         search=search,
-        page=pagination.page,
-        limit=pagination.limit
+        pagination=pagination
     )
 
 
