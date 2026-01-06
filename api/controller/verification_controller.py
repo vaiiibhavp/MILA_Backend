@@ -13,9 +13,14 @@ response = CustomResponseMixin()
 
 async def get_verification_queue(
     status: str,
-    lang: str = "en"
+    lang: str = "en",
+    search: str | None = None,
+    page: int = 1,
+    limit: int = 5
 ):
     try:
+        skip = (page - 1) * limit
+
         pipeline = [
             {
                 "$match": {
@@ -38,7 +43,16 @@ async def get_verification_queue(
                 }
             },
             {"$unwind": "$user"},
-
+            *(
+                [{
+                    "$match": {
+                        "user.username": {
+                            "$regex": search,
+                            "$options": "i"
+                        }
+                    }
+                }] if search else []
+            ),
             {
                 "$lookup": {
                     "from": "verification",
@@ -78,6 +92,14 @@ async def get_verification_queue(
         elif status == VerificationStatusEnum.APPROVED:
             pipeline.append({"$match": {"user.is_verified": True}})
 
+        #  Pagination
+        pipeline.extend([
+            {"$sort": {"created_at": -1}},
+            {"$skip": skip},
+            {"$limit": limit}
+        ])
+
+        #  Final projection
         pipeline.append({
             "$project": {
                 "_id": 0,

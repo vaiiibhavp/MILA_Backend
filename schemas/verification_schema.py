@@ -63,3 +63,7 @@ class VerificationActionRequest(BaseModel):
             raise ValueError("INVALID_USER_ID")
 
         return v.strip()
+
+class PaginationParams(BaseModel):
+    page: int = Field(1, ge=1)
+    limit: int = Field(10, ge=1, le=100)
