@@ -1,10 +1,10 @@
 #profile_view_controller.py:
 
 from bson import ObjectId
-from config.db_config import private_gallery_purchases_collection, profile_view_history, user_collection, onboarding_collection, file_collection, gift_collection
+from config.db_config import countries_collection, private_gallery_purchases_collection, profile_view_history, user_collection, onboarding_collection, file_collection, gift_collection
 from core.utils.response_mixin import CustomResponseMixin
 from core.utils.age_calculation import calculate_age
-from api.controller.files_controller import get_profile_photo_url, generate_file_url
+from api.controller.files_controller import get_profile_photo_url, generate_file_url, profile_photo_from_onboarding
 from datetime import date, datetime
 from services.translation import translate_message
 from core.utils.helper import serialize_datetime_fields
@@ -114,7 +114,7 @@ async def get_profile_controller(user_id: str, viewer: dict, lang: str = "en"):
         "name": user.get("username"),
         "age": age,
         "email": user.get("email"),
-        "profile_photo": profile_photo_url if profile_photo_url else None,
+        "profile_photo": await profile_photo_from_onboarding(onboarding),
         "about": onboarding.get("bio"),
         "hobbies": onboarding.get("passions"),
         "gender": onboarding.get("gender"),
@@ -519,8 +519,18 @@ async def search_profiles_controller(
 
     # APPLY FREE FILTERS
     for payload_key, (db_field, operator) in FREE_FILTERS.items():
-        if payload.get(payload_key):
-            query[db_field] = {operator: payload[payload_key]}
+        value = payload.get(payload_key)
+
+        if not value:
+            continue
+
+        # Country (and other list-based filters)
+        if operator == "$in":
+            query[db_field] = {
+                "$in": value if isinstance(value, list) else [value]
+            }
+        else:
+            query[db_field] = {operator: value}
 
     # APPLY PREMIUM FILTERS
     used_premium_filter = any(payload.get(k) for k in PREMIUM_FILTERS)
@@ -579,12 +589,27 @@ async def search_profiles_controller(
 
         age = calculate_age(birthdate) if birthdate else None
 
+        country_data = None
+        if onboarding.get("country"):
+            country_doc = await countries_collection.find_one(
+                {"_id": ObjectId(onboarding["country"])},
+                {"name": 1, "code": 1}
+            )
+            if country_doc:
+                country_data = {
+                    "id": str(country_doc["_id"]),
+                    "name": country_doc["name"],
+                    "code": country_doc.get("code")
+                }
+
+        profile_photo = await profile_photo_from_onboarding(onboarding)
+
         results.append({
             "user_id": str(user["_id"]),
             "name": user.get("username"),
             "age": age,
-            "city": onboarding.get("country"),
-            "profile_photo": await get_profile_photo_url({"_id": user["_id"]}),
+            "country": country_data,
+            "profile_photo": profile_photo,
             "is_verified": user.get("is_verified", False),
             "login_status": user.get("login_status")
         })

@@ -30,7 +30,8 @@ async def fetch_basic_profile_data(user_id: str):
             "marital_status",
             "passions",
             "sexual_preferences",
-            "preferred_country"
+            "preferred_country",
+            "images"
         ]
     )
 

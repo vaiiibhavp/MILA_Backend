@@ -461,3 +461,31 @@ async def delete_user_file_controller(file_id: str, user_id: str, lang: str = "e
             translate_message("FILE_DELETE_FAILED", lang=lang) + f": {str(e)}",
             status_code=500
         )
+    
+async def profile_photo_from_onboarding(onboarding: dict):
+    """
+    Priority:
+    first image from images[]
+    """
+    if not onboarding:
+        return None
+    
+    file_id = None
+
+    if onboarding.get("images"):
+        file_id = onboarding["images"][0]
+
+    if not file_id:
+        return None
+
+    file_doc = await file_collection.find_one(
+        {"_id": ObjectId(file_id), "is_deleted": {"$ne": True}}
+    )
+
+    if not file_doc:
+        return None
+
+    return await generate_file_url(
+        file_doc["storage_key"],
+        file_doc["storage_backend"]
+    )

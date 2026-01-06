@@ -13,6 +13,7 @@ from config.db_config import *
 from services.premium_guard import require_premium
 from config.models.user_models import *
 from core.utils.helper import *
+from api.controller.files_controller import *
 
 response = CustomResponseMixin()
 
@@ -50,16 +51,16 @@ async def get_users_who_liked_me_for_premium(
     results = []
 
     async for user in cursor:
-        onboarding, profile_photo = await asyncio.gather(
+        onboarding = await asyncio.gather(
             get_onboarding_details(
                 {"user_id": str(user["_id"])},
                 fields=["birthdate", "country"]
             ),
-            get_profile_photo_url({"_id": user["_id"]})
         )
 
         birthdate = onboarding.get("birthdate") if onboarding else None
         age = calculate_age(birthdate) if birthdate else None
+        profile_photo = await profile_photo_from_onboarding(onboarding)
 
         results.append({
             "user_id": str(user["_id"]),
@@ -137,7 +138,7 @@ async def get_users_who_visited_my_profile(
         viewer_id = view.get("user_id")
         viewed_at = view.get("viewed_at")
 
-        user, onboarding, profile_photo = await asyncio.gather(
+        user, onboarding = await asyncio.gather(
             get_user_details(
                 condition={
                     "_id": ObjectId(viewer_id),
@@ -147,13 +148,14 @@ async def get_users_who_visited_my_profile(
             ),
             get_onboarding_details(
                 {"user_id": viewer_id},
-                fields=["birthdate", "country"]
+                fields=["birthdate", "country", "images"]
             ),
-            get_profile_photo_url({"_id": ObjectId(viewer_id)})
         )
 
         if not user:
             continue
+
+        profile_photo = await profile_photo_from_onboarding(onboarding)
 
         birthdate = onboarding.get("birthdate") if onboarding else None
         age = calculate_age(birthdate) if birthdate else None

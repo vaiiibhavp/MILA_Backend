@@ -15,7 +15,7 @@ from services.profile_fetch_service import *
 from services.profile_mapper import *
 from schemas.language_schema import *
 from services.gallery_service import *
-
+from api.controller.files_controller import *
 response = CustomResponseMixin()
 
 VERIFICATION_REWARD_TOKENS=settings.VERIFICATION_REWARD_TOKENS
@@ -56,13 +56,13 @@ async def get_user_profile_controller(current_user: dict, lang: str = "en"):
     private_gallery_locked = membership_type == "free"
 
     tokens = user.get("tokens", 0)
-    profile_photo_url = await get_profile_photo_url(current_user)
+    profile_photo = await profile_photo_from_onboarding(onboarding)
 
     profile_data = [{
             "name": user.get("username"),
             "age": age,
             "email": user.get("email"),
-            "profile_photo": profile_photo_url,
+            "profile_photo": profile_photo,
             "about": onboarding.get("bio") if onboarding else None,
             "screen_state": screen_state,
             "verification": {
@@ -277,9 +277,7 @@ async def get_basic_profile_details_controller(
             status_code=404
         )
 
-    profile_photo = await get_profile_photo_url(
-        {"_id": ObjectId(current_user["_id"])}
-    )
+    profile_photo = await profile_photo_from_onboarding(onboarding)
 
     data = build_basic_profile_response(
         user=user,
