@@ -325,7 +325,7 @@
   "NO_VERIFICATION_SELFIE_FOUND": "No verification selfie found",
   "FILE_NOT_FOUND": "File not found",
   "VERIFICATION_SELFIE_FETCHED": "Verification selfie fetched",
-  
+
   "NOTIFICATION_FETCHED": "Notification fetched",
   "NOTIFICATION_NOT_FOUND": "Notification not found",
   "NOTIFIATION_MARKED_AS_READ": "Notification marked as read",
@@ -344,7 +344,7 @@
   "TOKEN_WITHDRAWAL_ALREADY_PENDING": "You already have a pending token withdrawal request. Please wait until it is processed.",
   "WITHDRAWAL_REQUEST_SUBMITTED": "Withdrawal request submitted successfully.",
   "WITHDRAWAL_REQUEST_PROCESSING_ERROR" : "We’re unable to process your withdrawal request right now. Please try again later.",
-
+  "WITHDRAW_TRANSACTIONS_FETCHED": "Withdrawal transactions fetched successfully.",
   "VERIFICATION_QUEUE_FETCHED_SUCCESSFULLY":"Verification queue fetched successfully",
   "FAILED_TO_FETCH_VERIFICATION_QUEUE":"Failed to fetch verification queue",
   "USER_ALREADY_VERIFIED":"User already verified",
@@ -354,5 +354,4 @@
   "APPROVED_VERIFICATION_COUNT_FETCHED":"Approved verification count fetched",
   "SOMEONE_VIEWED_YOUR_PROFILE": "Someone viewed your profile",
   "A_USER_JUST_VIEWED_YOUR_PROFILE": "A user just viewed your profile"
-
 }

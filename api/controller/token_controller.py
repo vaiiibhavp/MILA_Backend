@@ -16,7 +16,8 @@ from core.utils.transaction_helper import get_transaction_details, validate_dest
     calculate_tokens_based_on_amount
 from config.models.transaction_models import (store_transaction_details, get_existing_transaction,
                                               get_subscription_payment_details, update_transaction_details,
-                                              store_withdrawn_token_request, ensure_no_pending_token_withdrawal)
+                                              store_withdrawn_token_request, ensure_no_pending_token_withdrawal,
+                                              get_withdraw_token_transactions)
 from config.models.user_models import get_user_details
 from core.utils.response_mixin import CustomResponseMixin
 response = CustomResponseMixin()
@@ -227,6 +228,39 @@ async def request_withdrawn_token_amount(request: WithdrawnTokenRequestModel, us
             data=str(e),
             status_code=500
         )
+
+async def fetch_withdraw_token_transactions(
+        user_id:str,
+        lang:str,
+        pagination:StandardResultsSetPagination
+):
+    """
+        Fetches the token withdrawal transaction history for a user.
+
+        This function retrieves a paginated list of token withdrawal transactions
+        associated with the specified user and returns a localized success response.
+        If an error occurs during retrieval, it returns an appropriate error response.
+
+        :param user_id: Unique identifier of the user whose withdrawal transactions
+                        are being retrieved.
+        :param lang: Language code used for localized response messages.
+        :param pagination: Pagination configuration for limiting and offsetting results.
+        :return: Success response containing the user's withdrawal transaction history
+             or an error response if the operation fails.
+    """
+    try:
+        token_trans_history = await get_withdraw_token_transactions(user_id=user_id,pagination=pagination)
+        return response.success_message(
+            translate_message("WITHDRAW_TRANSACTIONS_FETCHED", lang=lang),
+            data=token_trans_history
+        )
+    except Exception as e:
+        return response.raise_exception(
+            translate_message("ERROR_WHILE_FETCHING_WITHDRAW_TRANSACTIONS", lang=lang),
+            data=str(e),
+            status_code=500
+        )
+
 
 
     
