@@ -542,7 +542,7 @@ async def search_profiles_controller(
                 query[db_field] = {"$in": value}
 
             elif operator == "range":
-                today = date.today()
+                today = datetime.utcnow()
                 birthdate_query = {}
 
                 if value.get("min"):

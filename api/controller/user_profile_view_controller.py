@@ -291,7 +291,7 @@ async def mark_notification_read(notification_id: str, current_user, lang: str =
         )
 
     return response.success_message(
-        translate_message("NOTIFIATION_MARKED_AS_READ", lang),
+        translate_message("NOTIFICATION_MARKED_AS_READ", lang),
         status_code=200
     )
 
