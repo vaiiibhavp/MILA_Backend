@@ -1,8 +1,9 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from bson import ObjectId
 from pydantic import BaseModel,Field, field_validator
 from typing import Optional, List, Union
-from core.utils.core_enums import TransactionStatus, TransactionType
+from core.utils.core_enums import TransactionStatus, TransactionType, MembershipType
+
 
 class TransactionRequestModel(BaseModel):
     tron_txn_id: str
@@ -92,3 +93,12 @@ class TokenWithdrawTransactionCreateModel(BaseModel):
     tokens:Optional[int] = 0
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class UserSubscribedDetailsModel(BaseModel):
+    trans_id: str
+    user_id: str
+    plan_id: str
+    plan_name: str
+    status: str = MembershipType.FREE.value
+    plan_amount: float = 0.0
+    expires_at: datetime = None

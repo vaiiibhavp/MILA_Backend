@@ -1,10 +1,12 @@
 from fastapi import APIRouter,Depends,Request,Query
 
+from core.utils import pagination
 from core.utils.pagination import StandardResultsSetPagination, pagination_params
 from schemas.response_schema import Response
 from core.utils.permissions import UserPermission
 from api.controller.subscriptionPlan import get_subscription_list, transaction_verify, \
-    validate_remaining_transaction_payment, fetch_subscription_transactions
+    validate_remaining_transaction_payment, fetch_subscription_transactions, \
+    fetch_user_subscription_details
 from schemas.transcation_schema import TransactionRequestModel, CompleteTransactionRequestModel
 
 supported_langs = ["en", "fr"]
@@ -57,3 +59,18 @@ class SubscriptionPlan:
         lang = lang if lang in supported_langs else "en"
         return await fetch_subscription_transactions(user_id=user_id, lang=lang, pagination=pagination)
 
+    @api_router.get("/current")
+    async def get_current_subscription_details(
+            request: Request,
+            current_user: dict = Depends(UserPermission(allowed_roles=["user"])),
+            lang: str = Query(None)
+    ):
+        """
+            Retrieve the current subscription details for the authenticated user.
+            This endpoint returns the user's latest subscription information,
+            including plan details, expiration date, and subscription status
+            (active or expired), with localized response messages.
+        """
+        user_id = str(current_user["_id"])
+        lang = lang if lang in supported_langs else "en"
+        return await fetch_user_subscription_details(user_id=user_id, lang=lang)

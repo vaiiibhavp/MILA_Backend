@@ -198,3 +198,18 @@ def convert_datetime_to_date(obj, date_format="%Y-%m-%d"):
         return [convert_datetime_to_date(item, date_format) for item in obj]
     else:
         return obj
+
+def get_subscription_status(expires_at) -> str:
+    """
+    Determine subscription status based on expiry date.
+    """
+    if not expires_at:
+        return MembershipStatus.EXPIRED.value
+
+    now = datetime.now(timezone.utc)
+
+    # Ensure timezone-aware comparison
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+    return MembershipStatus.EXPIRED.value if expires_at < now else MembershipStatus.ACTIVE.value

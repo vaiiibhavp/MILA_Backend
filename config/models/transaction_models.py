@@ -5,9 +5,11 @@ from pymongo import ReturnDocument
 
 from core.utils.core_enums import TransactionStatus, TransactionType
 from core.utils.pagination import StandardResultsSetPagination
-from schemas.transcation_schema import TransactionCreateModel, TransactionUpdateModel, TokenWithdrawTransactionCreateModel
+from schemas.transcation_schema import TransactionCreateModel, TransactionUpdateModel, \
+    TokenWithdrawTransactionCreateModel, UserSubscribedDetailsModel
 from config.db_config import transaction_collection, withdraw_token_transaction_collection
-from core.utils.helper import convert_objectid_to_str, convert_datetime_to_date, serialize_datetime_fields
+from core.utils.helper import convert_objectid_to_str, convert_datetime_to_date, serialize_datetime_fields, \
+    get_subscription_status
 from services.translation import translate_message
 from core.utils.response_mixin import CustomResponseMixin
 from datetime import datetime,timezone
@@ -162,3 +164,64 @@ async def get_subscription_transactions(user_id: str, pagination:StandardResults
         })
 
     return transactions
+
+async def get_user_transaction_details(trans_id:str, user_id:str) -> Optional[List[UserSubscribedDetailsModel]]:
+    """
+        Fetch a single subscription transaction for a user along with
+        its associated subscription plan details.
+
+        This function:
+        - Validates ownership of the transaction using `user_id`
+        - Ensures the transaction type is `subscription_transaction`
+        - Joins subscription plan data using MongoDB `$lookup`
+        - Returns a structured `UserSubscribedDetailsModel`
+
+        :param trans_id: MongoDB ObjectId of the transaction
+        :param user_id: MongoDB ObjectId of the authenticated user
+        :return: UserSubscribedDetailsModel if found, otherwise None
+    """
+    pipeline = [
+        {
+            "$match": {
+                "user_id": ObjectId(user_id),
+                "_id": ObjectId(trans_id),
+                "trans_type": TransactionType.SUBSCRIPTION_TRANSACTION.value
+            }
+        },
+        {
+            "$lookup": {
+                "from": "subscription_plan",  # collection name
+                "localField": "plan_id",
+                "foreignField": "_id",
+                "as": "plan_details"
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$plan_details",
+                "preserveNullAndEmptyArrays": True
+            }
+        },
+    ]
+    cursor = transaction_collection.aggregate(pipeline)
+    docs = await cursor.to_list(length=1)
+    if not docs:
+        return None
+    doc = docs[0]
+
+    expires_at = doc.get("expires_at",None)
+    doc = UserSubscribedDetailsModel(
+        trans_id=convert_objectid_to_str(doc["_id"]),
+        user_id=user_id,
+        plan_id=convert_objectid_to_str(doc["plan_id"]),
+        plan_name=(
+                doc["plan_details"]["title"]
+                if doc.get("plan_details") else None
+            ),
+        plan_amount=doc["plan_amount"],
+        expires_at=doc.get("expires_at",None),
+        status=get_subscription_status(expires_at)
+    ).model_dump()
+
+    doc = serialize_datetime_fields(doc)
+    return [doc]

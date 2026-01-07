@@ -1,6 +1,8 @@
+from bson import ObjectId
 from fastapi import Request
 
 from config import settings
+from config.models.user_models import get_user_details
 from core.utils.exceptions import CustomValidationError
 from core.utils.pagination import StandardResultsSetPagination
 from services.translation import translate_message
@@ -10,11 +12,12 @@ from config.db_config import subscription_plan_collection
 from core.utils.transaction_helper import get_transaction_details, validate_destination_wallet, \
     validate_transaction_status, build_transaction_model, handle_full_payment, mark_full_payment_received
 from schemas.transcation_schema import TransactionRequestModel, CompleteTransactionRequestModel
-from core.utils.core_enums import TransactionStatus, TransactionType
+from core.utils.core_enums import TransactionStatus, TransactionType, MembershipType
 
 response = CustomResponseMixin()
 from config.models.transaction_models import store_transaction_details, get_existing_transaction, \
-    get_subscription_payment_details, update_transaction_details, get_subscription_transactions
+    get_subscription_payment_details, update_transaction_details, get_subscription_transactions, \
+    get_user_transaction_details
 from config.models.subscription_plan_models import get_subscription_plan
 
 
@@ -182,6 +185,36 @@ async def fetch_subscription_transactions(
             data=str(e),
             status_code=500
         )
+
+async def fetch_user_subscription_details(
+    user_id:str,
+    lang:str,
+):
+    try:
+        user_membership_details = await get_user_details(condition={"_id": ObjectId(user_id)}, fields=["membership_trans_id","membership_status","membership_type"])
+
+        trans_id = user_membership_details.get('membership_trans_id', None)
+
+        if trans_id is None or user_membership_details.get('membership_type',MembershipType.FREE.value) == MembershipType.FREE.value:
+            return response.error_message(
+                message=translate_message("NOT_PREMIUM_USER", lang=lang),
+                status_code=404,
+                data = []
+            )
+
+        plan_details = await get_user_transaction_details(trans_id, user_id)
+
+        return response.success_message(
+            translate_message("USER_SUBSCRIPTION_DETAILS_FETCHED", lang=lang),
+            data=plan_details
+        )
+    except Exception as e:
+        return response.raise_exception(
+            translate_message("USER_SUBSCRIPTION_DETAILS_FETCH_FAILED", lang=lang),
+            data=str(e),
+            status_code=500
+        )
+
 
 
 
