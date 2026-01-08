@@ -11,6 +11,7 @@ class MembershipStatus(str,Enum):
 class TokenTransactionType(str, Enum):
     CREDIT = "CREDIT"
     DEBIT = "DEBIT"
+    WITHDRAW= "WITHDRAW"
 
 class TransactionStatus(str, Enum):
     SUCCESS = "success"

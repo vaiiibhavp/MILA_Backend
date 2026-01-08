@@ -1,4 +1,10 @@
 import re
+from typing import Optional
+
+from fastapi import Query
+
+from core.utils.core_enums import TokenTransactionType
+
 
 # ---------- EMAIL ----------
 def validate_email_value(v: str) -> str:
@@ -105,3 +111,20 @@ def validate_role_value(v: str) -> str:
         raise ValueError(f"Invalid role. Must be one of: {', '.join(allowed)}")
 
     return v
+
+def normalize_transaction_type(
+    transaction_type: Optional[str] = Query(
+        None,
+        description="Filter token history by transaction type : [CREDIT, DEBIT, WITHDRAW]",
+        examples=["CREDIT", "DEBIT", "WITHDRAW"]
+    )
+) -> Optional[TokenTransactionType]:
+    if transaction_type is None:
+        return None
+
+    try:
+        return TokenTransactionType(transaction_type.upper())
+    except ValueError:
+        raise ValueError(
+            f"Invalid transaction_type. Allowed values: {[e.value for e in TokenTransactionType]}"
+        )

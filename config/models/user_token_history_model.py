@@ -1,13 +1,28 @@
+from typing import Optional
+
 from config.db_config import user_token_history_collection
+from core.utils.core_enums import TokenTransactionType
 from core.utils.pagination import StandardResultsSetPagination
 from schemas.user_token_history_schema import TokenHistory
 from services.translation import translate_message
 from config.db_config import user_token_history_collection
 from schemas.user_token_history_schema import CreateTokenHistory
 
-async def get_user_token_history(user_id:str,lang:str, pagination:StandardResultsSetPagination):
-    cursor = ((user_token_history_collection
-                .find({"user_id":user_id})).sort("created_at", -1).skip(pagination.skip).limit(pagination.limit))
+async def get_user_token_history(user_id:str,lang:str, pagination:StandardResultsSetPagination, transaction_type: Optional[TokenTransactionType] = None):
+    # Build a base query
+    query = {"user_id": user_id}
+
+    # Apply optional type filter
+    if transaction_type:
+        query["type"] = transaction_type.value
+
+    cursor = (
+            user_token_history_collection
+            .find(query)
+            .sort("created_at", -1)
+            .skip(pagination.skip)
+            .limit(pagination.limit)
+    )
     docs = await cursor.to_list(length=pagination.limit)
     history: list[dict] = []
     for doc in docs:
