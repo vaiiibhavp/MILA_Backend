@@ -368,6 +368,7 @@
   "SUBSCRIPTION_TRANSACTIONS_FETCHED": "Transactions d'abonnement récupérées avec succès.",
   "ERROR_WHILE_FETCHING_SUBSCRIPTION_TRANSACTIONS":"Une erreur s'est produite lors de la récupération des transactions d'abonnement.",
   "USER_SUBSCRIPTION_DETAILS_FETCHED" : "Informations d'abonnement de l'utilisateur récupérées avec succès.",
-  "USER_SUBSCRIPTION_DETAILS_FETCH_FAILED": "Impossible de récupérer les informations d'abonnement de l'utilisateur. Veuillez réessayer plus tard."
+  "USER_SUBSCRIPTION_DETAILS_FETCH_FAILED": "Impossible de récupérer les informations d'abonnement de l'utilisateur. Veuillez réessayer plus tard.",
+  "Token_Purchase": "Crédité en USDT"
 
 }
