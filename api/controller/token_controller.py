@@ -1,6 +1,8 @@
+from typing import Optional
+
 from bson import ObjectId
 
-from core.utils.core_enums import TransactionType, TransactionStatus
+from core.utils.core_enums import TransactionType, TransactionStatus, TokenTransactionType
 from core.utils.exceptions import CustomValidationError
 from core.utils.pagination import StandardResultsSetPagination
 from config.models.user_token_history_model import get_user_token_history
@@ -26,10 +28,16 @@ response = CustomResponseMixin()
 async def get_user_token_details(
         user_id:str,
         lang:str,
-        pagination:StandardResultsSetPagination
+        pagination:StandardResultsSetPagination,
+        transaction_type: Optional[TokenTransactionType] = None
 ):
     try:
-        token_history = await get_user_token_history(user_id=user_id,lang=lang,pagination=pagination)
+        token_history = await get_user_token_history(
+            user_id=user_id,
+            lang=lang,
+            pagination=pagination,
+            transaction_type=transaction_type
+        )
         available_tokens = await get_user_details(condition={"_id":ObjectId(user_id)}, fields=["tokens"])
         token_plans = await get_token_packages_plans()
         token_plans = convert_objectid_to_str(token_plans)

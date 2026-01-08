@@ -1,9 +1,13 @@
+from typing import Optional
+
 from fastapi import APIRouter,Depends,Request,Query
 
+from core.utils.core_enums import TokenTransactionType
 from core.utils.pagination import StandardResultsSetPagination, pagination_params
 from core.utils.permissions import UserPermission
 from api.controller.token_controller import get_user_token_details, verify_token_purchase, \
     validate_remaining_token_payment, request_withdrawn_token_amount, fetch_withdraw_token_transactions
+from core.utils.validator import normalize_transaction_type
 from schemas.user_token_history_schema import (TokenTransactionRequestModel, CompleteTokenTransactionRequestModel,
     WithdrawnTokenRequestModel)
 
@@ -12,7 +16,13 @@ supported_langs = ["en", "fr"]
 
 class TokenRoutes:
     @api_router.get("/token-history")
-    async def get_token_history(request: Request, current_user: dict = Depends(UserPermission(allowed_roles=["user"])), lang: str = Query(None), pagination: StandardResultsSetPagination = Depends(pagination_params)):
+    async def get_token_history(
+            request: Request,
+            current_user: dict = Depends(UserPermission(allowed_roles=["user"])),
+            lang: str = Query(None),
+            pagination: StandardResultsSetPagination = Depends(pagination_params),
+            transaction_type: Optional[TokenTransactionType] = Depends(normalize_transaction_type),
+    ):
         """
             Get User Token Details:
             Description:
@@ -24,7 +34,12 @@ class TokenRoutes:
         """
         user_id = str(current_user["_id"])
         lang = lang if lang in supported_langs else "en"
-        return await get_user_token_details(user_id=user_id, lang=lang, pagination=pagination)
+        return await get_user_token_details(
+            user_id=user_id,
+            lang=lang,
+            pagination=pagination,
+            transaction_type=transaction_type,
+        )
 
     @api_router.post("/verify-token-purchase")
     async def validate_token_purchase(request: TokenTransactionRequestModel,current_user: dict = Depends(UserPermission(allowed_roles=["user"], require_verified=True)), lang: str = Query(None)):
