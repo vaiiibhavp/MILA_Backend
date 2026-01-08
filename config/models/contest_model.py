@@ -99,20 +99,17 @@ class ContestVoteModel(BaseModel):
     vote_cost: int
     voted_at: datetime = Field(default_factory=datetime.utcnow)
 
-def resolve_action_button(status: ContestStatus) -> str:
-    if status == ContestStatus.registration_open:
-        return "participate"
-    if status == ContestStatus.voting_started:
-        return "vote_now"
-    if status == ContestStatus.winner_announced:
-        return "view_winners"
-    return ""
 
 async def fetch_active_contests():
     return contest_collection.find(
         {
             "is_active": True,
-            "visibility": {"$in": ["upcoming", "in_progress"]}
+            "visibility": {
+                "$in": [
+                    ContestVisibility.upcoming.value,
+                    ContestVisibility.in_progress.value
+                ]
+            }
         }
     ).sort("created_at", -1)
 
@@ -121,18 +118,10 @@ async def fetch_past_contests():
     return contest_collection.find(
         {
             "is_active": True,
-            "visibility": "completed"
+            "visibility": ContestVisibility.completed.value
         }
     ).sort("created_at", -1)
 
-def resolve_action_button(status: ContestStatus) -> str:
-    if status == ContestStatus.registration_open:
-        return "participate"
-    if status == ContestStatus.voting_started:
-        return "vote_now"
-    if status == ContestStatus.winner_announced:
-        return "view_winners"
-    return ""
 
 async def get_contests_paginated(
     contest_type: str,
@@ -174,7 +163,6 @@ async def get_contests_paginated(
             voting_end=contest["voting_end"],
             total_participants=contest.get("total_participants", 0),
             total_votes=contest.get("total_votes", 0),
-            action_button=resolve_action_button(contest["status"]),
             prize_pool_description=contest.get("prize_pool_description"),
             voting_start=contest.get("voting_start")
         )
