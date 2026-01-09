@@ -2,6 +2,7 @@
 
 import asyncio
 from datetime import datetime
+import math
 import json
 from api.controller.files_controller import *
 from bson import ObjectId
@@ -179,6 +180,16 @@ async def get_user_profile_details(request: Request, current_user: dict, lang: s
 
 
 async def signup_controller(payload: Signup, lang):
+
+    deleted_account = await deleted_account_collection.find_one({
+        "email": payload.email
+    })
+
+    if deleted_account:
+        return response.error_message(
+            translate_message("EMAIL_CANNOT_BE_REUSED", lang=lang),
+            status_code=400
+        )
     # Step 1: Check if email already exists in DB
     existing = await user_collection.find_one({"email": payload.email})
     if existing:
@@ -331,6 +342,55 @@ async def login_controller(payload: LoginRequest, lang):
             status_code=400
         )
     
+    # Check user accout is deleted or not
+    deleted_account = await deleted_account_collection.find_one({
+        "email": payload.email
+    })
+
+    if deleted_account:
+        return response.error_message(
+            translate_message("EMAIL_CANNOT_BE_REUSED", lang=lang),
+            status_code=400
+        )
+    
+    # check user is blocked or not
+    blocked = await admin_blocked_users_collection.find_one({
+        "user_id": str(user["_id"]),
+    })
+
+    if blocked:
+        return response.error_message(
+        translate_message("ACCOUNT_BLOCKED", lang),
+        data=[],
+        status_code=403
+    )
+
+    # check if user account is suspended
+    now = datetime.utcnow()
+
+    suspension = await user_suspension_collection.find_one(
+        {
+            "user_id": str(user["_id"]),
+            "suspended_until": {"$exists": True}
+        }
+    )
+
+    if suspension:
+        suspended_until = suspension.get("suspended_until")
+
+        if suspended_until and now <= suspended_until:
+            remaining_seconds = (suspended_until - now).total_seconds()
+            remaining_days = max(1, math.ceil(remaining_seconds / 86400))
+
+            return response.error_message(
+                translate_message("ACCOUNT_SUSPENDED", lang=lang),
+                data=[{
+                    "suspended_until": suspended_until.isoformat(),
+                    "remaining_days": remaining_days
+                }],
+                status_code=403
+            )
+
     if not verify_password(password, user["password"]):
         return response.error_message(translate_message("INVALID_EMAIL_OR_PASSWORD", lang=lang), status_code=400)
 

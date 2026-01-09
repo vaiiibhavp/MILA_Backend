@@ -9,7 +9,7 @@ from api.routes import (
     profile_api, token_history_route, profile_api_route ,
     userPass_route, like_route_api, block_report_route, user_profile_view_api_route,
     fcm_route,
-    verification_routes
+    verification_routes , user_management
 )
 
 from core.utils.exceptions import CustomValidationError, custom_validation_error_handler, validation_exception_handler
@@ -227,6 +227,7 @@ app.include_router(verification_routes.router)
 
 app.include_router(block_report_route.router)
 app.include_router(fcm_route.router, prefix="/api/fcm")
+app.include_router(user_management.router)
 
 # Scheduler Instance
 scheduler = BackgroundScheduler()

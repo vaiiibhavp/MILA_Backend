@@ -361,6 +361,18 @@
   "ERROR_WHILE_FETCHING_SUBSCRIPTION_TRANSACTIONS":"An error occurred while fetching subscription transactions.",
   "USER_SUBSCRIPTION_DETAILS_FETCHED" : "User subscription details fetched successfully.",
   "USER_SUBSCRIPTION_DETAILS_FETCH_FAILED": "Unable to fetch user membership details. Please try again later.",
-  "Token_Purchase": "Credited through USDT"
+  "Token_Purchase": "Credited through USDT",
+  "USER_DETAILS_FETCHED_SUCCESSFULLY":"User details fetched successfully",
+  "USER_SUSPENDED_SUCCESSFULLY":"User suspended successfully",
+  "USER_ALREADY_SUSPENDED":"User already suspended",
+  "FAILED_TO_SUSPEND_USER":"Failed to suspend user",
+  "EMAIL_CANNOT_BE_REUSED":"Email cannot be reused",
+  "ACCOUNT_ALREADY_DELETED":"Account already deleted",
+  "ACCOUNT_DELETED_SUCCESSFULLY":"Account deleted successfully",
+  "FAILED_TO_DELETE_ACCOUNT":"Failed to delete account",
+  "FAILED_TO_BLOCK_USER":"Failed to block user",
+  "FAILED_TO_FETCH_USERS":"Failed to fetch users",
+  "ACCOUNT_SUSPENDED":"Account suspended",
+  "ACCOUNT_BLOCKED":"Account blocked"
 
 }

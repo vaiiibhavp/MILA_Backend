@@ -98,6 +98,9 @@ notification_collection = db["notifications"]
 fcm_device_tokens_collection = db["fcm_device_tokens"]
 private_gallery_purchases_collection = db["private_gallery_purchases"]
 verification_collection = db["verification_history"]
+user_suspension_collection = db["user_suspension"]
+admin_blocked_users_collection = db["admin_blocked_users_history"]
+deleted_account_collection = db["deleted_accounts"]
 
 async def create_indexes():
     """
