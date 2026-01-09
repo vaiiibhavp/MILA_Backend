@@ -384,5 +384,9 @@
 
   "VERIFICATION_PENDING": "Vérification en attente",
   "INVALID_CONTEST_TYPE": "Type de concours invalide",
-  "CONTESTS_FETCHED": "Concours récupéré"
+  "CONTESTS_FETCHED": "Concours récupéré",
+
+  "IMAGE_SIZE_EXCEEDS_THE_ALLOWED_LIMIT_(5MB)": "La taille de l'image dépasse la limite autorisée (5 Mo).",
+  "ACCOUNT_IS_BEEN_DELETED": "Le compte a été supprimé"
+
 }

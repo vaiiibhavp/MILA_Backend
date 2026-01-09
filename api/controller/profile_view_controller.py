@@ -330,8 +330,12 @@ async def get_profile_gallery(
         }
     ).to_list(length=100)
 
+    viewer_unlocked = set(
+        map(str, viewer.get("unlocked_images", []))
+    )
+
     purchased_map = {
-        p["file_id"]: p for p in purchases
+        str(p["file_id"]): p for p in purchases
     }
 
     # PUBLIC GALLERY (unchanged)
@@ -376,7 +380,10 @@ async def get_profile_gallery(
             "image_id": img["file_id"],
             "image_url": url,
             "price": int(img.get("price", 0)),
-            "is_unlocked": img["file_id"] in purchased_map
+            "is_unlocked": (
+                str(img["file_id"]) in viewer_unlocked
+                or str(img["file_id"]) in purchased_map
+            )
         })
 
     # ADD PURCHASED BUT DELETED IMAGES

@@ -51,18 +51,21 @@ async def get_users_who_liked_me_for_premium(
     results = []
 
     async for user in cursor:
-        onboarding = await asyncio.gather(
-            get_onboarding_details(
-                {"user_id": str(user["_id"])},
-                fields=["birthdate", "country"]
-            ),
+        onboarding = await get_onboarding_details(
+            {"user_id": str(user["_id"])},
+            fields=["birthdate", "country"]
         )
 
         birthdate = onboarding.get("birthdate") if onboarding else None
         age = calculate_age(birthdate) if birthdate else None
-        profile_photo = await profile_photo_from_onboarding(onboarding)
 
-        country_name = await get_country_name_by_id(onboarding.get("country"), countries_collection)
+        profile_photo, country_name = await asyncio.gather(
+            profile_photo_from_onboarding(onboarding),
+            get_country_name_by_id(
+                onboarding.get("country"),
+                countries_collection
+            )
+        )
 
         results.append({
             "user_id": str(user["_id"]),

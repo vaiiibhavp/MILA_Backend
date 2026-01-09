@@ -123,6 +123,10 @@ async def upload_public_gallery_controller(images, current_user, lang: str = "en
     public_items = []
 
     for image in images:
+        size_error = await validate_image_size(image, lang)
+        if size_error:
+            return size_error
+        
         item = await create_and_store_file(
             file_obj=image,
             user_id=str(current_user["_id"]),
@@ -165,6 +169,10 @@ async def upload_private_gallery_controller(image, price, current_user, lang: st
             status_code=400
         )
 
+    size_error = await validate_image_size(image[0], lang)
+    if size_error:
+        return size_error
+    
     if price is None or price <= 0:
         return response.error_message(
             translate_message("PRICE_MUST_BE_GREATER_THAN_ZERO", lang),

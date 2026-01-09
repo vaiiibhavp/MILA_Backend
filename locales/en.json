@@ -377,5 +377,7 @@
 
   "VERIFICATION_PENDING": "Verification pending",
   "INVALID_CONTEST_TYPE": "Invalid contest type",
-  "CONTESTS_FETCHED": "Contest fetched"  
+  "CONTESTS_FETCHED": "Contest fetched",
+  "IMAGE_SIZE_EXCEEDS_THE_ALLOWED_LIMIT_(5MB)": "Image size exceeds the allowed limit (5MB)",
+  "ACCOUNT_IS_BEEN_DELETED": "Account is been deleted"
 }
