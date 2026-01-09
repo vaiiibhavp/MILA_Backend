@@ -213,3 +213,21 @@ def get_subscription_status(expires_at) -> str:
         expires_at = expires_at.replace(tzinfo=timezone.utc)
 
     return MembershipStatus.EXPIRED.value if expires_at < now else MembershipStatus.ACTIVE.value
+
+async def get_country_name_by_id(
+    country_id: str | ObjectId,
+    countries_collection
+) -> Optional[str]:
+    """
+    Fetch country name using country ObjectId
+    """
+    if not country_id:
+        return None
+
+    try:
+        country_doc = await countries_collection.find_one(
+            {"_id": ObjectId(country_id)}
+        )
+        return country_doc.get("name") if country_doc else None
+    except Exception:
+        return None

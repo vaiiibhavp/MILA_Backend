@@ -279,7 +279,7 @@ async def get_basic_profile_details_controller(
 
     profile_photo = await profile_photo_from_onboarding(onboarding)
 
-    data = build_basic_profile_response(
+    data = await build_basic_profile_response(
         user=user,
         onboarding=onboarding,
         profile_photo=profile_photo

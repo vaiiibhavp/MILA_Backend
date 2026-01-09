@@ -7,7 +7,7 @@ from core.utils.age_calculation import calculate_age
 from api.controller.files_controller import get_profile_photo_url, generate_file_url, profile_photo_from_onboarding
 from datetime import date, datetime
 from services.translation import translate_message
-from core.utils.helper import serialize_datetime_fields
+from core.utils.helper import serialize_datetime_fields, get_country_name_by_id
 from config.models.user_token_history_model import create_user_token_history
 from schemas.user_token_history_schema import CreateTokenHistory
 from config.models.user_models import *
@@ -16,6 +16,7 @@ from core.utils.pagination import StandardResultsSetPagination
 from core.utils.core_enums import MembershipType, NotificationType, NotificationRecipientType
 from services.notification_service import send_notification
 from services.premium_guard import require_premium
+from services.gallery_service import resolve_gallery_items
 
 response = CustomResponseMixin()
 
@@ -73,12 +74,17 @@ async def get_profile_controller(user_id: str, viewer: dict, lang: str = "en"):
     membership_type = user.get("membership_type", "free")
     is_verified = user.get("is_verified", False)
 
-    public_gallery = onboarding.get("public_gallery", []) if onboarding else []
-    private_gallery = onboarding.get("private_gallery", []) if onboarding else []
+    public_gallery_raw = onboarding.get("public_gallery", []) if onboarding else []
+    private_gallery_raw = onboarding.get("private_gallery", []) if onboarding else []
+
+    public_gallery = await resolve_gallery_items(public_gallery_raw)
+    private_gallery = await resolve_gallery_items(private_gallery_raw)
 
     private_gallery_locked = membership_type == "free"
 
-    profile_photo_url = await get_profile_photo_url({"_id": user["_id"]})
+    profile_photo_url = await profile_photo_from_onboarding(onboarding)
+
+    country_name = await get_country_name_by_id(onboarding.get("country"), countries_collection)
 
     gifts = []
 
@@ -114,11 +120,11 @@ async def get_profile_controller(user_id: str, viewer: dict, lang: str = "en"):
         "name": user.get("username"),
         "age": age,
         "email": user.get("email"),
-        "profile_photo": await profile_photo_from_onboarding(onboarding),
+        "profile_photo": profile_photo_url,
         "about": onboarding.get("bio"),
         "hobbies": onboarding.get("passions"),
         "gender": onboarding.get("gender"),
-        "country": onboarding.get("country"),
+        "country": country_name,
         "orientation": onboarding.get("sexual_orientation"),
         "status": onboarding.get("marital_status"),
         "private_gallery": {
@@ -589,18 +595,7 @@ async def search_profiles_controller(
 
         age = calculate_age(birthdate) if birthdate else None
 
-        country_data = None
-        if onboarding.get("country"):
-            country_doc = await countries_collection.find_one(
-                {"_id": ObjectId(onboarding["country"])},
-                {"name": 1, "code": 1}
-            )
-            if country_doc:
-                country_data = {
-                    "id": str(country_doc["_id"]),
-                    "name": country_doc["name"],
-                    "code": country_doc.get("code")
-                }
+        country_name = await get_country_name_by_id(onboarding.get("country"), countries_collection)
 
         profile_photo = await profile_photo_from_onboarding(onboarding)
 
@@ -608,7 +603,7 @@ async def search_profiles_controller(
             "user_id": str(user["_id"]),
             "name": user.get("username"),
             "age": age,
-            "country": country_data,
+            "country": country_name,
             "profile_photo": profile_photo,
             "is_verified": user.get("is_verified", False),
             "login_status": user.get("login_status")

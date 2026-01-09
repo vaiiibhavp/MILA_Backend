@@ -489,3 +489,17 @@ async def profile_photo_from_onboarding(onboarding: dict):
         file_doc["storage_key"],
         file_doc["storage_backend"]
     )
+
+async def resolve_banner_url(file_id: str) -> str:
+    file_doc = await file_collection.find_one(
+        {"_id": ObjectId(file_id)},
+        {"storage_key": 1, "storage_backend": 1}
+    )
+
+    if not file_doc:
+        return None
+
+    return await generate_file_url(
+        storage_key=file_doc["storage_key"],
+        backend=file_doc.get("storage_backend")
+    )

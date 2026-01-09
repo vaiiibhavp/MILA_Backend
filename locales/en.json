@@ -361,7 +361,7 @@
   "ERROR_WHILE_FETCHING_SUBSCRIPTION_TRANSACTIONS":"An error occurred while fetching subscription transactions.",
   "USER_SUBSCRIPTION_DETAILS_FETCHED" : "User subscription details fetched successfully.",
   "USER_SUBSCRIPTION_DETAILS_FETCH_FAILED": "Unable to fetch user membership details. Please try again later.",
-  "Token_Purchase": "Credited through USDT",
+  "Token_Purchase": "Credited through USDT"
   "USER_DETAILS_FETCHED_SUCCESSFULLY":"User details fetched successfully",
   "USER_SUSPENDED_SUCCESSFULLY":"User suspended successfully",
   "USER_ALREADY_SUSPENDED":"User already suspended",
@@ -375,4 +375,7 @@
   "ACCOUNT_SUSPENDED":"Account suspended",
   "ACCOUNT_BLOCKED":"Account blocked"
 
+  "VERIFICATION_PENDING": "Verification pending",
+  "INVALID_CONTEST_TYPE": "Invalid contest type",
+  "CONTESTS_FETCHED": "Contest fetched"  
 }

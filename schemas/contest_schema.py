@@ -1,0 +1,72 @@
+from pydantic import BaseModel, Field
+from core.utils.core_enums import *
+from datetime import datetime
+from typing import Optional, List
+
+class ContestCardResponse(BaseModel):
+    contest_id: str
+    title: str
+    banner_url: str
+    status: ContestStatus
+    visibility: ContestVisibility
+    registration_end: datetime
+    voting_end: datetime
+    total_participants: int
+    total_votes: int
+    prize_pool_description: Optional[str] = None
+    voting_start: datetime
+
+
+class PrizeItem(BaseModel):
+    position: int        # 1, 2, 3
+    reward: int          # tokens
+
+
+class ParticipantPreview(BaseModel):
+    user_id: str
+    username: str
+    profile_photo: Optional[dict]
+
+
+class LeaderboardEntry(BaseModel):
+    user_id: str
+    username: str
+    profile_photo: Optional[dict]
+    votes: int
+    rank: int
+    badge: Optional[str]  # Top 1 / Top 2 / Top 3
+
+
+class ContestDetailResponse(BaseModel):
+    contest_id: str
+
+    title: str
+    tag: Optional[str]
+    description: str
+    rules_and_conditions: Optional[str]
+
+    banner_url: str
+
+    status: ContestStatus
+    visibility: ContestVisibility
+
+    registration_start: datetime
+    registration_end: datetime
+    voting_start: datetime
+    voting_end: datetime
+
+    prize_pool: List[PrizeItem]
+
+    judging_criteria: List[str]
+
+    total_participants: int
+    total_votes: int
+
+    participants_preview: List[ParticipantPreview]
+
+    leaderboard: Optional[List[LeaderboardEntry]] = None
+    winners: Optional[List[LeaderboardEntry]] = None
+
+    can_participate: bool
+    can_vote: bool
+    action_button: str  # participate | vote_now | view_leaderboard | view_winners

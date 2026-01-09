@@ -62,11 +62,13 @@ async def get_users_who_liked_me_for_premium(
         age = calculate_age(birthdate) if birthdate else None
         profile_photo = await profile_photo_from_onboarding(onboarding)
 
+        country_name = await get_country_name_by_id(onboarding.get("country"), countries_collection)
+
         results.append({
             "user_id": str(user["_id"]),
             "name": user.get("username"),
             "age": age,
-            "city": onboarding.get("country") if onboarding else None,
+            "city": country_name,
             "profile_photo": profile_photo,
             "is_verified": user.get("is_verified", False),
             "login_status": user.get("login_status")
@@ -159,12 +161,13 @@ async def get_users_who_visited_my_profile(
 
         birthdate = onboarding.get("birthdate") if onboarding else None
         age = calculate_age(birthdate) if birthdate else None
+        country_name = await get_country_name_by_id(onboarding.get("country"), countries_collection)
 
         results.append({
             "user_id": viewer_id,
             "name": user.get("username"),
             "age": age,
-            "city": onboarding.get("country") if onboarding else None,
+            "country": country_name,
             "profile_photo": profile_photo,
             "is_verified": user.get("is_verified", False),
             "login_status": user.get("login_status"),
