@@ -362,7 +362,24 @@
   "USER_SUBSCRIPTION_DETAILS_FETCHED" : "User subscription details fetched successfully.",
   "USER_SUBSCRIPTION_DETAILS_FETCH_FAILED": "Unable to fetch user membership details. Please try again later.",
   "Token_Purchase": "Credited through USDT",
+  "USER_DETAILS_FETCHED_SUCCESSFULLY":"User details fetched successfully",
+  "USER_SUSPENDED_SUCCESSFULLY":"User suspended successfully",
+  "USER_ALREADY_SUSPENDED":"User already suspended",
+  "FAILED_TO_SUSPEND_USER":"Failed to suspend user",
+  "EMAIL_CANNOT_BE_REUSED":"Email cannot be reused",
+  "ACCOUNT_ALREADY_DELETED":"Account already deleted",
+  "ACCOUNT_DELETED_SUCCESSFULLY":"Account deleted successfully",
+  "FAILED_TO_DELETE_ACCOUNT":"Failed to delete account",
+  "FAILED_TO_BLOCK_USER":"Failed to block user",
+  "FAILED_TO_FETCH_USERS":"Failed to fetch users",
+  "ACCOUNT_SUSPENDED":"Account suspended",
+  "ACCOUNT_BLOCKED":"Account blocked",
+
+  "VERIFICATION_PENDING": "Verification pending",
+  "INVALID_CONTEST_TYPE": "Invalid contest type",
+  "CONTESTS_FETCHED": "Contest fetched",
+  "IMAGE_SIZE_EXCEEDS_THE_ALLOWED_LIMIT_(5MB)": "Image size exceeds the allowed limit (5MB)",
+  "ACCOUNT_IS_BEEN_DELETED": "Account is been deleted",
   "MINIMUM_WITHDRAWAL_AMOUNT_REQUIRED": "A minimum withdrawal amount of {amount} USDT is required.",
   "INVALID_TRON_ADDRESS": "Invalid TRON wallet address."
-
 }

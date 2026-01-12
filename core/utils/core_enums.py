@@ -63,3 +63,26 @@ class VerificationStatusEnum(str, Enum):
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
+
+
+class ContestStatus(str, Enum):
+    registration_open = "registration_open"
+    registration_closed = "registration_closed"
+    voting_started = "voting_started"
+    voting_closed = "voting_closed"
+    winner_announced = "winner_announced"
+
+class ContestFrequency(str, Enum):
+    weekly = "weekly"
+    bi_weekly = "bi_weekly"
+    monthly = "monthly"
+    three_months = "three_months"
+    
+class ContestVisibility(str, Enum):
+    upcoming = "upcoming"
+    in_progress = "in_progress"
+    completed = "completed"
+
+class ContestType(str, Enum):
+    active = "active"
+    past = "past"

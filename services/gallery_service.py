@@ -6,6 +6,27 @@ from api.controller.files_controller import generate_file_url, save_file
 from datetime import datetime
 from config.models.user_models import Files, FileType
 from config.db_config import onboarding_collection
+from core.utils.response_mixin import CustomResponseMixin
+from fastapi import UploadFile
+from services.translation import translate_message
+from config.basic_config import settings
+
+response = CustomResponseMixin()
+
+async def validate_image_size(file: UploadFile, lang: str):
+    file.file.seek(0, 2)
+    size = file.file.tell()
+    file.file.seek(0)
+
+    if size > settings.MAX_IMAGE_SIZE_BYTES:
+        return response.error_message(
+            translate_message(
+                "IMAGE_SIZE_EXCEEDS_THE_ALLOWED_LIMIT_(5MB)",
+                lang=lang
+            ),
+            status_code=400
+        )
+    return None
 
 async def resolve_gallery_items(gallery: list):
     """
@@ -32,7 +53,8 @@ async def resolve_gallery_items(gallery: list):
         resolved.append({
             "file_id": file_id,
             "url": url,
-            "uploaded_at": item.get("uploaded_at")
+            "uploaded_at": item.get("uploaded_at"),
+            "price": item.get("price")
         })
 
     return resolved

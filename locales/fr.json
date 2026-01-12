@@ -370,6 +370,24 @@
   "USER_SUBSCRIPTION_DETAILS_FETCHED" : "Informations d'abonnement de l'utilisateur récupérées avec succès.",
   "USER_SUBSCRIPTION_DETAILS_FETCH_FAILED": "Impossible de récupérer les informations d'abonnement de l'utilisateur. Veuillez réessayer plus tard.",
   "Token_Purchase": "Crédité en USDT",
+  "USER_DETAILS_FETCHED_SUCCESSFULLY": "Détails de l’utilisateur récupérés avec succès",
+  "USER_SUSPENDED_SUCCESSFULLY": "Utilisateur suspendu avec succès",
+  "USER_ALREADY_SUSPENDED": "Utilisateur déjà suspendu",
+  "FAILED_TO_SUSPEND_USER": "Échec de la suspension de l’utilisateur",
+  "EMAIL_CANNOT_BE_REUSED": "L’adresse e-mail ne peut pas être réutilisée",
+  "ACCOUNT_ALREADY_DELETED": "Compte déjà supprimé",
+  "FAILED_TO_DELETE_ACCOUNT": "Échec de la suppression du compte",
+  "FAILED_TO_BLOCK_USER": "Échec du blocage de l’utilisateur",
+  "FAILED_TO_FETCH_USERS": "Échec de la récupération des utilisateurs",
+  "ACCOUNT_SUSPENDED": "Compte suspendu",
+  "ACCOUNT_BLOCKED": "Compte bloqué",
+
+  "VERIFICATION_PENDING": "Vérification en attente",
+  "INVALID_CONTEST_TYPE": "Type de concours invalide",
+  "CONTESTS_FETCHED": "Concours récupéré",
+
+  "IMAGE_SIZE_EXCEEDS_THE_ALLOWED_LIMIT_(5MB)": "La taille de l'image dépasse la limite autorisée (5 Mo).",
+  "ACCOUNT_IS_BEEN_DELETED": "Le compte a été supprimé",
   "MINIMUM_WITHDRAWAL_AMOUNT_REQUIRED": "Un montant minimum de retrait de {amount} USDT est requis.",
   "INVALID_TRON_ADDRESS": "Adresse de portefeuille TRON invalide."
 

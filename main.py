@@ -9,7 +9,7 @@ from api.routes import (
     profile_api, token_history_route, profile_api_route ,
     userPass_route, like_route_api, block_report_route, user_profile_view_api_route,
     fcm_route,
-    verification_routes
+    verification_routes, contest_api_route, user_management
 )
 
 from core.utils.exceptions import CustomValidationError, custom_validation_error_handler, validation_exception_handler
@@ -45,6 +45,7 @@ PRIVATE_GALLERY_DIR = os.path.join(UPLOAD_DIR, "private_gallery")
 PROFILE_PHOTO_DIR = os.path.join(UPLOAD_DIR, "profile_photo")
 SELFIE_DIR = os.path.join(UPLOAD_DIR, "selfie")
 GIFTS_DIR = os.path.join(UPLOAD_DIR, "gift")
+BANNER_DIR = os.path.join(UPLOAD_DIR, "contest_banner")
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(PUBLIC_GALLERY_DIR, exist_ok=True)
@@ -52,12 +53,14 @@ os.makedirs(PRIVATE_GALLERY_DIR, exist_ok=True)
 os.makedirs(PROFILE_PHOTO_DIR, exist_ok=True)
 os.makedirs(GIFTS_DIR, exist_ok=True)
 os.makedirs(SELFIE_DIR, exist_ok=True)
+os.makedirs(BANNER_DIR, exist_ok=True)
 
 app.mount("/public_gallery", StaticFiles(directory=PUBLIC_GALLERY_DIR))
 app.mount("/private_gallery", StaticFiles(directory=PRIVATE_GALLERY_DIR))
 app.mount("/profile_photo", StaticFiles(directory=PROFILE_PHOTO_DIR))
 app.mount("/gifts", StaticFiles(directory=GIFTS_DIR))
 app.mount("/selfie", StaticFiles(directory=SELFIE_DIR), name="selfie")
+app.mount("/contest_banner", StaticFiles(directory=BANNER_DIR))
 
 # Health check endpoints
 @app.get("/health")
@@ -224,9 +227,10 @@ app.include_router(userPass_route.router)
 app.include_router(like_route_api.router, prefix="/api/premium")
 app.include_router(user_profile_view_api_route.router, prefix="/api/edit")
 app.include_router(verification_routes.router)
-
 app.include_router(block_report_route.router)
 app.include_router(fcm_route.router, prefix="/api/fcm")
+app.include_router(contest_api_route.router, prefix="/api/contests")
+app.include_router(user_management.router)
 
 # Scheduler Instance
 scheduler = BackgroundScheduler()

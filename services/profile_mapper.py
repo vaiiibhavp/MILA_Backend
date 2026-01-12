@@ -4,9 +4,11 @@ from core.utils.age_calculation import calculate_age
 from core.utils.core_enums import MembershipType
 from core.utils.helper import *
 
-def build_basic_profile_response(user: dict, onboarding: dict, profile_photo: str):
+async def build_basic_profile_response(user: dict, onboarding: dict, profile_photo: str):
     birthdate = onboarding.get("birthdate") if onboarding else None
     age = calculate_age(birthdate) if birthdate else None
+
+    country_name = await get_country_name_by_id(onboarding.get("country"), countries_collection)
 
     return {
         "header": {
@@ -21,7 +23,7 @@ def build_basic_profile_response(user: dict, onboarding: dict, profile_photo: st
             "email": user.get("email"),
             "gender": onboarding.get("gender") if onboarding else None,
             "dob": birthdate,
-            "country": onboarding.get("country") if onboarding else None,
+            "country": country_name,
             "interested_in": onboarding.get("interested_in") if onboarding else None,
             "sexual_orientation": onboarding.get("sexual_orientation") if onboarding else None,
             "marital_status": onboarding.get("marital_status") if onboarding else None

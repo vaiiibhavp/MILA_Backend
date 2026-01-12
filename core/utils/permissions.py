@@ -5,6 +5,8 @@ from config.db_config import user_collection , admin_collection
 import os
 from fastapi.responses import JSONResponse
 from .response_mixin import CustomResponseMixin
+from services.translation import translate_message
+
 response = CustomResponseMixin()
 
 SECRET_ACCESS_KEY = os.getenv("SECRET_ACCESS_KEY", " ")
@@ -73,11 +75,24 @@ class UserPermission:
         try:
             # Decode the JWT token
             payload = jwt.decode(credentials.credentials, SECRET_ACCESS_KEY, algorithms=[ALGORITHM])
-            user = await user_collection.find_one({"email": payload["sub"]})
-
+            user = await user_collection.find_one(
+                {"email": payload["sub"]},
+                {
+                    "role": 1,
+                    "is_deleted": 1,
+                }
+            )
             if not user:
                 raise HTTPException(status_code=401, detail="Invalid user")
+            
+            lang = payload.get("lang", "en")
 
+            if user.get("is_deleted") is True:
+                return response.raise_exception(
+                    message=translate_message("ACCOUNT_IS_BEEN_DELETED", lang),
+                    data=None,
+                    status_code=401
+                )
             # Debugging: Log the user role
             user_role = user.get("role")
 

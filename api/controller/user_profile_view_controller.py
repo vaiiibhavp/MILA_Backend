@@ -197,6 +197,14 @@ async def get_verification_selfie_controller(
     current_user: dict,
     lang: str = "en"
 ):
+    # BLOCK if already verified
+    if current_user.get("is_verified") is True:
+        return response.success_message(
+            translate_message("USER_ALREADY_VERIFIED", lang),
+            data=[{"selfie_url": None}],
+            status_code=200
+        )
+
     user_id = str(current_user["_id"])
 
     onboarding = await onboarding_collection.find_one(
