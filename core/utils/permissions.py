@@ -80,6 +80,7 @@ class UserPermission:
                 {
                     "role": 1,
                     "is_deleted": 1,
+                    "is_verified": 1,
                 }
             )
             if not user:
