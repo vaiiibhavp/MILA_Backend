@@ -1,4 +1,3 @@
-from fastapi import HTTPException , status
 from bson import ObjectId
 from datetime import datetime
 from config.db_config import onboarding_collection , user_collection  , favorite_collection ,user_like_history ,user_match_history , user_passed_hostory,countries_collection,interest_categories_collection
@@ -116,28 +115,41 @@ async def like_user(user_id: str, liked_user_id: str, lang: str = "en"):
         upsert=True
     )
 
-    #  Check mutual like (MATCH)
-    mutual_like = await user_like_history.find_one({
+    # --------------------------------------------------
+    # 2 CHECK MUTUAL LIKE
+    # --------------------------------------------------
+    user_liked_them = await user_like_history.find_one({
         "user_id": user_id,
         "liked_by_user_ids": liked_user_id
     })
 
+    they_liked_user = await user_like_history.find_one({
+        "user_id": liked_user_id,
+        "liked_by_user_ids": user_id
+    })
+
     is_match = False
 
-    if mutual_like:
+    # --------------------------------------------------
+    # 3 CREATE MATCH (ATOMIC & SAFE)
+    # --------------------------------------------------
+    if user_liked_them and they_liked_user:
+        # Sorted pair ensures consistency
         user_pair = sorted([user_id, liked_user_id])
 
-        existing_match = await user_match_history.find_one({
-            "user_ids": user_pair
-        })
+        result = await user_match_history.update_one(
+            {"user_ids": user_pair},
+            {
+                "$setOnInsert": {
+                    "user_ids": user_pair,
+                    "created_at": datetime.utcnow()
+                }
+            },
+            upsert=True
+        )
 
-        if not existing_match:
-            await user_match_history.insert_one({
-                "user_ids": user_pair,
-                "created_at": datetime.utcnow()
-            })
-
-        is_match = True
+        # True only if a new match was created
+        is_match = bool(result.upserted_id)
 
     return response.success_message(
         translate_message(

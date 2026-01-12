@@ -642,6 +642,7 @@ async def fetch_user_by_id(user_id: str, lang: str):
                 "country": 1,
                 "birthdate": 1,
                 "tokens": 1,
+                "images": 1,
             }
         )
 
@@ -679,12 +680,31 @@ async def fetch_user_by_id(user_id: str, lang: str):
                 else user_data["birthdate"]
             )
             age = calculate_age(dob)
+        
+        country_data = None
+        country_id = user_data.get("country")
 
+        if country_id:
+            country_doc = await countries_collection.find_one(
+                {"_id": ObjectId(country_id)},
+                {"name": 1}
+            )
+
+            if country_doc:
+                country_data = {
+                    "id": str(country_doc["_id"]),
+                    "name": country_doc.get("name")
+                }
+        
         # Profile photo
         profile_photo = None
-        if user.get("profile_photo_id"):
+        images = user_data.get("images", [])
+
+        if images:
+            first_image_id = images[0]
+
             file_doc = await file_collection.find_one(
-                {"_id": ObjectId(user["profile_photo_id"])},
+                {"_id": ObjectId(first_image_id)},
                 {"storage_key": 1, "storage_backend": 1}
             )
 
@@ -705,7 +725,7 @@ async def fetch_user_by_id(user_id: str, lang: str):
             "status": user.get("login_status"),
             "bio": user_data.get("bio"),
             "age": age,
-            "country": user_data.get("country"),
+            "country": country_data, 
             "tokens": user_data.get("tokens"),
             "passions": user_data.get("passions"),
             "profile_photo": profile_photo
