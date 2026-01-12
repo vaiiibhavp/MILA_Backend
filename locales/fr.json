@@ -389,6 +389,10 @@
   "IMAGE_SIZE_EXCEEDS_THE_ALLOWED_LIMIT_(5MB)": "La taille de l'image dépasse la limite autorisée (5 Mo).",
   "ACCOUNT_IS_BEEN_DELETED": "Le compte a été supprimé",
   "MINIMUM_WITHDRAWAL_AMOUNT_REQUIRED": "Un montant minimum de retrait de {amount} USDT est requis.",
-  "INVALID_TRON_ADDRESS": "Adresse de portefeuille TRON invalide."
+  "INVALID_TRON_ADDRESS": "Adresse de portefeuille TRON invalide.",
+
+  "TOKEN_PACKAGE_PLAN_TITLE_ALREADY_EXISTS": "Un forfait de jetons portant ce titre existe déjà.",
+  "TOKEN_PACKAGE_PLAN_CREATED": "Plan de forfait de jetons créé avec succès.",
+  "TOKEN_PACKAGE_PLAN_CREATION_FAILED": "Impossible de créer un forfait de jetons. Veuillez réessayer plus tard."
 
 }

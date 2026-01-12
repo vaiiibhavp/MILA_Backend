@@ -86,3 +86,7 @@ class ContestVisibility(str, Enum):
 class ContestType(str, Enum):
     active = "active"
     past = "past"
+
+class TokenPlanStatus(str, Enum):
+    active = "active",
+    inactive = "inactive",
