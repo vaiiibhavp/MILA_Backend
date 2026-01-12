@@ -51,14 +51,10 @@ async def get_verification_queue(
             ),
             {
                 "$lookup": {
-                    "from": "verification",
+                    "from": "verification_history",
                     "let": {"uid": "$user_id"},
                     "pipeline": [
-                        {
-                            "$match": {
-                                "$expr": {"$eq": ["$user_id", "$$uid"]}
-                            }
-                        },
+                        {"$match": {"$expr": {"$eq": ["$user_id", "$$uid"]}}},
                         {"$sort": {"verified_at": -1}},
                         {"$limit": 1}
                     ],
@@ -68,27 +64,36 @@ async def get_verification_queue(
             {
                 "$addFields": {
                     "latest_verification_status": {
-                        "$arrayElemAt": ["$verification.status", 0]
+                        "$cond": [
+                            {"$gt": [{"$size": "$verification"}, 0]},
+                            {"$arrayElemAt": ["$verification.status", 0]},
+                            None
+                        ]
                     }
                 }
             },
             {
                 "$match": {
                     "$or": [
-                        {"latest_verification_status": {"$exists": False}},
-                        {"latest_verification_status": {"$ne": VerificationStatusEnum.REJECTED}}
+                        {"latest_verification_status": None},
+                        {"latest_verification_status": VerificationStatusEnum.PENDING}
                     ]
+                }
+            },
+            {
+                "$match": {
+                    "latest_verification_status": {
+                        "$ne": VerificationStatusEnum.REJECTED
+                    }
                 }
             }
         ]
 
-        #  Status-based filtering
-        if status == VerificationStatusEnum.PENDING:
-            pipeline.append({"$match": {"user.is_verified": False}})
-        elif status == VerificationStatusEnum.APPROVED:
-            pipeline.append({"$match": {"user.is_verified": True}})
+        if status == VerificationStatusEnum.APPROVED:
+            pipeline.append({
+                "$match": {"latest_verification_status": VerificationStatusEnum.APPROVED}
+            })
 
-        #  Pagination
         pipeline.extend([
             {"$sort": {"created_at": -1}},
             {"$skip": pagination.skip},
@@ -106,13 +111,17 @@ async def get_verification_queue(
                 "live_selfie": "$selfie_image",
 
                 "verification_status": {
-                    "$cond": {
-                        "if": {"$eq": ["$user.is_verified", True]},
-                        "then": VerificationStatusEnum.APPROVED,
-                        "else": VerificationStatusEnum.PENDING
-                    }
+                    "$cond": [
+                        {
+                            "$or": [
+                                {"$eq": ["$latest_verification_status", None]},
+                                {"$eq": ["$latest_verification_status", VerificationStatusEnum.PENDING]}
+                            ]
+                        },
+                        VerificationStatusEnum.PENDING,
+                        "$latest_verification_status"
+                    ]
                 },
-
                 "Registration_Date": "$created_at"
             }
         })
@@ -222,34 +231,47 @@ async def reject_verification(user_id: str, admin , lang: str = "en"):
             data=[],
             status_code=404
         )
-    
-    approved_verification = await verification_collection.find_one({
-        "user_id": user_id,
-        "status":VerificationStatusEnum.APPROVED
-    })
 
-    if approved_verification:
-        return response.error_message(
-            message=translate_message("USER_ALREADY_APPROVED"),
-            data=[],
-            status_code=400
-        )
-    
+    latest_verification = await verification_collection.find_one(
+        {"user_id": user_id},
+        sort=[("verified_at", -1)]
+    )
+
+    if latest_verification:
+        latest_status = latest_verification.get("status")
+
+        # Already approved
+        if latest_status == VerificationStatusEnum.APPROVED:
+            return response.error_message(
+                message=translate_message("USER_ALREADY_VERIFIED", lang),
+                data=[],
+                status_code=400
+            )
+
+        # Already rejected
+        if latest_status == VerificationStatusEnum.REJECTED:
+            return response.error_message(
+                message=translate_message("USER_ALREADY_VERIFIED", lang),
+                data=[],
+                status_code=400
+            )
+
     await verification_collection.insert_one({
         "user_id": user_id,
         "verified_by_admin_id": str(admin["_id"]),
-        "status":VerificationStatusEnum.REJECTED,
-        "verified_at": datetime.utcnow(),
-        })
-    
+        "status": VerificationStatusEnum.REJECTED,
+        "verified_at": datetime.utcnow()
+    })
+
     return response.success_message(
-        message=translate_message("USER_VERIFICATION_REJECTED"),
+        message=translate_message("USER_VERIFICATION_REJECTED", lang),
         data=[{
-        "user_id": user_id,
-        "verified_by": str(admin["_id"]),
-        "status":VerificationStatusEnum.REJECTED
-        }]
-        )
+            "user_id": user_id,
+            "verified_by": str(admin["_id"]),
+            "status": VerificationStatusEnum.REJECTED
+        }],
+        status_code=200
+    )
 
 async def get_approved_verification(lang: str = "en"):
     count = await verification_collection.count_documents({
