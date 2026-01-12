@@ -387,6 +387,8 @@
   "CONTESTS_FETCHED": "Concours récupéré",
 
   "IMAGE_SIZE_EXCEEDS_THE_ALLOWED_LIMIT_(5MB)": "La taille de l'image dépasse la limite autorisée (5 Mo).",
-  "ACCOUNT_IS_BEEN_DELETED": "Le compte a été supprimé"
+  "ACCOUNT_IS_BEEN_DELETED": "Le compte a été supprimé",
+  "MINIMUM_WITHDRAWAL_AMOUNT_REQUIRED": "Un montant minimum de retrait de {amount} USDT est requis.",
+  "INVALID_TRON_ADDRESS": "Adresse de portefeuille TRON invalide."
 
 }

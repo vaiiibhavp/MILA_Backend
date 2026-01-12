@@ -534,7 +534,7 @@ async def validate_withdrawal_tokens(user_tokens: int, lang:str):
                                         required_tokens=required_tokens),
                                         data=[], status_code=400)
 
-async def calculate_tokens_based_on_amount(amount_usd:int | float | str) -> int:
+async def calculate_tokens_based_on_amount(amount_usd:int | float | str, lang:str) -> int:
     """
         Calculate the number of tokens based on USD amount.
 
@@ -545,16 +545,23 @@ async def calculate_tokens_based_on_amount(amount_usd:int | float | str) -> int:
             Number of tokens (integer)
 
         Raises:
-            ValueError: If amount is invalid or <= 0
+            ValueError: If amount is invalid or < 25
 
     """
     try:
         amount = Decimal(str(amount_usd))
     except InvalidOperation:
-        raise ValueError("Invalid amount value")
+        raise ValueError("Invalid_Amount_Value")
 
-    if amount <= 0:
-        raise ValueError("Amount must be greater than zero")
+    if amount < MIN_WITHDRAWAL_USD:
+        response.raise_exception(
+            translate_message(
+                "MINIMUM_WITHDRAWAL_AMOUNT_REQUIRED",
+                lang=lang,
+                amount=MIN_WITHDRAWAL_USD
+            ),
+            data=[], status_code=400
+        )
 
     tokens = (amount / Decimal(str(TOKEN_TO_USD_RATE))).quantize(
         Decimal("1"),
@@ -562,3 +569,31 @@ async def calculate_tokens_based_on_amount(amount_usd:int | float | str) -> int:
     )
 
     return int(tokens)
+
+async def is_valid_tron_address(
+    address: str,
+    lang: str
+) -> None:
+    """
+    Validates a TRON (TRC-20) wallet address.
+    Raises a formatted API exception on failure.
+    """
+    if not address or not isinstance(address, str):
+        _raise_invalid_tron_address(lang=lang)
+
+    try:
+        # tronpy is sync internally, but safe to call in async flow
+        if not client.is_address(address):
+            _raise_invalid_tron_address(lang=lang)
+    except Exception:
+        _raise_invalid_tron_address(lang=lang)
+
+def _raise_invalid_tron_address(lang: str):
+    response.raise_exception(
+        translate_message(
+            "INVALID_TRON_ADDRESS",
+            lang=lang
+        ),
+        data=[],
+        status_code=400
+    )

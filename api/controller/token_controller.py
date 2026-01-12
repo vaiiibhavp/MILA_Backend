@@ -15,7 +15,7 @@ from core.utils.helper import serialize_datetime_fields, convert_objectid_to_str
 from core.utils.transaction_helper import get_transaction_details, validate_destination_wallet, \
     validate_transaction_status, build_transaction_model, handle_full_payment, mark_full_payment_received, \
     handle_token_full_payment, mark_token_full_payment_received, validate_withdrawal_tokens, \
-    calculate_tokens_based_on_amount
+    calculate_tokens_based_on_amount, is_valid_tron_address
 from config.models.transaction_models import (store_transaction_details, get_existing_transaction,
                                               get_subscription_payment_details, update_transaction_details,
                                               store_withdrawn_token_request, ensure_no_pending_token_withdrawal,
@@ -196,12 +196,13 @@ async def validate_remaining_token_payment(request: CompleteTokenTransactionRequ
 async def request_withdrawn_token_amount(request: WithdrawnTokenRequestModel, user_id:str, lang: str = "en"):
 
     try:
+        await is_valid_tron_address(request.wallet_address, lang=lang)
         await ensure_no_pending_token_withdrawal(user_id=user_id, lang=lang)
 
         available_tokens = await get_user_details(condition={"_id": ObjectId(user_id)}, fields=["tokens"])
         await validate_withdrawal_tokens(int(available_tokens.get("tokens", "0")), lang=lang)
 
-        withdrawn_token = await calculate_tokens_based_on_amount(request.amount)
+        withdrawn_token = await calculate_tokens_based_on_amount(request.amount, lang=lang)
 
         if int(withdrawn_token) > int(available_tokens.get("tokens", "0")):
             return response.error_message(
