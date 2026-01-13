@@ -1,6 +1,6 @@
 from bson import ObjectId
 from datetime import datetime
-from config.db_config import user_collection  , favorite_collection ,user_like_history ,user_match_history , user_passed_hostory,countries_collection,interest_categories_collection
+from config.db_config import user_collection  , favorite_collection ,user_like_history ,user_match_history , user_passed_hostory,user_passed_hostory
 from core.utils.helper import serialize_datetime_fields
 from core.utils.response_mixin import CustomResponseMixin
 from core.utils.helper import serialize_datetime_fields
@@ -49,6 +49,19 @@ async def add_to_fav(user_id: str, favorite_user_id: str, lang: str = "en"):
             status_code=404
         )
 
+    # ------------------ PASSED USER CHECK (NEW) ------------------
+    passed_user = await user_passed_hostory.find_one({
+        "user_id": user_id,
+        "passed_user_ids": favorite_user_id
+    })
+
+    if passed_user:
+        return response.error_message(
+            translate_message("CANNOT_FAVORITE_PASSED_USER", lang),
+            status_code=400
+        )
+
+    # ------------------ ALREADY IN FAVORITES ------------------
     existing_fav = await favorite_collection.find_one(
         {
             "user_id": user_id,
@@ -114,6 +127,19 @@ async def like_user(user_id: str, liked_user_id: str, lang: str = "en"):
         "user_id": liked_user_id,
         "liked_by_user_ids": user_id
     })
+
+
+    passed_user = await user_passed_hostory.find_one({
+        "user_id": user_id,
+        "passed_user_ids": liked_user_id
+    })
+
+    if passed_user:
+        return response.error_message(
+            translate_message("CANNOT_LIKE_PASSED_USER", lang),
+            data=[],
+            status_code=400
+        )
 
     if already_liked:
         return response.error_message(

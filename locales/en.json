@@ -389,6 +389,8 @@
   "CONTEST_DETAILS_FETCHED": "Contest details fetched",
   "USER_CANNOT_BE_APPROVED_ALREADY_REJECTED":"User cannot be approved already rejected",
   "PREMIUM_REQUIRED_TO_ADD_FAVORITES":"Premium required to add favorites",
-  "USER_ACCOUNT_DELETED":"User account deleted"
+  "USER_ACCOUNT_DELETED":"User account deleted",
+  "CANNOT_LIKE_PASSED_USER":"Can not like passed user",
+  "CANNOT_FAVORITE_PASSED_USER":"Can not favorite passed user"
 
 }

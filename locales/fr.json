@@ -397,6 +397,8 @@
   "CONTEST_DETAILS_FETCHED": "Détails du concours récupérés",
   "USER_CANNOT_BE_APPROVED_ALREADY_REJECTED":"L’utilisateur ne peut pas être approuvé car il a déjà été rejeté",
   "PREMIUM_REQUIRED_TO_ADD_FAVORITES":"Un abonnement premium est requis pour ajouter des favoris",
-  "USER_ACCOUNT_DELETED": "Compte utilisateur supprimé"
+  "USER_ACCOUNT_DELETED": "Compte utilisateur supprimé",
+  "CANNOT_LIKE_PASSED_USER": "Impossible d’aimer un utilisateur déjà passé",
+  "CANNOT_FAVORITE_PASSED_USER": "Impossible d’ajouter aux favoris un utilisateur déjà passé"
 
 }
