@@ -39,9 +39,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 app = FastAPI()
 
 # Make sure your uploads folder exists
-BASE_DIR = os.path.dirname(
-    os.path.dirname(os.path.abspath(__file__))
-)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 PUBLIC_DIR = os.path.join(BASE_DIR, settings.PUBLIC_DIR)
 UPLOAD_DIR = os.path.join(BASE_DIR, settings.UPLOAD_DIR)
