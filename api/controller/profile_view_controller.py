@@ -16,7 +16,7 @@ from core.utils.pagination import StandardResultsSetPagination
 from core.utils.core_enums import MembershipType, NotificationType, NotificationRecipientType
 from services.notification_service import send_notification
 from services.premium_guard import require_premium
-from services.gallery_service import resolve_gallery_items
+from services.gallery_service import *
 
 response = CustomResponseMixin()
 
@@ -30,6 +30,16 @@ async def get_profile_controller(user_id: str, viewer: dict, lang: str = "en"):
     )
     if not user:
         return response.error_message(translate_message("USER_NOT_FOUND", lang=lang), data=[], status_code=404)
+
+    viewer_unlocked_images = set()
+    if viewer:
+        viewer_db = await user_collection.find_one(
+            {"_id": viewer["_id"]},
+            {"unlocked_images": 1}
+        )
+        viewer_unlocked_images = set(viewer_db.get("unlocked_images", []))
+
+    is_owner = viewer and str(viewer["_id"]) == user_id
 
     recipient_lang = user.get("lang", "en")
 
@@ -77,8 +87,12 @@ async def get_profile_controller(user_id: str, viewer: dict, lang: str = "en"):
     public_gallery_raw = onboarding.get("public_gallery", []) if onboarding else []
     private_gallery_raw = onboarding.get("private_gallery", []) if onboarding else []
 
-    public_gallery = await resolve_gallery_items(public_gallery_raw)
-    private_gallery = await resolve_gallery_items(private_gallery_raw)
+    public_gallery = await resolve_public_gallery_items(public_gallery_raw)
+    private_gallery = await resolve_private_gallery_items(
+        private_gallery_raw,
+        viewer_unlocked_images=viewer_unlocked_images,
+        is_owner=is_owner
+    )
 
     private_gallery_locked = membership_type == "free"
 
@@ -288,9 +302,6 @@ async def buy_private_gallery_image(
         "owner_id": profile_user_id,
 
         "file_id": image_id,
-        "storage_key": image["storage_key"],
-        "storage_backend": image["storage_backend"],
-
         "price": price,
         "purchased_at": datetime.utcnow(),
         "is_active": True
