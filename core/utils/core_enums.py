@@ -63,6 +63,9 @@ class VerificationStatusEnum(str, Enum):
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
+    SUSPENDED = "suspended"
+    DELETED = "deleted"
+    BLOCKED = "blocked"
 
 
 class ContestStatus(str, Enum):

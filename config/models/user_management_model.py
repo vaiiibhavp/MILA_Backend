@@ -11,7 +11,8 @@ from config.db_config import (
     user_match_history,
     user_suspension_collection,
     admin_blocked_users_collection,
-    deleted_account_collection
+    deleted_account_collection,
+    reported_users_collection
 )
 from api.controller.files_controller import generate_file_url
 from core.utils.core_enums import VerificationStatusEnum
@@ -359,6 +360,19 @@ class UserManagementModel:
             "updated_at": suspended_from
         })
 
+        # ---------------- UPDATE REPORT STATUS ----------------
+        await reported_users_collection.update_many(
+            {
+                "reported_id": user_id
+            },
+            {
+                "$set": {
+                    "status": VerificationStatusEnum.SUSPENDED.value,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+
         return {
             "error": False,
             "data": {
@@ -434,6 +448,19 @@ class UserManagementModel:
             "updated_at": now
         })
 
+        # ---------------- UPDATE REPORT STATUS ----------------
+        await reported_users_collection.update_many(
+            {
+                "reported_id": user_id
+            },
+            {
+                "$set": {
+                    "status": VerificationStatusEnum.BLOCKED.value,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+
         return {
             "error": False,
             "data": {
@@ -483,6 +510,19 @@ class UserManagementModel:
         "created_at": now,
         "updated_at": now
         })
+
+    # ---------------- UPDATE REPORT STATUS ----------------
+        await reported_users_collection.update_many(
+            {
+                "reported_id": user_id
+            },
+            {
+                "$set": {
+                    "status": VerificationStatusEnum.DELETED.value,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
 
         return {
         "error": False,

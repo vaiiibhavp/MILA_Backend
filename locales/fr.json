@@ -399,6 +399,12 @@
   "PREMIUM_REQUIRED_TO_ADD_FAVORITES":"Un abonnement premium est requis pour ajouter des favoris",
   "USER_ACCOUNT_DELETED": "Compte utilisateur supprimé",
   "CANNOT_LIKE_PASSED_USER": "Impossible d’aimer un utilisateur déjà passé",
-  "CANNOT_FAVORITE_PASSED_USER": "Impossible d’ajouter aux favoris un utilisateur déjà passé"
+  "CANNOT_FAVORITE_PASSED_USER": "Impossible d’ajouter aux favoris un utilisateur déjà passé",
+  "REPORTED_USERS_FETCHED_SUCCESSFULLY": "Utilisateurs signalés récupérés avec succès",
+  "INVALID_REQUEST": "Requête invalide",
+  "SOMETHING_WENT_WRONG": "Une erreur est survenue",
+  "REPORT_NOT_FOUND": "Signalement introuvable",
+  "REPORT_DETAILS_FETCHED_SUCCESSFULLY": "Détails du signalement récupérés avec succès",
+  "FAILED_TO_FETCH_REPORT_DETAILS": "Échec de la récupération des détails du signalement"
 
 }

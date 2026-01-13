@@ -391,6 +391,12 @@
   "PREMIUM_REQUIRED_TO_ADD_FAVORITES":"Premium required to add favorites",
   "USER_ACCOUNT_DELETED":"User account deleted",
   "CANNOT_LIKE_PASSED_USER":"Can not like passed user",
-  "CANNOT_FAVORITE_PASSED_USER":"Can not favorite passed user"
+  "CANNOT_FAVORITE_PASSED_USER":"Can not favorite passed user",
+  "REPORTED_USERS_FETCHED_SUCCESSFULLY": "Reported users fetched successfully",
+  "INVALID_REQUEST": "Invalid request",
+  "SOMETHING_WENT_WRONG": "Something went wrong",
+  "REPORT_NOT_FOUND": "Report not found",
+  "REPORT_DETAILS_FETCHED_SUCCESSFULLY": "Report details fetched successfully",
+  "FAILED_TO_FETCH_REPORT_DETAILS": "Failed to fetch report details"
 
 }
