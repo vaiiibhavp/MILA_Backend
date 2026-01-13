@@ -23,13 +23,20 @@ async def get_admin_users(
 ):
     try:
         users = await UserManagementModel.get_admin_users_pipeline(
-            status, search, gender, country,
-            verification, membership, date_from, date_to, pagination
+            status,
+            search,
+            gender,
+            country,
+            verification,
+            membership,
+            date_from,
+            date_to,
+            pagination
         )
 
-        for u in users:
-            if u.get("registration_date"):
-                u["registration_date"] = u["registration_date"].isoformat()
+        for user in users:
+            if user.get("registration_date"):
+                user["registration_date"] = user["registration_date"].isoformat()
 
         return response.success_message(
             translate_message("USERS_FETCHED_SUCCESSFULLY", lang),
@@ -37,9 +44,23 @@ async def get_admin_users(
             status_code=200
         )
 
-    except Exception as e:
+    except ValueError as ve:
+        return response.error_message(
+            translate_message("INVALID_REQUEST", lang),
+            data=str(ve),
+            status_code=400
+        )
+
+    except RuntimeError as re:
         return response.error_message(
             translate_message("FAILED_TO_FETCH_USERS", lang),
+            data=str(re),
+            status_code=500
+        )
+
+    except Exception as e:
+        return response.error_message(
+            translate_message("SOMETHING_WENT_WRONG", lang),
             data=str(e),
             status_code=500
         )

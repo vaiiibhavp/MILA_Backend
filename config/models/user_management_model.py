@@ -1,6 +1,7 @@
 from bson import ObjectId
 from datetime import datetime, timedelta
 from typing import Optional
+from pymongo.errors import PyMongoError
 from config.db_config import (
     user_collection,
     onboarding_collection,
@@ -30,164 +31,176 @@ class UserManagementModel:
         date_to: Optional[datetime],
         pagination
     ):
-        pipeline = []
+        try:
+            if not pagination:
+                raise ValueError("Pagination object is required")
 
-        # ---------------- USER MATCH ----------------
-        user_match = {"is_deleted": {"$ne": True}}
+            pipeline = []
 
-        if status:
-            user_match["login_status"] = status
+            # ---------------- USER MATCH ----------------
+            user_match = {"is_deleted": {"$ne": True}}
 
-        if membership:
-            user_match["membership_type"] = membership
+            if status:
+                user_match["login_status"] = status
 
-        if date_from or date_to:
-            user_match["created_at"] = {}
-            if date_from:
-                user_match["created_at"]["$gte"] = date_from
-            if date_to:
-                user_match["created_at"]["$lte"] = date_to
+            if membership:
+                user_match["membership_type"] = membership
 
-        pipeline.append({"$match": user_match})
+            if date_from or date_to:
+                user_match["created_at"] = {}
+                if date_from:
+                    user_match["created_at"]["$gte"] = date_from
+                if date_to:
+                    user_match["created_at"]["$lte"] = date_to
 
-        # ---------------- STRING ID ----------------
-        pipeline.append({
-            "$addFields": {
-                "userIdStr": {"$toString": "$_id"}
-            }
-        })
+            pipeline.append({"$match": user_match})
 
-        # ---------------- ONBOARDING ----------------
-        pipeline.extend([
-            {
-                "$lookup": {
-                    "from": "user_onboarding",
-                    "localField": "userIdStr",
-                    "foreignField": "user_id",
-                    "as": "onboarding"
-                }
-            },
-            {"$unwind": "$onboarding"}
-        ])
-
-        if search:
+            # ---------------- STRING ID ----------------
             pipeline.append({
-                "$match": {"username": {"$regex": search, "$options": "i"}}
+                "$addFields": {
+                    "userIdStr": {"$toString": "$_id"}
+                }
             })
 
-        if gender:
-            pipeline.append({"$match": {"onboarding.gender": gender}})
+            # ---------------- ONBOARDING ----------------
+            pipeline.extend([
+                {
+                    "$lookup": {
+                        "from": "user_onboarding",
+                        "localField": "userIdStr",
+                        "foreignField": "user_id",
+                        "as": "onboarding"
+                    }
+                },
+                {"$unwind": "$onboarding"}
+            ])
 
-        if country:
-            pipeline.append({"$match": {"onboarding.country": country}})
+            if search:
+                pipeline.append({
+                    "$match": {"username": {"$regex": search, "$options": "i"}}
+                })
 
-        # ---------------- VERIFICATION ----------------
-        pipeline.append({
-            "$lookup": {
-                "from": "verification_history",
-                "let": {"uid": "$userIdStr"},
-                "pipeline": [
-                    {"$match": {"$expr": {"$eq": ["$user_id", "$$uid"]}}},
-                    {"$sort": {"verified_at": -1}},
-                    {"$limit": 1}
-                ],
-                "as": "verification"
-            }
-        })
+            if gender:
+                pipeline.append({"$match": {"onboarding.gender": gender}})
 
-        pipeline.append({
-            "$addFields": {
-                "verification_status": {
-                    "$cond": {
-                        "if": {"$gt": [{"$size": "$verification"}, 0]},
-                        "then": {"$arrayElemAt": ["$verification.status", 0]},
-                        "else": VerificationStatusEnum.PENDING
+            if country:
+                pipeline.append({"$match": {"onboarding.country": country}})
+
+            # ---------------- VERIFICATION ----------------
+            pipeline.append({
+                "$lookup": {
+                    "from": "verification_history",
+                    "let": {"uid": "$userIdStr"},
+                    "pipeline": [
+                        {"$match": {"$expr": {"$eq": ["$user_id", "$$uid"]}}},
+                        {"$sort": {"verified_at": -1}},
+                        {"$limit": 1}
+                    ],
+                    "as": "verification"
+                }
+            })
+
+            pipeline.append({
+                "$addFields": {
+                    "verification_status": {
+                        "$cond": {
+                            "if": {"$gt": [{"$size": "$verification"}, 0]},
+                            "then": {"$arrayElemAt": ["$verification.status", 0]},
+                            "else": VerificationStatusEnum.PENDING
+                        }
                     }
                 }
-            }
-        })
+            })
 
-        if verification:
-            pipeline.append({"$match": {"verification_status": verification}})
+            if verification:
+                pipeline.append({"$match": {"verification_status": verification}})
 
-        # ---------------- MATCHES ----------------
-        pipeline.append({
-            "$lookup": {
-                "from": "users_matched_history",
-                "let": {"uid": "$userIdStr"},
-                "pipeline": [
-                    {"$match": {"$expr": {"$in": ["$$uid", "$user_ids"]}}}
-                ],
-                "as": "matches"
-            }
-        })
-
-        pipeline.append({
-            "$addFields": {
-                "match_count": {"$size": "$matches"}
-            }
-        })
-
-        # ---------------- COUNTRY ----------------
-        pipeline.append({
-            "$addFields": {
-                "countryObjId": {
-                    "$toObjectId": "$onboarding.country"
+            # ---------------- MATCHES ----------------
+            pipeline.append({
+                "$lookup": {
+                    "from": "users_matched_history",
+                    "let": {"uid": "$userIdStr"},
+                    "pipeline": [
+                        {"$match": {"$expr": {"$in": ["$$uid", "$user_ids"]}}}
+                    ],
+                    "as": "matches"
                 }
-            }
-        })
+            })
 
-        pipeline.append({
-            "$lookup": {
-                "from": "countries",
-                "localField": "countryObjId",
-                "foreignField": "_id",
-                "as": "country"
-            }
-        })
+            pipeline.append({
+                "$addFields": {
+                    "match_count": {"$size": "$matches"}
+                }
+            })
 
-        pipeline.append({
-            "$unwind": {
-                "path": "$country",
-                "preserveNullAndEmptyArrays": True
-            }
-        })
+            # ---------------- COUNTRY ----------------
+            pipeline.append({
+                "$addFields": {
+                    "countryObjId": {
+                        "$toObjectId": "$onboarding.country"
+                    }
+                }
+            })
 
-        # ---------------- PAGINATION ----------------
-        pipeline.extend([
-            {"$sort": {"created_at": -1}},
-            {"$skip": pagination.skip},
-            {"$limit": pagination.limit}
-        ])
+            pipeline.append({
+                "$lookup": {
+                    "from": "countries",
+                    "localField": "countryObjId",
+                    "foreignField": "_id",
+                    "as": "country"
+                }
+            })
 
-        # ---------------- FINAL PROJECTION ----------------
-        pipeline.append({
-            "$project": {
-                "_id": 0,
-                "user_id": {"$toString": "$_id"},
+            pipeline.append({
+                "$unwind": {
+                    "path": "$country",
+                    "preserveNullAndEmptyArrays": True
+                }
+            })
 
-                "username": 1,
-                "email": 1,
+            # ---------------- PAGINATION ----------------
+            pipeline.extend([
+                {"$sort": {"created_at": -1}},
+                {"$skip": max(pagination.skip, 0)},
+                {"$limit": max(pagination.limit, 1)}
+            ])
 
-                "account_status": "$login_status",
-                "subscription": "$membership_type",
-                "verification_status": 1,
+            # ---------------- FINAL PROJECTION ----------------
+            pipeline.append({
+                "$project": {
+                    "_id": 0,
+                    "user_id": {"$toString": "$_id"},
+                    "username": 1,
+                    "email": 1,
+                    "account_status": "$login_status",
+                    "subscription": "$membership_type",
+                    "verification_status": 1,
+                    "gender": "$onboarding.gender",
+                    "sexual_orientation": "$onboarding.sexual_orientation",
+                    "relationship_status": "$onboarding.marital_status",
+                    "country": {
+                        "id": {"$toString": "$country._id"},
+                        "name": "$country.name"
+                    },
+                    "match_count": 1,
+                    "registration_date": "$created_at"
+                }
+            })
 
-                "gender": "$onboarding.gender",
-                "sexual_orientation": "$onboarding.sexual_orientation",
-                "relationship_status": "$onboarding.marital_status",
+            return await user_collection.aggregate(pipeline).to_list(None)
 
-                "country": {
-                    "id": {"$toString": "$country._id"},
-                    "name": "$country.name"
-                },
+        except ValueError as ve:
+            # logger.warning(f"Validation error: {ve}")
+            raise ve
 
-                "match_count": 1,
-                "registration_date": "$created_at"
-            }
-        })
+        except PyMongoError as db_error:
+            # logger.error(f"Database error: {db_error}")
+            raise RuntimeError("Database operation failed")
 
-        return await user_collection.aggregate(pipeline).to_list(None)
+        except Exception as e:
+            # logger.exception("Unexpected error while fetching admin users")
+            raise RuntimeError(str(e))
+
     # ------------------ USER DETAILS ------------------
     @staticmethod
     async def get_user(user_id: str):
