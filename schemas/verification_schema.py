@@ -56,10 +56,10 @@ class VerificationActionRequest(BaseModel):
     def validate_user_id(cls, v):
         # Empty / whitespace check
         if not v or not v.strip():
-            raise ValueError("USER_ID_REQUIRED")
+            raise ValueError("User id required")
 
         # Mongo ObjectId validation
         if not ObjectId.is_valid(v):
-            raise ValueError("INVALID_USER_ID")
+            raise ValueError("Invalid user ID")
 
         return v.strip()

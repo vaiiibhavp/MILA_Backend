@@ -1,10 +1,11 @@
 from bson import ObjectId
 from datetime import datetime
-from config.db_config import onboarding_collection , user_collection  , favorite_collection ,user_like_history ,user_match_history , user_passed_hostory,countries_collection,interest_categories_collection
+from config.db_config import user_collection  , favorite_collection ,user_like_history ,user_match_history , user_passed_hostory,countries_collection,interest_categories_collection
 from core.utils.helper import serialize_datetime_fields
 from core.utils.response_mixin import CustomResponseMixin
 from core.utils.helper import serialize_datetime_fields
 from services.translation import translate_message
+from core.utils.core_enums import MembershipType
 
 
 response = CustomResponseMixin()
@@ -12,6 +13,26 @@ response = CustomResponseMixin()
 
 # function help to add user to favorites collection
 async def add_to_fav(user_id: str, favorite_user_id: str, lang: str = "en"):
+
+    # ------------------ PREMIUM VALIDATION ------------------
+    user = await user_collection.find_one(
+        {"_id": ObjectId(user_id)},
+        {"membership_type": 1}
+    )
+
+    if not user:
+        return response.error_message(
+            translate_message("USER_NOT_FOUND", lang),
+            status_code=404
+        )
+
+    if user.get("membership_type") != MembershipType.PREMIUM:
+        return response.error_message(
+            translate_message("PREMIUM_REQUIRED_TO_ADD_FAVORITES", lang),
+            status_code=403
+        )
+
+    # ------------------ SELF CHECK ------------------
     if user_id == favorite_user_id:
         return response.error_message(
             translate_message("CANNOT_ADD_SELF_TO_FAVORITES", lang),

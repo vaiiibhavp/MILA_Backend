@@ -183,14 +183,28 @@ async def approve_verification(user_id: str, admin: dict , lang: str = "en"):
 
     if not user:
         return response.raise_exception(
-            message=translate_message("USER_NOT_FOUND"),
+            translate_message("USER_NOT_FOUND", lang),
             data=[],
             status_code=404
         )
 
+    # ------------------ SIMPLE REJECTED CHECK ------------------
+    rejected_exists = await verification_collection.find_one({
+        "user_id": user_id,
+        "status": VerificationStatusEnum.REJECTED
+    })
+
+    if rejected_exists:
+        return response.raise_exception(
+            translate_message("USER_CANNOT_BE_APPROVED_ALREADY_REJECTED",lang),
+            data=[],
+            status_code=400
+        )
+
+    # ------------------ ALREADY VERIFIED ------------------
     if user.get("is_verified", False):
         return response.raise_exception(
-            message=translate_message("USER_ALREADY_VERIFIED"),
+            message=translate_message("USER_ALREADY_VERIFIED", lang),
             data=[],
             status_code=400
         )
@@ -214,7 +228,7 @@ async def approve_verification(user_id: str, admin: dict , lang: str = "en"):
     })
 
     return response.success_message(
-        message=translate_message("USER_VERIFICATION_APPROVED"),
+        translate_message("USER_VERIFICATION_APPROVED", lang),
         data=[{
             "user_id": user_id,
             "verified_by": str(admin["_id"]),
