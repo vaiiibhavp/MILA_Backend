@@ -309,6 +309,32 @@ class UserManagementModel:
                 "status_code": 404
             }
 
+        # ---------------- DELETED ACCOUNT CHECK ----------------
+        deleted_account = await deleted_account_collection.find_one({
+            "user_id": user_id
+        })
+
+        if deleted_account:
+            return {
+                "error": True,
+                "message": translate_message("USER_ACCOUNT_DELETED", lang),
+                "status_code": 400
+            }
+
+        # ---------------- ADMIN BLOCK CHECK ----------------
+        admin_blocked = await admin_blocked_users_collection.find_one({
+            "user_id": user_id,
+            "unblocked_at": {"$exists": False}
+        })
+
+        if admin_blocked:
+            return {
+                "error": True,
+                "message": translate_message("USER_ALREADY_BLOCKED", lang),
+                "status_code": 400
+            }
+
+        # ---------------- ACTIVE SUSPENSION CHECK ----------------
         already_suspended = await user_suspension_collection.find_one({
             "user_id": user_id,
             "suspended_until": {"$gt": datetime.utcnow()}
@@ -360,15 +386,41 @@ class UserManagementModel:
                 "status_code": 404
             }
 
+        # ---------------- CHECK DELETED ACCOUNT ----------------
+        deleted_account = await deleted_account_collection.find_one({
+            "user_id": user_id
+        })
+
+        if deleted_account:
+            return {
+                "error": True,
+                "message": translate_message("USER_ACCOUNT_DELETED", lang),
+                "status_code": 400
+            }
+
         # ---------------- CHECK ALREADY BLOCKED ----------------
         already_blocked = await admin_blocked_users_collection.find_one({
-            "user_id": user_id
+            "user_id": user_id,
+            "unblocked_at": {"$exists": False}
         })
 
         if already_blocked:
             return {
                 "error": True,
                 "message": translate_message("USER_ALREADY_BLOCKED", lang),
+                "status_code": 400
+            }
+
+        # ---------------- CHECK ACTIVE SUSPENSION ----------------
+        active_suspension = await user_suspension_collection.find_one({
+            "user_id": user_id,
+            "suspended_until": {"$gt": datetime.utcnow()}
+        })
+
+        if active_suspension:
+            return {
+                "error": True,
+                "message": translate_message("USER_ALREADY_SUSPENDED", lang),
                 "status_code": 400
             }
 

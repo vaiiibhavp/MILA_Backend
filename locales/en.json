@@ -386,6 +386,9 @@
 
   "CONTEST_NOT_FOUND": "Contest not found",
   "CONTEST_HISTORY_NOT_FOUND": "Contest history not found",
-  "CONTEST_DETAILS_FETCHED": "Contest details fetched"
+  "CONTEST_DETAILS_FETCHED": "Contest details fetched",
+  "USER_CANNOT_BE_APPROVED_ALREADY_REJECTED":"User cannot be approved already rejected",
+  "PREMIUM_REQUIRED_TO_ADD_FAVORITES":"Premium required to add favorites",
+  "USER_ACCOUNT_DELETED":"User account deleted"
 
 }
