@@ -135,7 +135,7 @@ async def retry_verification_selfie_controller(
         file_obj=selfie,
         file_name=selfie.filename,
         user_id=user_id,
-        file_type="profile_photos"
+        file_type="verification_selfie"
     )
 
     file_doc = Files(
