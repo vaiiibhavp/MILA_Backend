@@ -1,11 +1,13 @@
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional, List
 from bson import ObjectId
 
-from schemas.token_package_schema import TokenPackagePlanCreateModel
+from schemas.token_package_schema import TokenPackagePlanCreateModel, TokenPackagePlanUpdateRequestModel
 from services.translation import translate_message
 from core.utils.response_mixin import CustomResponseMixin
 from config.db_config import token_packages_plan_collection
-from core.utils.helper import convert_objectid_to_str
+from core.utils.helper import convert_objectid_to_str, calculate_usdt_amount
+
 response = CustomResponseMixin()
 
 async def get_token_packages_plans():
@@ -46,3 +48,66 @@ async def get_token_packages_plan_details(
         condition,
         projection
     )
+
+async def update_token_package_plan(
+    plan_id: str,
+    payload: TokenPackagePlanUpdateRequestModel,
+    admin_user_id: str,
+    lang: str
+) -> Dict[str, Any]:
+    """
+    Fully update token package plan.
+    """
+
+    plan = await token_packages_plan_collection.find_one(
+        {"_id": ObjectId(plan_id)}
+    )
+
+    if not plan:
+        raise response.raise_exception(
+            translate_message("TOKEN_PACKAGE_PLAN_NOT_FOUND", lang=lang),
+            status_code=404
+        )
+
+    existing_plan = await token_packages_plan_collection.find_one({
+        "title": payload.title.strip().title(),
+        "_id": {"$ne": ObjectId(plan_id)}
+    })
+
+    if existing_plan:
+        raise response.raise_exception(
+            translate_message(
+                "TOKEN_PACKAGE_PLAN_TITLE_ALREADY_EXISTS",
+                lang=lang
+            ),
+            status_code=409
+        )
+
+    amount = calculate_usdt_amount(int(payload.tokens))
+    update_doc = {
+        "title": payload.title.strip().title(),
+        "amount": str(amount),
+        "tokens": str(payload.tokens),
+        "status": payload.status,
+        "updated_at": datetime.now(timezone.utc),
+        "updated_by": ObjectId(admin_user_id)
+    }
+
+    await token_packages_plan_collection.update_one(
+        {"_id": ObjectId(plan_id)},
+        {"$set": update_doc}
+    )
+
+    updated = await token_packages_plan_collection.find_one(
+        {"_id": ObjectId(plan_id)}
+    )
+
+    return {
+        "_id": updated["_id"],
+        "title": updated["title"],
+        "amount": updated["amount"],
+        "tokens": updated["tokens"],
+        "status": updated["status"],
+        "created_at": updated["created_at"],
+        "updated_at": updated["updated_at"]
+    }

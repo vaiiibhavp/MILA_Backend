@@ -392,10 +392,6 @@
   "INVALID_TRON_ADDRESS": "Adresse de portefeuille TRON invalide.",
   "HOME_SUGGESTIONS_FETCHED": "Suggestions de la page d’accueil récupérées",
 
-  "TOKEN_PACKAGE_PLAN_TITLE_ALREADY_EXISTS": "Un forfait de jetons portant ce titre existe déjà.",
-  "TOKEN_PACKAGE_PLAN_CREATED": "Plan de forfait de jetons créé avec succès.",
-  "TOKEN_PACKAGE_PLAN_CREATION_FAILED": "Impossible de créer un forfait de jetons. Veuillez réessayer plus tard.",
-
   "CONTEST_NOT_FOUND": "Concours introuvable",
   "CONTEST_HISTORY_NOT_FOUND": "Historique du concours introuvable",
   "CONTEST_DETAILS_FETCHED": "Détails du concours récupérés",
@@ -412,5 +408,11 @@
   "FAILED_TO_FETCH_REPORT_DETAILS": "Échec de la récupération des détails du signalement",
 
   "PLEASE_ENTER_A_VALID_PRICE": "Veuillez saisir un prix valide",
-  "ONLY_NUMERIC_VALUES_ALLOWED": "Seules les valeurs numériques sont autorisées."
+  "ONLY_NUMERIC_VALUES_ALLOWED": "Seules les valeurs numériques sont autorisées.",
+
+  "TOKEN_PACKAGE_PLAN_TITLE_ALREADY_EXISTS": "Un forfait de jetons portant ce titre existe déjà.",
+  "TOKEN_PACKAGE_PLAN_CREATED": "Plan de forfait de jetons créé avec succès.",
+  "TOKEN_PACKAGE_PLAN_CREATION_FAILED": "Impossible de créer un forfait de jetons. Veuillez réessayer plus tard.",
+  "TOKEN_PLAN_UPDATED_SUCCESSFULLY": "Le forfait de jetons a été mis à jour avec succès.",
+  "TOKEN_PACKAGE_PLAN_UPDATE_FAILED": "Impossible de mettre à jour le forfait de jetons. Veuillez réessayer plus tard."
 }

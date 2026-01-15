@@ -404,5 +404,7 @@
 
   "TOKEN_PACKAGE_PLAN_TITLE_ALREADY_EXISTS": "A token package plan with this title already exists.",
   "TOKEN_PACKAGE_PLAN_CREATED": "Token package plan created successfully.",
-  "TOKEN_PACKAGE_PLAN_CREATION_FAILED": "Unable to create token package plan. Please try again later."
+  "TOKEN_PACKAGE_PLAN_CREATION_FAILED": "Unable to create token package plan. Please try again later.",
+  "TOKEN_PLAN_UPDATED_SUCCESSFULLY": "Token package plan updated successfully.",
+  "TOKEN_PACKAGE_PLAN_UPDATE_FAILED": "Failed to update the token package plan. Please try again later."
 }
