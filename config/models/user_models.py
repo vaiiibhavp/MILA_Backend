@@ -50,7 +50,7 @@ class PyObjectId(str):
         return json_schema
 
 FREE_FILTERS = {
-    "cities": ("country", "$in"),
+    "country": ("country", "$in"),
     "genders": ("gender", "$in"),
 }
 

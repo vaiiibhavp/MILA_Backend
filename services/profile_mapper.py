@@ -3,6 +3,7 @@
 from core.utils.age_calculation import calculate_age
 from core.utils.core_enums import MembershipType
 from core.utils.helper import *
+from api.controller.files_controller import *
 
 async def build_basic_profile_response(user: dict, onboarding: dict, profile_photo: str):
     birthdate = onboarding.get("birthdate") if onboarding else None
@@ -59,15 +60,29 @@ def build_selectable_options(all_options: list, selected_values):
         for option in all_options
     ]
 
-def build_edit_profile_response(user: dict, onboarding: dict):
+async def build_edit_profile_response(user: dict, onboarding: dict):
     onboarding = onboarding or {}
     is_premium = user.get("membership_type") == MembershipType.PREMIUM
 
+    country_name = await get_country_name_by_id(
+        onboarding.get("country"),
+        countries_collection
+    )
+
+    preferred_country_names = []
+    for cid in onboarding.get("preferred_country", []):
+        name = await get_country_name_by_id(cid, countries_collection)
+        if name:
+            preferred_country_names.append(name)
+
     data = {
+        "username": user.get("username"),
+        "is_verified": user.get("is_verified", False),        
+        "profile_photo": await profile_photo_from_onboarding(onboarding),
+
         "basic_details": {
             "bio": onboarding.get("bio"),
-            "country": onboarding.get("country"),
-
+            "country": country_name,
             "gender": build_selectable_options(
                 enum_values(GenderEnum),
                 onboarding.get("gender")
@@ -94,8 +109,7 @@ def build_edit_profile_response(user: dict, onboarding: dict):
                 enum_values(InterestedInEnum),
                 onboarding.get("interested_in", [])
             ),
-
-            "preferred_country": onboarding.get("preferred_country", [])
+            "preferred_country": preferred_country_names
         },
 
         "security": {
