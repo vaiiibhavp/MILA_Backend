@@ -405,6 +405,8 @@
   "SOMETHING_WENT_WRONG": "Une erreur est survenue",
   "REPORT_NOT_FOUND": "Signalement introuvable",
   "REPORT_DETAILS_FETCHED_SUCCESSFULLY": "Détails du signalement récupérés avec succès",
-  "FAILED_TO_FETCH_REPORT_DETAILS": "Échec de la récupération des détails du signalement"
+  "FAILED_TO_FETCH_REPORT_DETAILS": "Échec de la récupération des détails du signalement",
 
+  "PLEASE_ENTER_A_VALID_PRICE": "Veuillez saisir un prix valide",
+  "ONLY_NUMERIC_VALUES_ALLOWED": "Seules les valeurs numériques sont autorisées."
 }

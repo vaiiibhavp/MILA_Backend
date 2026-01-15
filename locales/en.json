@@ -397,6 +397,9 @@
   "SOMETHING_WENT_WRONG": "Something went wrong",
   "REPORT_NOT_FOUND": "Report not found",
   "REPORT_DETAILS_FETCHED_SUCCESSFULLY": "Report details fetched successfully",
-  "FAILED_TO_FETCH_REPORT_DETAILS": "Failed to fetch report details"
+  "FAILED_TO_FETCH_REPORT_DETAILS": "Failed to fetch report details", 
 
+  "PLEASE_ENTER_A_VALID_PRICE": "Please enter a valid price",
+  "ONLY_NUMERIC_VALUES_ALLOWED": "Only numeric values allowed"
+  
 }

@@ -39,7 +39,7 @@ async def upload_public_gallery(
 @router.post("/upload_private_gallery", response_model=Response)
 async def upload_private_gallery(
     image: List[UploadFile] = File(...),
-    price: Optional[int] = Form(None),
+    price: Optional[str] = Form(None),
     current_user: dict = Depends(UserPermission(["user"])),
     lang: str = Query("en")
 ):

@@ -198,7 +198,22 @@ async def upload_private_gallery_controller(image, price, current_user, lang: st
     if size_error:
         return size_error
     
-    if price is None or price <= 0:
+    # PRICE VALIDATION (string-safe)
+    if price is None or price.strip() == "":
+        return response.error_message(
+            translate_message("PLEASE_ENTER_A_VALID_PRICE", lang),
+            status_code=400
+        )
+
+    if not price.isdigit():
+        return response.error_message(
+            translate_message("ONLY_NUMERIC_VALUES_ALLOWED", lang),
+            status_code=400
+        )
+
+    price = int(price)
+
+    if price <= 0:
         return response.error_message(
             translate_message("PRICE_MUST_BE_GREATER_THAN_ZERO", lang),
             status_code=400
