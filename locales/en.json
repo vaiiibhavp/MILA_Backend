@@ -411,5 +411,7 @@
   "TOKEN_PLAN_ALREADY_DELETED": "Token package plan is already deleted.",
   "TOKEN_PACKAGE_PLAN_DELETE_FAILED": "Failed to delete the token package plan. Please try again later.",
   "TOKEN_PACKAGE_PLANS_FETCHED_SUCCESSFULLY": "Token package plans fetched successfully.",
-  "ERROR_WHILE_FETCHING_TOKEN_PACKAGE_PLANS": "Failed to fetch token package plans."
+  "ERROR_WHILE_FETCHING_TOKEN_PACKAGE_PLANS": "Failed to fetch token package plans.",
+  "PROFILE_IMAGE_UPDATED":"Profile image updated"
+
 }
