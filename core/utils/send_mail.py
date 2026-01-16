@@ -4,7 +4,6 @@ from config.basic_config import settings
 
 #helper function for send_email
 def smtp_send_email(to_email: str, subject: str, body: str, is_html: bool = False):
-
     msg_type = "html" if is_html else "plain"
     msg = MIMEText(body, msg_type)
     

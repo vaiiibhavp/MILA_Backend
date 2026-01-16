@@ -4,6 +4,7 @@ from config.models.contest_model import *
 from core.utils.pagination import StandardResultsSetPagination
 import asyncio
 from core.utils.helper import *
+from services.gallery_service import *
 
 response = CustomResponseMixin()
 
@@ -113,4 +114,134 @@ async def get_contest_details_controller(
     return response.success_message(
         translate_message("CONTEST_DETAILS_FETCHED", lang),
         data=[serialize_datetime_fields(convert_objectid_to_str(raw_data))]
+    )
+
+async def get_contest_participants_controller(
+    contest_id: str,
+    pagination,
+    lang: str
+):
+    participants = await fetch_contest_participants(
+        contest_id=contest_id,
+        skip=pagination.skip,
+        limit=pagination.limit
+    )
+
+    response_items = []
+
+    for participant in participants:
+        user = await get_user_details(
+            {"_id": ObjectId(participant["user_id"]), "is_deleted": {"$ne": True}},
+            fields=["username", "is_verified"]
+        )
+
+        if not user:
+            continue
+
+        avatar = await resolve_user_avatar(participant["user_id"])
+
+        response_items.append({
+            "user_id": participant["user_id"],
+            "name": user.get("username"),
+            "profile_photo": avatar["avatar_url"] if avatar else None,
+            "is_verified": user.get("is_verified", False)
+        })
+
+    return response.success_message(
+        translate_message("CONTEST_PARTICIPANTS_FETCHED_SUCCESSFULLY", lang),
+        data=[{
+            "participants": response_items,
+            "page": pagination.page,
+            "page_size": pagination.page_size
+        }],
+        status_code=200
+    )
+
+async def participate_in_contest_controller(
+    contest_id: str,
+    contest_history_id: str,
+    images: list,
+    current_user: dict,
+    lang: str
+):
+    user_id = str(current_user["_id"])
+
+    # Verified check
+    if not current_user.get("is_verified"):
+        return response.error_message(
+            translate_message("VERIFY_PROFILE_TO_PARTICIPATE", lang),
+            status_code=403
+        )
+
+    # Contest & history validation
+    contest = await fetch_contest_by_id(contest_id)
+    contest_history = await fetch_active_contest_history(contest_id)
+
+    if not contest or not contest_history:
+        return response.error_message(
+            translate_message("CONTEST_NOT_FOUND", lang),
+            status_code=404
+        )
+
+    if contest_history["status"] != ContestStatus.registration_open:
+        return response.error_message(
+            translate_message("CONTEST_REGISTRATION_CLOSED", lang),
+            status_code=400
+        )
+
+    # Image count validation
+    allowed_images = contest.get("images_per_participant", 1)
+    if len(images) != allowed_images:
+        return response.error_message(
+            translate_message(
+                "INVALID_IMAGE_COUNT",
+                lang
+            ),
+            data={"allowed": allowed_images},
+            status_code=400
+        )
+
+    # Already participated check
+    already = await is_user_already_participant(
+        contest_id,
+        contest_history_id,
+        user_id
+    )
+    if already:
+        return response.error_message(
+            translate_message("ALREADY_PARTICIPATED", lang),
+            status_code=409
+        )
+
+    # Upload images
+    uploaded_file_ids = []
+    for img in images:
+        file_doc = await create_and_store_file(
+            file_obj=img,
+            user_id=user_id,
+            file_type=FileType.CONTEST
+        )
+        uploaded_file_ids.append(file_doc["file_id"])
+
+    # Save participant
+    participant_data = {
+        "contest_id": contest_id,
+        "contest_history_id": contest_history_id,
+        "user_id": user_id,
+        "uploaded_file_ids": uploaded_file_ids,
+        "total_votes": 0,
+        "created_at": datetime.utcnow()
+    }
+
+    participant_id = await create_contest_participant(participant_data)
+
+    await increment_participant_count(contest_history_id)
+
+    return response.success_message(
+        translate_message("CONTEST_PARTICIPATION_SUCCESSFUL", lang),
+        data=[{
+            "participant_id": participant_id,
+            "total_images": len(uploaded_file_ids)
+        }],
+        status_code=200
     )

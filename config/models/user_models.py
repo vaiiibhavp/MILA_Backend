@@ -77,7 +77,8 @@ class FileType(str, Enum):
     PRIVATE_GALLERY = "private_gallery"
     GIFT = "gift"
     VERIFICATION_SELFIE = "verification_selfie"
-
+    CONTEST = "contest"
+    
 # ---- Files model ----
 class Files(BaseModel):
     id: Optional[PyObjectId] = Field(default=None)

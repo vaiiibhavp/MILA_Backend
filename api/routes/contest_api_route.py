@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, Query, Path
+from fastapi import APIRouter, Depends, Query, Path, Form
 from api.controller.contest_controller import *
 from core.utils.permissions import UserPermission
 from core.utils.pagination import pagination_params, StandardResultsSetPagination
+from schemas.response_schema import Response
 
 router = APIRouter(prefix="", tags=["contest"])
 
@@ -52,4 +53,36 @@ async def get_contest_details(
         contest_id=contest_id,
         current_user=current_user,
         lang=lang
+    )
+
+@router.get(
+    "/{contest_id}/view_participants",
+    response_model=Response
+)
+async def get_contest_participants(
+    contest_id: str,
+    pagination: StandardResultsSetPagination = Depends(pagination_params),
+    current_user: dict = Depends(UserPermission(["user"])),
+    lang: str = Query("en")
+):
+    return await get_contest_participants_controller(
+        contest_id=contest_id,
+        pagination=pagination,
+        lang=lang
+    )
+
+@router.post("/{contest_id}/participate", response_model=Response)
+async def participate_in_contest(
+    contest_id: str,
+    contest_history_id: str = Form(...),
+    images: List[UploadFile] = File(...),
+    current_user: dict = Depends(UserPermission(["user"])),
+    lang: str = Query("en")
+):
+    return await participate_in_contest_controller(
+        contest_id,
+        contest_history_id,
+        images,
+        current_user,
+        lang
     )

@@ -592,23 +592,50 @@ async def search_profiles_controller(
                 if birthdate_query:
                     query[db_field] = birthdate_query
 
+    total_matching = await onboarding_collection.count_documents(query)
+
     # QUERY WITH PAGINATION
-    cursor = (
-        onboarding_collection
-        .find(query)
-        .skip(pagination.skip)
-        .limit(pagination.limit)
-    )
+    base_pipeline = [
+        {"$match": query},
+        {"$match": {"user_id": {"$ne": None}}},
+        {"$addFields": {"user_obj_id": {"$toObjectId": "$user_id"}}},
+        {
+            "$lookup": {
+                "from": "users",
+                "localField": "user_obj_id",
+                "foreignField": "_id",
+                "as": "user"
+            }
+        },
+        {"$unwind": "$user"},
+        {"$match": {"user.is_deleted": {"$ne": True}}},
+    ]
+
+    count_pipeline = base_pipeline + [
+        {"$count": "total"}
+    ]
+
+    count_cursor = onboarding_collection.aggregate(count_pipeline)
+    count_result = await count_cursor.to_list(length=1)
+
+    total_matching = count_result[0]["total"] if count_result else 0
+
+    data_pipeline = base_pipeline + [
+        {"$sort": {"_id": 1}}
+    ]
+
+    if pagination.page is not None and pagination.page_size is not None:
+        data_pipeline.extend([
+            {"$skip": pagination.skip},
+            {"$limit": pagination.page_size}
+        ])
+
+    cursor = onboarding_collection.aggregate(data_pipeline)
 
     results = []
 
     async for onboarding in cursor:
-        user = await user_collection.find_one(
-            {"_id": ObjectId(onboarding["user_id"]), "is_deleted": {"$ne": True}}
-        )
-        if not user:
-            continue
-
+        user = onboarding["user"]
         birthdate = onboarding.get("birthdate")
 
         age = calculate_age(birthdate) if birthdate else None
@@ -633,6 +660,7 @@ async def search_profiles_controller(
             "results": results,
             "page": pagination.page,
             "page_size": pagination.page_size,
+            "total": total_matching,
             "premium_required": False
         }]
     )

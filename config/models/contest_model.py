@@ -326,3 +326,48 @@ async def get_leaderboard(
         rank += 1
 
     return leaderboard
+
+async def fetch_contest_participants(
+    contest_id: str,
+    skip: int,
+    limit: int
+):
+    cursor = (
+        contest_participant_collection
+        .find(
+            {
+                "contest_id": contest_id,
+                "is_deleted": {"$ne": True}
+            }
+        )
+        .skip(skip)
+        .limit(limit)
+    )
+
+    participants = []
+    async for p in cursor:
+        participants.append(p)
+
+    return participants
+
+async def is_user_already_participant(
+    contest_id: str,
+    contest_history_id: str,
+    user_id: str
+):
+    return await contest_participant_collection.find_one({
+        "contest_id": contest_id,
+        "contest_history_id": contest_history_id,
+        "user_id": user_id
+    })
+
+async def create_contest_participant(data: dict):
+    result = await contest_participant_collection.insert_one(data)
+    return str(result.inserted_id)
+
+async def increment_participant_count(contest_history_id: str):
+    await contest_history_collection.update_one(
+        {"_id": ObjectId(contest_history_id)},
+        {"$inc": {"total_participants": 1}}
+    )
+
