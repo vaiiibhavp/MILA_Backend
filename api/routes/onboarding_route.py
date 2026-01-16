@@ -142,3 +142,12 @@ async def get_intrest_categories(
 ):
     return await intrest_and_categories(lang=lang)
 
+@router.patch("/onboarding/profile-image")
+async def update_profile_image(
+    image: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
+):
+    return await update_profile_image_onboarding(
+        image=image,
+        current_user=current_user
+    )

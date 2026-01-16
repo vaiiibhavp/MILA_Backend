@@ -851,3 +851,82 @@ async def upload_onboarding_selfie(
             data=str(e),
             status_code=500
         )
+
+async def update_profile_image_onboarding(
+    image: UploadFile,
+    current_user: dict
+):
+    try:
+        lang = current_user.get("language", "en")
+        user_id = str(current_user["_id"])
+
+        # ---------------- SAVE FILE ----------------
+        public_url, storage_key, backend = await save_file(
+            file_obj=image,
+            file_name=image.filename,
+            user_id=user_id,
+            file_type="profile_photo",
+        )
+
+        file_doc = Files(
+            storage_key=storage_key,
+            storage_backend=backend,
+            file_type="profile_photo",
+            uploaded_by=user_id,
+            uploaded_at=datetime.utcnow(),
+        )
+
+        inserted = await file_collection.insert_one(
+            file_doc.model_dump(by_alias=True)
+        )
+
+        new_file_id = str(inserted.inserted_id)
+
+        # ---------------- FETCH ONBOARDING ----------------
+        onboarding = await onboarding_collection.find_one(
+            {"user_id": user_id},
+            {"images": 1}
+        )
+
+        if not onboarding:
+            return response.error_message(
+                translate_message("ONBOARDING_NOT_FOUND", lang),
+                status_code=404
+            )
+
+        images = onboarding.get("images", [])
+
+        # ---------------- UPDATE 0th INDEX ----------------
+        if images:
+            images[0] = new_file_id
+        else:
+            images = [new_file_id]
+
+        # ---------------- UPDATE ONBOARDING ----------------
+        await onboarding_collection.update_one(
+            {"user_id": user_id},
+            {
+                "$set": {
+                    "images": images,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+
+        # ---------------- RESPONSE ----------------
+        return response.success_message(
+            translate_message("PROFILE_IMAGE_UPDATED", lang),
+            data={
+                "file_id": new_file_id,
+                "storage_key": storage_key,
+                "url": public_url
+            },
+            status_code=200
+        )
+
+    except Exception as e:
+        return response.raise_exception(
+            translate_message("ERROR_WHILE_UPLOADING_FILE", lang),
+            data=str(e),
+            status_code=500
+        )
