@@ -150,6 +150,35 @@ async def save_onboarding_step(
 
         payload["images"] = images
 
+        # -------- ADD IMAGES TO PUBLIC GALLERY --------
+        existing_doc = await onboarding_collection.find_one(
+            {"user_id": user_id},
+            {"public_gallery": 1}
+        )
+
+        existing_gallery = (
+            existing_doc.get("public_gallery", [])
+            if existing_doc else []
+        )
+
+        existing_file_ids = {
+            item.get("file_id") for item in existing_gallery
+        }
+
+        new_gallery_items = [
+            {
+                "file_id": fid,
+                "uploaded_at": datetime.utcnow()
+            }
+            for fid in images
+            if fid not in existing_file_ids
+        ]
+
+        payload["public_gallery"] = existing_gallery + new_gallery_items
+
+    # --------------------------------------------------
+    # COUNTRY VALIDATION
+    # --------------------------------------------------
     if payload.get("country"):
         cid = payload["country"]
 

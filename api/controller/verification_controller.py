@@ -54,7 +54,11 @@ async def get_verification_queue(
                     "from": "verification_history",
                     "let": {"uid": "$user_id"},
                     "pipeline": [
-                        {"$match": {"$expr": {"$eq": ["$user_id", "$$uid"]}}},
+                        {
+                            "$match": {
+                                "$expr": {"$eq": ["$user_id", "$$uid"]}
+                            }
+                        },
                         {"$sort": {"verified_at": -1}},
                         {"$limit": 1}
                     ],
@@ -91,7 +95,9 @@ async def get_verification_queue(
 
         if status == VerificationStatusEnum.APPROVED:
             pipeline.append({
-                "$match": {"latest_verification_status": VerificationStatusEnum.APPROVED}
+                "$match": {
+                    "latest_verification_status": VerificationStatusEnum.APPROVED
+                }
             })
 
         pipeline.extend([
@@ -177,7 +183,11 @@ async def get_verification_queue(
             status_code=500
         )
 
-async def approve_verification(user_id: str, admin: dict , lang: str = "en"):
+async def approve_verification(
+    user_id: str,
+    admin: dict,
+    lang: str = "en"
+):
     # Fetch the user
     user = await user_collection.find_one({"_id": ObjectId(user_id)})
 
@@ -204,12 +214,18 @@ async def approve_verification(user_id: str, admin: dict , lang: str = "en"):
     # ------------------ ALREADY VERIFIED ------------------
     if user.get("is_verified", False):
         return response.raise_exception(
-            message=translate_message("USER_ALREADY_VERIFIED", lang),
+            translate_message("USER_ALREADY_VERIFIED", lang),
             data=[],
             status_code=400
         )
 
-    #  Update user verification status
+    # ------------------ FIND PENDING VERIFICATION ------------------
+    pending_verification = await verification_collection.find_one({
+        "user_id": user_id,
+        "status": VerificationStatusEnum.PENDING
+    })
+
+    # ------------------ UPDATE USER ------------------
     await user_collection.update_one(
         {"_id": ObjectId(user_id)},
         {"$set": {
@@ -218,30 +234,47 @@ async def approve_verification(user_id: str, admin: dict , lang: str = "en"):
         }}
     )
 
-    #  Store successful verification record with status APPROVED
-    await verification_collection.insert_one({
-        "user_id": user_id,
-        "verified_by_admin_id": str(admin["_id"]),
-        "status":VerificationStatusEnum.APPROVED,
-        "verified_at": datetime.utcnow(),
+    # ------------------ UPDATE OR INSERT VERIFICATION ------------------
+    if pending_verification:
+        #  UPDATE EXISTING PENDING RECORD
+        await verification_collection.update_one(
+            {"_id": pending_verification["_id"]},
+            {"$set": {
+                "status": VerificationStatusEnum.APPROVED,
+                "verified_by_admin_id": str(admin["_id"]),
+                "verified_at": datetime.utcnow()
+            }}
+        )
+    else:
+        #  CREATE NEW RECORD ONLY IF NO PENDING EXISTS
+        await verification_collection.insert_one({
+            "user_id": user_id,
+            "verified_by_admin_id": str(admin["_id"]),
+            "status": VerificationStatusEnum.APPROVED,
+            "verified_at": datetime.utcnow()
+        })
 
-    })
-
+    # ------------------ RESPONSE ------------------
     return response.success_message(
         translate_message("USER_VERIFICATION_APPROVED", lang),
         data=[{
             "user_id": user_id,
             "verified_by": str(admin["_id"]),
-            "status":VerificationStatusEnum.APPROVED
+            "status": VerificationStatusEnum.APPROVED
         }]
     )
 
-async def reject_verification(user_id: str, admin , lang: str = "en"):
-    user = await user_collection.find_one({"_id":ObjectId(user_id)})
+async def reject_verification(
+    user_id: str,
+    admin: dict,
+    lang: str = "en"
+):
+    # ------------------ FETCH USER ------------------
+    user = await user_collection.find_one({"_id": ObjectId(user_id)})
 
     if not user:
         return response.error_message(
-            message=translate_message("USER_NOT_FOUND"),
+            message=translate_message("USER_NOT_FOUND", lang),
             data=[],
             status_code=404
         )
@@ -265,17 +298,36 @@ async def reject_verification(user_id: str, admin , lang: str = "en"):
         # Already rejected
         if latest_status == VerificationStatusEnum.REJECTED:
             return response.error_message(
-                message=translate_message("USER_ALREADY_VERIFIED", lang),
+                message=translate_message("USER_ALREADY_REJECTED", lang),
                 data=[],
                 status_code=400
             )
 
-    await verification_collection.insert_one({
+    # ------------------ FIND PENDING VERIFICATION ------------------
+    pending_verification = await verification_collection.find_one({
         "user_id": user_id,
-        "verified_by_admin_id": str(admin["_id"]),
-        "status": VerificationStatusEnum.REJECTED,
-        "verified_at": datetime.utcnow()
+        "status": VerificationStatusEnum.PENDING
     })
+
+    # ------------------ UPDATE OR INSERT ------------------
+    if pending_verification:
+        #  UPDATE EXISTING PENDING RECORD
+        await verification_collection.update_one(
+            {"_id": pending_verification["_id"]},
+            {"$set": {
+                "status": VerificationStatusEnum.REJECTED,
+                "verified_by_admin_id": str(admin["_id"]),
+                "verified_at": datetime.utcnow()
+            }}
+        )
+    else:
+        #  INSERT ONLY IF NO PENDING EXISTS
+        await verification_collection.insert_one({
+            "user_id": user_id,
+            "verified_by_admin_id": str(admin["_id"]),
+            "status": VerificationStatusEnum.REJECTED,
+            "verified_at": datetime.utcnow()
+        })
 
     return response.success_message(
         message=translate_message("USER_VERIFICATION_REJECTED", lang),

@@ -86,7 +86,7 @@ class OnboardingModel(BaseModel):
     sexual_preferences: List[SexualPreferenceEnum] = []
 
     tokens : Optional[int] = None
-    public_gallery : Optional[List[PrivateGalleryItem]] = None
+    public_gallery : Optional[List[PublicGalleryItem]] = None
     private_gallery : Optional[List[PrivateGalleryItem]] = None
 
     preferred_country: Optional[List[str]] = None
