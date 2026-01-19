@@ -126,10 +126,24 @@ async def upload_public_gallery_controller(images, current_user, lang: str = "en
     if not images:
         return response.error_message(translate_message("PUBLIC_GALLERY_IMAGES_REQUIRED", lang=lang), data=[], status_code=400)
 
-    if len(images) > 5:
+    # Fetch existing public gallery count
+    onboarding = await onboarding_collection.find_one(
+        {"user_id": str(current_user["_id"])},
+        {"public_gallery": 1}
+    )
+
+    existing_count = len(onboarding.get("public_gallery", [])) if onboarding else 0
+    incoming_count = len(images)
+
+    # Enforce TOTAL limit (existing + new)
+    if existing_count + incoming_count > 5:
         return response.error_message(
             translate_message("PUBLIC_GALLERY_MAX_LIMIT_EXCEEDED", lang=lang),
-            data=[],
+            data={
+                "allowed": max(0, 5 - existing_count),
+                "existing": existing_count,
+                "max_limit": 5
+            },
             status_code=400
         )
 
@@ -378,5 +392,54 @@ async def change_language_controller(
         data=[{
             "language": payload.language.value
         }],
+        status_code=200
+    )
+
+async def delete_gallery_image_controller(
+    file_id: str,
+    gallery_field: str,
+    current_user: dict,
+    lang: str = "en"
+):
+    user_id = str(current_user["_id"])
+
+    # Validate ObjectId
+    try:
+        ObjectId(file_id)
+    except Exception:
+        return response.error_message(
+            translate_message("INVALID_FILE_ID", lang),
+            status_code=400
+        )
+
+    # Ownership + existence check
+    onboarding = await find_gallery_item(
+        user_id=user_id,
+        gallery_field=gallery_field,
+        file_id=file_id
+    )
+
+    if not onboarding:
+        return response.error_message(
+            translate_message("IMAGE_NOT_FOUND_IN_GALLERY", lang),
+            status_code=404
+        )
+
+    # Remove from gallery
+    await remove_gallery_item(
+        user_id=user_id,
+        gallery_field=gallery_field,
+        file_id=file_id
+    )
+
+    # Soft delete file
+    await soft_delete_file(
+        file_id=file_id,
+        deleted_by=user_id
+    )
+
+    return response.success_message(
+        translate_message("GALLERY_IMAGE_DELETED_SUCCESSFULLY", lang),
+        data=[{"file_id": file_id}],
         status_code=200
     )

@@ -383,7 +383,9 @@
   "MINIMUM_WITHDRAWAL_AMOUNT_REQUIRED": "A minimum withdrawal amount of {amount} USDT is required.",
   "INVALID_TRON_ADDRESS": "Invalid TRON wallet address.",
   "HOME_SUGGESTIONS_FETCHED":"Home suggestions fetched",
-
+  "IMAGE_NOT_FOUND_IN_GALLERY": "Image not found in gallery",
+  "GALLERY_IMAGE_DELETED_SUCCESSFULLY": "Gallery image deleted successfully",
+  
   "CONTEST_NOT_FOUND": "Contest not found",
   "CONTEST_HISTORY_NOT_FOUND": "Contest history not found",
   "CONTEST_DETAILS_FETCHED": "Contest details fetched",

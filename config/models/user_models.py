@@ -8,7 +8,7 @@ from pydantic_core import core_schema
 from bson import ObjectId
 from datetime import datetime,date
 from config.db_config import db
-from config.db_config import user_collection,token_collection
+from config.db_config import user_collection,token_collection, file_collection, onboarding_collection
 from core.utils.response_mixin import CustomResponseMixin
 from enum import Enum
 import asyncio
@@ -243,3 +243,34 @@ async def get_users_list(
     total = await user_collection.count_documents(condition)
 
     return users, total
+
+async def find_gallery_item(user_id: str, gallery_field: str, file_id: str):
+    return await onboarding_collection.find_one(
+        {
+            "user_id": user_id,
+            f"{gallery_field}.file_id": file_id
+        }
+    )
+
+async def remove_gallery_item(user_id: str, gallery_field: str, file_id: str):
+    return await onboarding_collection.update_one(
+        {"user_id": user_id},
+        {
+            "$pull": {
+                gallery_field: {"file_id": file_id}
+            },
+            "$set": {"updated_at": datetime.utcnow()}
+        }
+    )
+
+async def soft_delete_file(file_id: str, deleted_by: str):
+    return await file_collection.update_one(
+        {"_id": ObjectId(file_id)},
+        {
+            "$set": {
+                "is_deleted": True,
+                "deleted_at": datetime.utcnow(),
+                "deleted_by": deleted_by
+            }
+        }
+    )

@@ -178,7 +178,8 @@ async def finalize_login_response(user: dict, lang: str):
         data=[{
             "access_token": access_token,
             "refresh_token": refresh_token,
-            "onboarding_completed": onboarding_completed
+            "onboarding_completed": onboarding_completed,
+            "two_factor_enabled": user.get("two_factor_enabled", False)
         }],
         status_code=200
     )

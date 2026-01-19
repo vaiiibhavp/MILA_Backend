@@ -391,6 +391,8 @@
   "MINIMUM_WITHDRAWAL_AMOUNT_REQUIRED": "Un montant minimum de retrait de {amount} USDT est requis.",
   "INVALID_TRON_ADDRESS": "Adresse de portefeuille TRON invalide.",
   "HOME_SUGGESTIONS_FETCHED": "Suggestions de la page d’accueil récupérées",
+  "IMAGE_NOT_FOUND_IN_GALLERY": "Image introuvable dans la galerie",
+  "GALLERY_IMAGE_DELETED_SUCCESSFULLY": "Image de la galerie supprimée avec succès",
 
   "CONTEST_NOT_FOUND": "Concours introuvable",
   "CONTEST_HISTORY_NOT_FOUND": "Historique du concours introuvable",
