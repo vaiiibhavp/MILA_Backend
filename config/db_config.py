@@ -127,10 +127,14 @@ async def create_indexes():
         )
 
         # Matches (prevent duplicate matches)
+        existing_indexes = await user_match_history.index_information()
+        if "idx_unique_user_match" in existing_indexes:
+            await user_match_history.drop_index("idx_unique_user_match")
+
         await user_match_history.create_index(
-            [("user_ids", 1)],
+            [("pair_key", 1)],
             unique=True,
-            name="idx_unique_user_match"
+            name="idx_unique_pair_key"
         )
 
         # Passed users

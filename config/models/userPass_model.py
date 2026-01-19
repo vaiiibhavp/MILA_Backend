@@ -1,5 +1,6 @@
 from bson import ObjectId
 from datetime import datetime
+from pymongo.errors import DuplicateKeyError
 from config.db_config import user_collection  , favorite_collection ,user_like_history ,user_match_history , user_passed_hostory,user_passed_hostory
 from core.utils.helper import serialize_datetime_fields
 from core.utils.response_mixin import CustomResponseMixin
@@ -122,13 +123,6 @@ async def like_user(user_id: str, liked_user_id: str, lang: str = "en"):
             status_code=404
         )
 
-    # Check already liked
-    already_liked = await user_like_history.find_one({
-        "user_id": liked_user_id,
-        "liked_by_user_ids": user_id
-    })
-
-
     passed_user = await user_passed_hostory.find_one({
         "user_id": user_id,
         "passed_user_ids": liked_user_id
@@ -141,11 +135,20 @@ async def like_user(user_id: str, liked_user_id: str, lang: str = "en"):
             status_code=400
         )
 
+    # Already liked check (idempotent)
+    already_liked = await user_like_history.find_one({
+        "user_id": liked_user_id,
+        "liked_by_user_ids": user_id
+    })
+
     if already_liked:
         return response.error_message(
             translate_message("USER_ALREADY_LIKED", lang),
-            data = [],
-            status_code=200
+            data=[{
+                "liked_user_id": liked_user_id,
+                "is_match": False
+            }],
+            status_code=400
         )
 
     # Add like
@@ -183,20 +186,31 @@ async def like_user(user_id: str, liked_user_id: str, lang: str = "en"):
     if user_liked_them and they_liked_user:
         # Sorted pair ensures consistency
         user_pair = sorted([user_id, liked_user_id])
+        pair_key = f"{user_pair[0]}_{user_pair[1]}"
 
-        result = await user_match_history.update_one(
-            {"user_ids": user_pair},
-            {
-                "$setOnInsert": {
-                    "user_ids": user_pair,
-                    "created_at": datetime.utcnow()
-                }
-            },
-            upsert=True
-        )
+        try:
+            result = await user_match_history.update_one(
+                {"pair_key": pair_key},
+                {
+                    "$setOnInsert": {
+                        "pair_key": pair_key,
+                        "user_ids": user_pair,
+                        "created_at": datetime.utcnow()
+                    }
+                },
+                upsert=True
+            )
 
-        # True only if a new match was created
-        is_match = bool(result.upserted_id)
+            # True only if match was created now
+            is_match = bool(result.upserted_id)
+
+        except DuplicateKeyError:
+            # Another request already created the match
+            is_match = False
+
+    # --------------------------------------------------
+    # 5. FINAL RESPONSE
+    # --------------------------------------------------
 
     return response.success_message(
         translate_message(
