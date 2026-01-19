@@ -27,7 +27,13 @@ async def get_verification_queue(
             },
             {
                 "$addFields": {
-                    "userObjectId": {"$toObjectId": "$user_id"}
+                    "userObjectId": {
+                        "$cond": [
+                            {"$eq": [{"$type": "$user_id"}, "objectId"]},
+                            "$user_id",
+                            {"$toObjectId": "$user_id"}
+                        ]
+                    }
                 }
             },
             {
@@ -39,16 +45,16 @@ async def get_verification_queue(
                 }
             },
             {"$unwind": "$user"},
-            *(
-                [{
-                    "$match": {
-                        "user.username": {
-                            "$regex": search,
-                            "$options": "i"
-                        }
-                    }
-                }] if search else []
-            ),
+        ]
+
+        if search:
+            pipeline.append({
+                "$match": {
+                    "user.username": {"$regex": search, "$options": "i"}
+                }
+            })
+
+        pipeline.extend([
             {
                 "$lookup": {
                     "from": "verification_history",
@@ -76,37 +82,40 @@ async def get_verification_queue(
                     }
                 }
             },
-            {
-                "$match": {
-                    "$or": [
-                        {"latest_verification_status": None},
-                        {"latest_verification_status": VerificationStatusEnum.PENDING}
-                    ]
-                }
-            },
-            {
-                "$match": {
-                    "latest_verification_status": {
-                        "$ne": VerificationStatusEnum.REJECTED
-                    }
-                }
-            }
-        ]
+        ])
 
-        if status == VerificationStatusEnum.APPROVED:
+        # ---------------- STATUS FILTER LOGIC ----------------
+
+        if status == VerificationStatusEnum.APPROVED.value:
             pipeline.append({
                 "$match": {
-                    "latest_verification_status": VerificationStatusEnum.APPROVED
+                    "latest_verification_status": VerificationStatusEnum.APPROVED.value
+                }
+            })
+        else:
+            pipeline.append({
+                "$match": {
+                    "latest_verification_status": {
+                        "$in": [
+                            None,
+                            VerificationStatusEnum.PENDING.value
+                        ]
+                    }
                 }
             })
 
-        pipeline.extend([
-            {"$sort": {"created_at": -1}},
-            {"$skip": pagination.skip},
-            {"$limit": pagination.limit}
-        ])
+        # ---------------- FIXED PAGINATION (CRASH PROOF) ----------------
 
-        #  Final projection
+        pipeline.append({"$sort": {"created_at": -1}})
+
+        if pagination and pagination.skip is not None and pagination.skip >= 0:
+            pipeline.append({"$skip": int(pagination.skip)})
+
+        if pagination and pagination.limit is not None and pagination.limit > 0:
+            pipeline.append({"$limit": int(pagination.limit)})
+
+        # ---------------- FINAL PROJECTION ----------------
+
         pipeline.append({
             "$project": {
                 "_id": 0,
@@ -117,15 +126,9 @@ async def get_verification_queue(
                 "live_selfie": "$selfie_image",
 
                 "verification_status": {
-                    "$cond": [
-                        {
-                            "$or": [
-                                {"$eq": ["$latest_verification_status", None]},
-                                {"$eq": ["$latest_verification_status", VerificationStatusEnum.PENDING]}
-                            ]
-                        },
-                        VerificationStatusEnum.PENDING,
-                        "$latest_verification_status"
+                    "$ifNull": [
+                        "$latest_verification_status",
+                        VerificationStatusEnum.PENDING.value
                     ]
                 },
                 "Registration_Date": "$created_at"

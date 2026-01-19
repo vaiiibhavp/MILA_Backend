@@ -103,10 +103,23 @@ async def get_home_suggestions(user_id: str, lang: str = "en"):
         now = datetime.utcnow()
         results = []
 
+        # ==================  (FETCH WHO LIKED ME) ==================
+        like_doc = await user_like_history.find_one(
+            {"user_id": user_id},
+            {"liked_by_user_ids": 1}
+        )
+
+        liked_me_user_ids = set()
+        if like_doc and like_doc.get("liked_by_user_ids"):
+            liked_me_user_ids = set(like_doc["liked_by_user_ids"])
+
         async for candidate in cursor:
             details = await fetch_user_by_id(candidate["user_id"], lang)
             if not details:
                 continue
+
+            # ==================(SET is_liked FLAG) ==================
+            details["is_liked"] = candidate["user_id"] in liked_me_user_ids
 
             priority = {
                 "is_online": bool(candidate.get("is_online")),
