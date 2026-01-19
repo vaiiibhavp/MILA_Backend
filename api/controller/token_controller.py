@@ -2,7 +2,8 @@ from typing import Optional
 
 from bson import ObjectId
 
-from core.utils.core_enums import TransactionType, TransactionStatus, TokenTransactionType, TokenPlanStatus
+from core.utils.core_enums import TransactionType, TransactionStatus, TokenTransactionType, TokenPlanStatus, \
+    WithdrawalStatus
 from core.utils.exceptions import CustomValidationError
 from core.utils.pagination import StandardResultsSetPagination
 from config.models.user_token_history_model import get_user_token_history
@@ -220,7 +221,7 @@ async def request_withdrawn_token_amount(request: WithdrawnTokenRequestModel, us
             user_id=str(ObjectId(user_id)),
             request_amount=request.amount,
             remaining_amount=request.amount,
-            status=TransactionStatus.PENDING.value,
+            status=WithdrawalStatus.pending.value,
             tokens=withdrawn_token,
             wallet_address=request.wallet_address,
         )

@@ -13,7 +13,7 @@ from api.routes import (
 )
 
 from api.routes.admin import (
-    token_plan_routes
+    token_plan_routes, withdrawal_request_routes
 )
 
 from core.utils.exceptions import CustomValidationError, custom_validation_error_handler, validation_exception_handler
@@ -245,6 +245,7 @@ app.include_router(user_management.router)
 app.include_router(moderation_route.router , prefix="/moderation")
 
 app.include_router(token_plan_routes.admin_router)
+app.include_router(withdrawal_request_routes.admin_router)
 
 # Scheduler Instance
 scheduler = BackgroundScheduler()
@@ -380,9 +381,7 @@ def main():
     logger.info("Scheduler started")
     
     try:
-        # Run initial update
-        update_ev_data()
-        
+
         # Keep the main thread alive
         while True:
             pass

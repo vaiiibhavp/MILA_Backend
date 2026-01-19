@@ -93,3 +93,9 @@ class ContestType(str, Enum):
 class TokenPlanStatus(str, Enum):
     active = "active",
     inactive = "inactive",
+
+class WithdrawalStatus(str, Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+    completed = "completed"

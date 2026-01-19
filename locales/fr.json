@@ -420,5 +420,8 @@
   "TOKEN_PACKAGE_PLAN_DELETE_FAILED": "Impossible de supprimer le forfait de jetons. Veuillez réessayer plus tard.",
   "TOKEN_PACKAGE_PLANS_FETCHED_SUCCESSFULLY": "Les forfaits de jetons ont été récupérés avec succès.",
   "ERROR_WHILE_FETCHING_TOKEN_PACKAGE_PLANS": "Impossible de récupérer les forfaits de jetons.",
-  "PROFILE_IMAGE_UPDATED": "Image de profil mise à jour"
+  "PROFILE_IMAGE_UPDATED": "Image de profil mise à jour",
+
+  "WITHDRAWAL_REQUESTS_FETCHED": "Demandes de retrait récupérées avec succès.",
+  "WITHDRAWAL_REQUESTS_FETCH_FAILED": "Impossible de récupérer les demandes de retrait. Veuillez réessayer plus tard."
 }

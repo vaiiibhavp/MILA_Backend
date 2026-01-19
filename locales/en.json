@@ -412,6 +412,9 @@
   "TOKEN_PACKAGE_PLAN_DELETE_FAILED": "Failed to delete the token package plan. Please try again later.",
   "TOKEN_PACKAGE_PLANS_FETCHED_SUCCESSFULLY": "Token package plans fetched successfully.",
   "ERROR_WHILE_FETCHING_TOKEN_PACKAGE_PLANS": "Failed to fetch token package plans.",
-  "PROFILE_IMAGE_UPDATED":"Profile image updated"
+  "PROFILE_IMAGE_UPDATED":"Profile image updated",
+
+  "WITHDRAWAL_REQUESTS_FETCHED": "Withdrawal requests fetched successfully.",
+  "WITHDRAWAL_REQUESTS_FETCH_FAILED": "Unable to fetch withdrawal requests. Please try again later."
 
 }
