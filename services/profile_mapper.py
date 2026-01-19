@@ -109,6 +109,13 @@ async def build_edit_profile_response(user: dict, onboarding: dict):
                 enum_values(InterestedInEnum),
                 onboarding.get("interested_in", [])
             ),
+
+            # SHOW FOR ALL USERS
+            "sexual_preferences": build_selectable_options(
+                enum_values(SexualPreferenceEnum),
+                onboarding.get("sexual_preferences", [])
+            ),
+
             "preferred_country": preferred_country_names
         },
 
@@ -121,11 +128,5 @@ async def build_edit_profile_response(user: dict, onboarding: dict):
             "enabled": is_premium
         }
     }
-
-    if is_premium:
-        data["interests"]["sexual_preferences"] = build_selectable_options(
-            enum_values(SexualPreferenceEnum),
-            onboarding.get("sexual_preferences", [])
-        )
 
     return data
