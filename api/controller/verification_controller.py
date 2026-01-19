@@ -7,6 +7,8 @@ from api.controller.files_controller import generate_file_url
 from core.utils.response_mixin import CustomResponseMixin
 from config.db_config import verification_collection , user_collection
 from services.translation import translate_message
+from config.basic_config import settings
+from core.utils.helper import credit_tokens_for_verification
 
 response = CustomResponseMixin()
 
@@ -209,7 +211,7 @@ async def approve_verification(
 
     if rejected_exists:
         return response.raise_exception(
-            translate_message("USER_CANNOT_BE_APPROVED_ALREADY_REJECTED",lang),
+            translate_message("USER_CANNOT_BE_APPROVED_ALREADY_REJECTED", lang),
             data=[],
             status_code=400
         )
@@ -257,13 +259,20 @@ async def approve_verification(
             "verified_at": datetime.utcnow()
         })
 
+    #  VERIFICATION REWARD TOKEN LOGIC
+    await credit_tokens_for_verification(
+        user_id=user_id,
+        admin_id=str(admin["_id"])
+    )
+
     # ------------------ RESPONSE ------------------
     return response.success_message(
         translate_message("USER_VERIFICATION_APPROVED", lang),
         data=[{
             "user_id": user_id,
             "verified_by": str(admin["_id"]),
-            "status": VerificationStatusEnum.APPROVED
+            "status": VerificationStatusEnum.APPROVED,
+            "tokens_rewarded": settings.VERIFICATION_REWARD_TOKENS
         }]
     )
 
