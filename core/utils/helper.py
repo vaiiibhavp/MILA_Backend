@@ -301,3 +301,13 @@ async def credit_tokens_for_verification(user_id: str, admin_id: str):
     )
 
     await create_user_token_history(token_history)
+
+def calculate_visibility(start_date, end_date):
+    now = datetime.utcnow()
+
+    if now < start_date:
+        return ContestVisibility.upcoming.value
+    elif start_date <= now <= end_date:
+        return ContestVisibility.in_progress.value
+    else:
+        return ContestVisibility.completed.value
