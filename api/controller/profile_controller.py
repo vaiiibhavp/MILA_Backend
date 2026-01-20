@@ -38,7 +38,7 @@ async def get_user_profile_controller(current_user: dict, lang: str = "en"):
         )
         viewer_unlocked_images = set(viewer_db.get("unlocked_images", []))
 
-    is_owner = user and str(user["_id"]) == current_user["_id"]
+    is_owner = str(user["_id"]) == str(current_user["_id"])
     onboarding = await onboarding_collection.find_one(
         {"user_id": str(user["_id"])}
     )
