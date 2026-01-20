@@ -49,12 +49,22 @@ async def get_user_profile_controller(current_user: dict, lang: str = "en"):
     verification_status = user.get("is_verified")
     membership_type = user.get("membership_type", "free")
 
-    if verification_status == True:
-        screen_state = "verified_user"
-    elif verification_status == False:
-        screen_state = "unverified_rejected"
-    else:
-        screen_state = "unverified_pending"
+    verification_record = await verification_collection.find_one(
+        {"user_id": str(user["_id"])},
+        sort=[("verified_at", -1)]
+    )
+
+    screen_state = "unverified_pending"
+    show_badge = False
+    show_retry = False
+
+    if verification_record:
+        if verification_record["status"] == "approved":
+            screen_state = "verified_user"
+            show_badge = True
+        elif verification_record["status"] == "rejected":
+            screen_state = "unverified_rejected"
+            show_retry = True
 
     public_gallery_raw = onboarding.get("public_gallery", []) if onboarding else []
     private_gallery_raw = onboarding.get("private_gallery", []) if onboarding else []
@@ -79,9 +89,9 @@ async def get_user_profile_controller(current_user: dict, lang: str = "en"):
             "about": onboarding.get("bio") if onboarding else None,
             "screen_state": screen_state,
             "verification": {
-                "status": verification_status,
-                "show_badge": verification_status == "verified",
-                "show_retry": verification_status == "rejected",
+                "status": screen_state,
+                "show_badge": show_badge,
+                "show_retry": show_retry,
             },
             "tokens": tokens,
             "membership": {
