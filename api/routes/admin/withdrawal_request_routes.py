@@ -1,6 +1,7 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, Query, Path
-from api.controller.admin.admin_withdrawal_controller import fetch_withdrawal_requests
+from api.controller.admin.admin_withdrawal_controller import fetch_withdrawal_requests, \
+    reject_withdrawal_request_controller
 from core.utils.pagination import StandardResultsSetPagination, pagination_params
 from core.utils.permissions import AdminPermission
 
@@ -23,5 +24,22 @@ async def list_withdrawals(
         user_id=user_id,
         pagination=pagination,
         search=search,
+        lang=lang
+    )
+
+@admin_router.post("/{request_id}/reject")
+async def reject_withdrawal(
+    request_id: str = Path(..., description="Withdrawal request ID"),
+    current_user: dict = Depends(AdminPermission(["admin"])),
+    lang: str = Query(None)
+):
+    """
+    Reject a withdrawal request (Admin only).
+    """
+    lang = lang if lang in supported_langs else "en"
+    user_id = str(current_user["_id"])
+    return await reject_withdrawal_request_controller(
+        request_id=request_id,
+        current_user=user_id,
         lang=lang
     )

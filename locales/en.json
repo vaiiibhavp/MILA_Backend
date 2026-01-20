@@ -415,6 +415,14 @@
   "PROFILE_IMAGE_UPDATED":"Profile image updated",
 
   "WITHDRAWAL_REQUESTS_FETCHED": "Withdrawal requests fetched successfully.",
-  "WITHDRAWAL_REQUESTS_FETCH_FAILED": "Unable to fetch withdrawal requests. Please try again later."
+  "WITHDRAWAL_REQUESTS_FETCH_FAILED": "Unable to fetch withdrawal requests. Please try again later.",
+  "WITHDRAWAL_REQUEST_NOT_FOUND": "Withdrawal request not found.",
+  "WITHDRAWAL_REQUEST_CANNOT_BE_REJECTED": "This withdrawal request cannot be rejected in its current state.",
+  "WITHDRAWAL_REQUEST_REJECTED_SUCCESSFULLY": "Withdrawal request rejected successfully.",
+  "WITHDRAWAL_REQUEST_REJECT_FAILED": "Unable to reject the withdrawal request. Please try again later.",
+  "PUSH_TITLE_WITHDRAWAL_REQUEST_REJECTED": "Withdrawal Request Rejected",
+  "PUSH_MESSAGE_WITHDRAWAL_REQUEST_REJECTED": "Your withdrawal request has been rejected. Please contact support for more details.",
+  "PUSH_TITLE_WITHDRAWAL_COMPLETED": "Withdrawal Successful",
+  "PUSH_MESSAGE_WITHDRAWAL_COMPLETED": "Your withdrawal has been completed successfully. The funds have been sent to your wallet."
 
 }

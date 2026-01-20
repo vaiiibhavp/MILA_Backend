@@ -423,5 +423,9 @@
   "PROFILE_IMAGE_UPDATED": "Image de profil mise à jour",
 
   "WITHDRAWAL_REQUESTS_FETCHED": "Demandes de retrait récupérées avec succès.",
-  "WITHDRAWAL_REQUESTS_FETCH_FAILED": "Impossible de récupérer les demandes de retrait. Veuillez réessayer plus tard."
+  "WITHDRAWAL_REQUESTS_FETCH_FAILED": "Impossible de récupérer les demandes de retrait. Veuillez réessayer plus tard.",
+  "WITHDRAWAL_REQUEST_NOT_FOUND": "Demande de retrait introuvable.",
+  "WITHDRAWAL_REQUEST_CANNOT_BE_REJECTED": "Cette demande de retrait ne peut être rejetée en l'état.",
+  "WITHDRAWAL_REQUEST_REJECTED_SUCCESSFULLY": "Demande de retrait rejetée avec succès.",
+  "WITHDRAWAL_REQUEST_REJECT_FAILED": "Impossible de refuser la demande de retrait. Veuillez réessayer plus tard."
 }

@@ -4,7 +4,11 @@ from bson import ObjectId
 from datetime import datetime, timezone
 
 from config.db_config import withdraw_token_transaction_collection
+from core.utils.core_enums import WithdrawalStatus
+from core.utils.response_mixin import CustomResponseMixin
+from services.translation import translate_message
 
+response = CustomResponseMixin()
 
 async def list_withdrawal_requests(search: str, pagination):
     """
@@ -132,3 +136,48 @@ async def list_withdrawal_requests(search: str, pagination):
         }
         for doc in docs
     ]
+
+async def reject_withdrawal_request(
+    request_id: str,
+    admin_user_id: str,
+    lang: str
+):
+    """
+    Reject a pending withdrawal request.
+    """
+
+    withdrawal = await withdraw_token_transaction_collection.find_one(
+        {"_id": ObjectId(request_id)}
+    )
+
+    if not withdrawal:
+        raise response.raise_exception(
+            translate_message(message="WITHDRAWAL_REQUEST_NOT_FOUND", lang=lang),
+            status_code=404
+        )
+
+    if withdrawal["status"] != WithdrawalStatus.pending.value:
+        raise response.raise_exception(
+            translate_message(
+                message="WITHDRAWAL_REQUEST_CANNOT_BE_REJECTED",
+                lang=lang
+            ),
+            status_code=400
+        )
+
+    update_doc = {
+        "status": WithdrawalStatus.rejected.value,
+        "updated_at": datetime.now(timezone.utc),
+        "updated_by": ObjectId(admin_user_id),
+    }
+
+    await withdraw_token_transaction_collection.update_one(
+        {"_id": ObjectId(request_id)},
+        {"$set": update_doc}
+    )
+
+    return {
+        "id": request_id,
+        "user_id": str(withdrawal["user_id"]),
+        "status": WithdrawalStatus.rejected.value
+    }
