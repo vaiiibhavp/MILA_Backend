@@ -253,7 +253,9 @@
   "OTP_VERIFIED_SUCCESSFULLY": "OTP vérifié avec succès",
   "OTP_VERIFICATION_REQUIRED": "Vérification OTP requise",
   "PASSWORD_RESET_SUCCESSFULLY": "Mot de passe réinitialisé avec succès. Veuillez vous connecter",
-
+  "OTP_RESENT_SUCCESSFULLY": "Renvoi réussi du code OTP",
+  "OTP_RESEND_TOO_SOON": "OTP à envoyer bientôt",
+  
   "INVALID_USER_ID": "Identifiant utilisateur invalide",
   "USER_FETCHED_SUCCESSFULLY": "Utilisateur récupéré avec succès",
 

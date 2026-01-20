@@ -251,7 +251,9 @@
   "OTP_VERIFIED_SUCCESSFULLY": "OTP verified successfully",
   "OTP_VERIFICATION_REQUIRED": "OTP verification required",
   "PASSWORD_RESET_SUCCESSFULLY": "Password reset successfully. Please log in",
-
+  "OTP_RESENT_SUCCESSFULLY": "OTP resent successfully",
+  "OTP_RESEND_TOO_SOON": "Otp send to soon",
+  
   "INVALID_USER_ID": "Invalid user ID",
   "USER_FETCHED_SUCCESSFULLY": "User fetched successfully",
   "USERS_FETCHED_SUCCESSFULLY": "Users fetched successfully",
