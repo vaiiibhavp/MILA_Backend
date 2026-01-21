@@ -16,7 +16,8 @@ async def build_basic_profile_response(user: dict, onboarding: dict, profile_pho
             "name": user.get("username"),
             "age": age,
             "is_verified": user.get("is_verified", False),
-            "profile_photo": profile_photo
+            "profile_photo": profile_photo,
+            "language": user.get("language", "en"),
         },
 
         "personal_info": {
@@ -83,6 +84,7 @@ async def build_edit_profile_response(user: dict, onboarding: dict):
         "basic_details": {
             "bio": onboarding.get("bio"),
             "country": country_name,
+            "country_id": onboarding.get("country"),
             "gender": build_selectable_options(
                 enum_values(GenderEnum),
                 onboarding.get("gender")

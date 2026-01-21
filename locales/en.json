@@ -447,7 +447,8 @@
   "FAILED_TO_DELETE_CONTEST":"Failed to delete contest",
   "CONTEST_PARTICIPANTS_FETCHED_SUCCESSFULLY":"contest participants fetched successfully",
   "FAILED_TO_FETCH_CONTEST_PARTICIPANTS":"Failed to fetch contest participants",
-
+  "LEADERBOARD_FETCHED_SUCCESSFULLY": "Leaderboard fetched successfully",
+  
   "WITHDRAWAL_REQUESTS_FETCHED": "Withdrawal requests fetched successfully.",
   "WITHDRAWAL_REQUESTS_FETCH_FAILED": "Unable to fetch withdrawal requests. Please try again later.",
   "WITHDRAWAL_REQUEST_NOT_FOUND": "Withdrawal request not found.",

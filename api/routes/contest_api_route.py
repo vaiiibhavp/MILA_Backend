@@ -86,3 +86,16 @@ async def participate_in_contest(
         current_user,
         lang
     )
+
+@router.get("/leaderboard/{contest_id}")
+async def get_full_leaderboard(
+    contest_id: str,
+    pagination: StandardResultsSetPagination = Depends(pagination_params),
+    current_user: dict = Depends(UserPermission(["user"])),
+    lang: str = Query("en")
+):
+    return await get_full_leaderboard_controller(
+        contest_id=contest_id,
+        pagination=pagination,
+        lang=lang
+    )
