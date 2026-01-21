@@ -1,7 +1,7 @@
 #profile_view_controller.py:
 
 from bson import ObjectId
-from config.db_config import countries_collection, private_gallery_purchases_collection, profile_view_history, user_collection, onboarding_collection, file_collection, gift_collection
+from config.db_config import contest_participant_collection, countries_collection, private_gallery_purchases_collection, profile_view_history, user_collection, onboarding_collection, file_collection, gift_collection
 from core.utils.response_mixin import CustomResponseMixin
 from core.utils.age_calculation import calculate_age
 from api.controller.files_controller import get_profile_photo_url, generate_file_url, profile_photo_from_onboarding
@@ -17,6 +17,7 @@ from core.utils.core_enums import MembershipType, NotificationType, Notification
 from services.notification_service import send_notification
 from services.premium_guard import require_premium
 from services.gallery_service import *
+from config.models.contest_model import resolve_badge
 
 response = CustomResponseMixin()
 
@@ -130,11 +131,31 @@ async def get_profile_controller(user_id: str, viewer: dict, lang: str = "en"):
                 "token": gift["token"]
             })
 
+    # Fetch latest contest winner badge (if any)
+    winner_badge = None
+
+    winner_entry = await contest_participant_collection.find_one(
+        {
+            "user_id": user_id,
+            "is_winner": True
+        },
+        sort=[("created_at", -1)]  # latest contest win
+    )
+    
+    if winner_entry:
+        position = (
+            winner_entry.get("winner_position")
+            or winner_entry.get("rank")
+        )
+
+        winner_badge = resolve_badge(position)
+
     profile_data = [{
         "name": user.get("username"),
         "age": age,
         "email": user.get("email"),
         "profile_photo": profile_photo_url,
+        "profile_badge": winner_badge,
         "about": onboarding.get("bio"),
         "hobbies": onboarding.get("passions"),
         "gender": onboarding.get("gender"),

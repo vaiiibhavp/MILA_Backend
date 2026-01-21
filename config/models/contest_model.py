@@ -191,21 +191,28 @@ async def fetch_active_contest_history(contest_id: str):
     )
 
 
-async def fetch_participant_avatars(
-    contest_id: str,
-    contest_history_id: str,
-    limit: int = 5
-):
+async def fetch_participant_avatars(contest_id, contest_history_id, limit=5):
     cursor = contest_participant_collection.find(
         {
             "contest_id": contest_id,
             "contest_history_id": contest_history_id
         }
-    ).limit(limit)
+    )
 
+    seen_users = set()
     avatars = []
+
     async for p in cursor:
-        avatars.append(await resolve_user_avatar(p["user_id"]))
+        if p["user_id"] in seen_users:
+            continue
+
+        avatar = await resolve_user_avatar(p["user_id"])
+        if avatar:
+            avatars.append(avatar)
+            seen_users.add(p["user_id"])
+
+        if len(avatars) == limit:
+            break
 
     return avatars
 
@@ -370,4 +377,13 @@ async def increment_participant_count(contest_history_id: str):
         {"_id": ObjectId(contest_history_id)},
         {"$inc": {"total_participants": 1}}
     )
+
+def resolve_badge(rank: int | None):
+    if rank == 1:
+        return {"type": "gold", "label": "Top 1"}
+    if rank == 2:
+        return {"type": "silver", "label": "Top 2"}
+    if rank == 3:
+        return {"type": "bronze", "label": "Top 3"}
+    return None
 

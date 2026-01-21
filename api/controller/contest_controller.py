@@ -301,3 +301,78 @@ async def participate_in_contest_controller(
         data=[response_payload],
         status_code=200
     )
+
+async def get_full_leaderboard_controller(
+    contest_id: str,
+    pagination: StandardResultsSetPagination,
+    lang: str
+):
+    contest_history = await fetch_active_contest_history(contest_id)
+    if not contest_history:
+        return response.error_message(
+            translate_message("CONTEST_HISTORY_NOT_FOUND", lang),
+            status_code=404
+        )
+
+    query = {
+        "contest_id": contest_id,
+        "contest_history_id": str(contest_history["_id"])
+    }
+
+    cursor = (
+        contest_participant_collection
+        .find(query)
+        .sort("total_votes", -1)
+    )
+
+    # Apply pagination ONLY if provided
+    if pagination.page and pagination.page_size:
+        cursor = (
+            cursor
+            .skip(pagination.skip)
+            .limit(pagination.page_size)
+        )
+
+    total = await contest_participant_collection.count_documents(query)
+
+    leaderboard = []
+    rank_counter = pagination.skip + 1 if pagination.page else 1
+
+    async for participant in cursor:
+        user_id = participant["user_id"]
+
+        user = await get_user_details(
+            {"_id": ObjectId(user_id)},
+            fields=["username"]
+        )
+
+        avatar = await resolve_user_avatar(user_id)
+        badge = resolve_badge(rank_counter)
+
+        leaderboard.append({
+            "rank": rank_counter,
+            "user_id": user_id,
+            "username": user.get("username") if user else None,
+            "total_votes": participant.get("total_votes", 0),
+            "avatar": avatar,
+            "badge": badge
+        })
+
+        rank_counter += 1
+
+    return response.success_message(
+        translate_message("LEADERBOARD_FETCHED_SUCCESSFULLY", lang),
+        data=[{
+            "contest_id": contest_id,
+            "pagination": (
+                {
+                    "page": pagination.page,
+                    "page_size": pagination.page_size,
+                    "total": total
+                }
+                if pagination.page and pagination.page_size
+                else None
+            ),
+            "results": leaderboard
+        }]
+    )
