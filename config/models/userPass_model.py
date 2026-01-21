@@ -27,12 +27,6 @@ async def add_to_fav(user_id: str, favorite_user_id: str, lang: str = "en"):
             status_code=404
         )
 
-    if user.get("membership_type") != MembershipType.PREMIUM:
-        return response.error_message(
-            translate_message("PREMIUM_REQUIRED_TO_ADD_FAVORITES", lang),
-            status_code=403
-        )
-
     # ------------------ SELF CHECK ------------------
     if user_id == favorite_user_id:
         return response.error_message(

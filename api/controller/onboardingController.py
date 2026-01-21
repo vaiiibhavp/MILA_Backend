@@ -885,11 +885,55 @@ async def update_profile_image_onboarding(
     image: UploadFile,
     current_user: dict
 ):
+    lang = current_user.get("language", "en")
+
     try:
-        lang = current_user.get("language", "en")
         user_id = str(current_user["_id"])
 
-        # ---------------- SAVE FILE ----------------
+        # ================= INLINE FILE TYPE VALIDATION =================
+
+        ALLOWED_MIME_TYPES = {
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/webp"
+        }
+
+        ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
+
+        # 1. Validate MIME type
+        if image.content_type not in ALLOWED_MIME_TYPES:
+            return response.error_message(
+                translate_message("UNSUPPORTED_PROFILE_IMAGE_TYPE", lang),
+                data=[],
+                status_code=400
+            )
+
+        # 2. Validate file extension
+        filename = image.filename.lower()
+
+        if "." not in filename:
+            return response.error_message(
+                translate_message("UNSUPPORTED_PROFILE_IMAGE_TYPE", lang),
+                data={
+                    "allowed_types": "JPG, JPEG, PNG, WEBP"
+                },
+                status_code=400
+            )
+
+        ext = filename.rsplit(".", 1)[1]
+
+        if ext not in ALLOWED_EXTENSIONS:
+            return response.error_message(
+                translate_message("UNSUPPORTED_PROFILE_IMAGE_TYPE", lang),
+                data={
+                    "allowed_types": "JPG, JPEG, PNG, WEBP"
+                },
+                status_code=400
+            )
+
+        # ================= SAVE FILE =================
+
         public_url, storage_key, backend = await save_file(
             file_obj=image,
             file_name=image.filename,

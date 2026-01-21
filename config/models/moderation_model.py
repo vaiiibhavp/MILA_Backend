@@ -93,11 +93,15 @@ class ModerationModel:
             # ---------------- SORT ----------------
             pipeline.append({"$sort": {"created_at": -1}})
 
-            # ---------------- PAGINATION ----------------
-            pipeline.extend([
-                {"$skip": max(pagination.skip, 0)},
-                {"$limit": max(pagination.limit, 1)}
-            ])
+            # ---------------- PAGINATION (SAFE) ----------------
+            if pagination.page is not None and pagination.page_size is not None:
+                skip = max(pagination.skip, 0)
+                limit = max(pagination.page_size, 1)
+
+                pipeline.extend([
+                    {"$skip": skip},
+                    {"$limit": limit}
+                ])
 
             # ---------------- FINAL PROJECTION ----------------
             pipeline.append({
@@ -121,8 +125,8 @@ class ModerationModel:
 
             return await reported_users_collection.aggregate(pipeline).to_list(None)
 
-        except ValueError as ve:
-            raise ve
+        except ValueError:
+            raise
 
         except PyMongoError:
             raise RuntimeError("Database operation failed")
@@ -180,7 +184,12 @@ class ModerationModel:
                     "as": "reporter"
                 }
             })
-            pipeline.append({"$unwind": "$reporter"})
+            pipeline.append({
+                "$unwind": {
+                    "path": "$reporter",
+                    "preserveNullAndEmptyArrays": True
+                }
+            })
 
             # ---------------- REPORTED USER ----------------
             pipeline.append({
@@ -191,7 +200,12 @@ class ModerationModel:
                     "as": "reported_user"
                 }
             })
-            pipeline.append({"$unwind": "$reported_user"})
+            pipeline.append({
+                "$unwind": {
+                    "path": "$reported_user",
+                    "preserveNullAndEmptyArrays": True
+                }
+            })
 
             # ---------------- REPORTER ONBOARDING ----------------
             pipeline.append({
@@ -202,7 +216,12 @@ class ModerationModel:
                     "as": "reporter_onboarding"
                 }
             })
-            pipeline.append({"$unwind": "$reporter_onboarding"})
+            pipeline.append({
+                "$unwind": {
+                    "path": "$reporter_onboarding",
+                    "preserveNullAndEmptyArrays": True
+                }
+            })
 
             # ---------------- REPORTED ONBOARDING ----------------
             pipeline.append({
@@ -213,7 +232,12 @@ class ModerationModel:
                     "as": "reported_onboarding"
                 }
             })
-            pipeline.append({"$unwind": "$reported_onboarding"})
+            pipeline.append({
+                "$unwind": {
+                    "path": "$reported_onboarding",
+                    "preserveNullAndEmptyArrays": True
+                }
+            })
 
             # ---------------- FINAL PROJECTION (IDS ONLY) ----------------
             pipeline.append({
@@ -229,7 +253,10 @@ class ModerationModel:
                         "username": "$reporter.username",
                         "email": "$reporter.email",
                         "image_id": {
-                            "$arrayElemAt": ["$reporter_onboarding.images", 0]
+                            "$arrayElemAt": [
+                                {"$ifNull": ["$reporter_onboarding.images", []]},
+                                0
+                            ]
                         }
                     },
 
@@ -238,7 +265,10 @@ class ModerationModel:
                         "username": "$reported_user.username",
                         "email": "$reported_user.email",
                         "image_id": {
-                            "$arrayElemAt": ["$reported_onboarding.images", 0]
+                            "$arrayElemAt": [
+                                {"$ifNull": ["$reported_onboarding.images", []]},
+                                0
+                            ]
                         }
                     }
                 }
@@ -247,8 +277,8 @@ class ModerationModel:
             result = await reported_users_collection.aggregate(pipeline).to_list(1)
             return result[0] if result else None
 
-        except ValueError as ve:
-            raise ve
+        except ValueError:
+            raise
         except PyMongoError:
             raise RuntimeError("Database operation failed")
         except Exception as e:

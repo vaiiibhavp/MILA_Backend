@@ -462,5 +462,7 @@
   "WITHDRAWAL_TRANSACTION_ID_ALREADY_USED": "This transaction ID has already been used for a withdrawal.",
   "WITHDRAWAL_REQUEST_APPROVED_SUCCESSFULLY": "Withdrawal request approved successfully.",
   "WITHDRAWAL_REQUEST_NOT_ELIGIBLE_FOR_COMPLETION": "This withdrawal request cannot be approved.",
-  "WITHDRAWAL_PAID_AMOUNT_MISMATCH": "Paid amount does not match the withdrawal request amount."
+  "WITHDRAWAL_PAID_AMOUNT_MISMATCH": "Paid amount does not match the withdrawal request amount.",
+  "UNSUPPORTED_PROFILE_IMAGE_TYPE": "Please upload a profile picture in JPG, JPEG, PNG, or WEBP format."
+
 }

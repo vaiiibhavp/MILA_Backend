@@ -115,8 +115,24 @@ async def report_user_controller(
             data=[]
         )
 
+    # ---------------- VALIDATE REASON ----------------
+    if not reason or not reason.strip():
+        return response.error_message(
+            translate_message("REPORT_REASON_REQUIRED", lang),
+            status_code=400,
+            data=[]
+        )
+
     reason = reason.strip()
-    if not re.search(r"[A-Za-z]{3,}", reason):
+
+    if len(reason) < 5:
+        return response.error_message(
+            translate_message("PLEASE_ENTER_AT_LEAST_5_CHARACTERS", lang),
+            status_code=400,
+            data=[]
+        )
+
+    if not re.search(r"[A-Za-z]", reason):
         return response.error_message(
             translate_message("PLEASE_ENTER_VALID_REPORT_REASON", lang),
             status_code=400,
