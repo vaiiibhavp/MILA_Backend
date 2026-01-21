@@ -465,6 +465,7 @@
   "WITHDRAWAL_PAID_AMOUNT_MISMATCH": "Paid amount does not match the withdrawal request amount.",
   "UNSUPPORTED_PROFILE_IMAGE_TYPE": "Please upload a profile picture in JPG, JPEG, PNG, or WEBP format.",
   "DASHBOARD_FETCHED_SUCCESSFULLY":"Dashboard fetched successfully",
-  "FAILED_TO_FETCH_DASHBOARD":"Failed to fetch dashboard"
+  "FAILED_TO_FETCH_DASHBOARD":"Failed to fetch dashboard",
+  "PLEASE_ENTER_AT_LEAST_5_CHARACTERS":"Please enter at least five characters"
 
 }

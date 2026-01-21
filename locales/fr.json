@@ -468,5 +468,6 @@
   "WITHDRAWAL_PAID_AMOUNT_MISMATCH": "Le montant payé ne correspond pas au montant de la demande de retrait.",
   "UNSUPPORTED_PROFILE_IMAGE_TYPE": "Veuillez télécharger une photo de profil au format JPG, JPEG, PNG ou WEBP.",
   "DASHBOARD_FETCHED_SUCCESSFULLY": "Tableau de bord récupéré avec succès",
-  "FAILED_TO_FETCH_DASHBOARD": "Échec de la récupération du tableau de bord"
+  "FAILED_TO_FETCH_DASHBOARD": "Échec de la récupération du tableau de bord",
+  "PLEASE_ENTER_AT_LEAST_5_CHARACTERS": "Veuillez saisir au moins cinq caractères"
 }
