@@ -119,9 +119,42 @@ async def get_contest_details_controller(
 
 async def get_contest_participants_controller(
     contest_id: str,
-    pagination,
+    pagination: StandardResultsSetPagination,
+    current_user: dict,
     lang: str
 ):
+    contest_history = await fetch_active_contest_history(contest_id)
+
+    voting_active = (
+        contest_history
+        and contest_history["status"] == ContestStatus.voting_started
+    )
+
+    viewer_id = str(current_user["_id"])
+
+    # Fetch contest (for max_votes_per_user)
+    contest = await fetch_contest_by_id(contest_id)
+
+    votes_casted = 0
+    voted_participant_ids = set()
+
+    if voting_active:
+        votes_casted = await contest_vote_collection.count_documents({
+            "contest_id": contest_id,
+            "contest_history_id": str(contest_history["_id"]),
+            "voter_user_id": viewer_id
+        })
+
+        async for v in contest_vote_collection.find(
+            {
+                "contest_id": contest_id,
+                "contest_history_id": str(contest_history["_id"]),
+                "voter_user_id": viewer_id
+            },
+            {"participant_id": 1}
+        ):
+            voted_participant_ids.add(v["participant_id"])
+
     participants = await fetch_contest_participants(
         contest_id=contest_id,
         skip=pagination.skip,
@@ -141,11 +174,34 @@ async def get_contest_participants_controller(
 
         avatar = await resolve_user_avatar(participant["user_id"])
 
+        # ----- can_vote logic -----
+        can_vote = True
+        vote_disabled_reason = None
+
+        if not voting_active:
+            can_vote = False
+            vote_disabled_reason = "VOTING_NOT_STARTED"
+
+        elif participant["user_id"] == viewer_id:
+            can_vote = False
+            vote_disabled_reason = "SELF_PARTICIPANT"
+
+        elif participant["_id"] in voted_participant_ids:
+            can_vote = False
+            vote_disabled_reason = "ALREADY_VOTED"
+
+        elif votes_casted >= contest["max_votes_per_user"]:
+            can_vote = False
+            vote_disabled_reason = "VOTE_LIMIT_REACHED"
+
         response_items.append({
+            "participant_id": str(participant["_id"]),
             "user_id": participant["user_id"],
             "name": user.get("username"),
             "profile_photo": avatar["avatar_url"] if avatar else None,
-            "is_verified": user.get("is_verified", False)
+            "is_verified": user.get("is_verified", False),
+            "can_vote": can_vote,
+            "vote_disabled_reason": vote_disabled_reason
         })
 
     return response.success_message(
@@ -375,4 +431,109 @@ async def get_full_leaderboard_controller(
             ),
             "results": leaderboard
         }]
+    )
+
+async def cast_vote_controller(
+    contest_id: str,
+    participant_user_id: str,
+    current_user: dict,
+    lang: str
+):
+    if not participant_user_id:
+        return response.error_message(
+            translate_message("PARTICIPANT_USER_ID_REQUIRED", lang),
+            status_code=400
+        )
+
+    user_id = str(current_user["_id"])
+
+    contest_history = await fetch_active_contest_history(contest_id)
+    if not contest_history or contest_history["status"] != ContestStatus.voting_started:
+        return response.error_message(
+            translate_message("CONTEST_NOT_ACTIVE", lang),
+            status_code=400
+        )
+
+    contest_history_id = str(contest_history["_id"])
+
+    participant = await get_participant_by_user(
+        contest_id,
+        contest_history_id,
+        participant_user_id
+    )
+    if not participant:
+        return response.error_message(
+            translate_message("PARTICIPANT_NOT_FOUND", lang),
+            status_code=404
+        )
+
+    if participant_user_id == user_id:
+        return response.error_message(
+            translate_message("PARTICIPANT_CANNOT_VOTE", lang),
+            status_code=400
+        )
+
+    contest = await fetch_contest_by_id(contest_id)
+
+    votes_casted = await get_user_vote_count(
+        contest_id,
+        contest_history_id,
+        user_id
+    )
+
+    if votes_casted >= contest["max_votes_per_user"]:
+        return response.error_message(
+            translate_message("VOTING_LIMIT_REACHED", lang),
+            status_code=400
+        )
+
+    already_voted = await has_user_voted_for_participant(
+        contest_id,
+        contest_history_id,
+        str(participant["_id"]),
+        user_id
+    )
+    if already_voted:
+        return response.error_message(
+            translate_message("ALREADY_VOTED_FOR_PARTICIPANT", lang),
+            status_code=400
+        )
+
+    balance_after, balance_before = await debit_user_tokens(
+        user_id=user_id,
+        amount=contest["vote_cost"],
+        reason=f"contest_vote:{contest_id}"
+    )
+
+    if balance_after is None:
+        return response.error_message(
+            translate_message("INSUFFICIENT_TOKENS", lang),
+            data={
+                "required": contest["vote_cost"],
+                "available": balance_before
+            },
+            status_code=400
+        )
+
+    await create_vote_entry({
+        "contest_id": contest_id,
+        "contest_history_id": contest_history_id,
+        "participant_id": str(participant["_id"]),
+        "voter_user_id": user_id,
+        "vote_cost": contest["vote_cost"],
+        "voted_at": datetime.utcnow()
+    })
+
+    await increment_vote_counts(
+        participant["_id"],
+        contest_history_id
+    )
+
+    return response.success_message(
+        translate_message("VOTE_CAST_SUCCESSFULLY", lang),
+        data={
+            "participant_user_id": participant_user_id,
+            "remaining_votes": contest["max_votes_per_user"] - (votes_casted + 1),
+            "tokens_left": balance_after
+        }
     )

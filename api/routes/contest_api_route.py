@@ -67,6 +67,7 @@ async def get_contest_participants(
 ):
     return await get_contest_participants_controller(
         contest_id=contest_id,
+        current_user=current_user,
         pagination=pagination,
         lang=lang
     )
@@ -99,3 +100,18 @@ async def get_full_leaderboard(
         pagination=pagination,
         lang=lang
     )
+
+@router.post("/{contest_id}/vote")
+async def cast_vote(
+    contest_id: str,
+    payload: VoteRequestSchema,
+    current_user: dict = Depends(UserPermission(["user"])),
+    lang: str = Query("en")
+):
+    return await cast_vote_controller(
+        contest_id=contest_id,
+        participant_user_id=payload.participant_user_id,
+        current_user=current_user,
+        lang=lang
+    )
+

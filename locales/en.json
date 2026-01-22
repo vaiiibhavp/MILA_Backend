@@ -448,6 +448,13 @@
   "CONTEST_PARTICIPANTS_FETCHED_SUCCESSFULLY":"contest participants fetched successfully",
   "FAILED_TO_FETCH_CONTEST_PARTICIPANTS":"Failed to fetch contest participants",
   "LEADERBOARD_FETCHED_SUCCESSFULLY": "Leaderboard fetched successfully",
+  "PARTICIPANT_USER_ID_REQUIRED": "Participant user id required",
+  "CONTEST_NOT_ACTIVE": "Contest not active",
+  "PARTICIPANT_NOT_FOUND": "Participant not found",
+  "PARTICIPANT_CANNOT_VOTE": "Participant cannot vote",
+  "VOTING_LIMIT_REACHED": "Voting limit reached",
+  "ALREADY_VOTED_FOR_PARTICIPANT": "Already voted for this participant",
+  "VOTE_CAST_SUCCESSFULLY": "Vote cast successfully",
   
   "WITHDRAWAL_REQUESTS_FETCHED": "Withdrawal requests fetched successfully.",
   "WITHDRAWAL_REQUESTS_FETCH_FAILED": "Unable to fetch withdrawal requests. Please try again later.",

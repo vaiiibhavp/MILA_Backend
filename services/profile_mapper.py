@@ -70,11 +70,24 @@ async def build_edit_profile_response(user: dict, onboarding: dict):
         countries_collection
     )
 
-    preferred_country_names = []
+    preferred_countries = []
+
     for cid in onboarding.get("preferred_country", []):
-        name = await get_country_name_by_id(cid, countries_collection)
-        if name:
-            preferred_country_names.append(name)
+        if not cid:
+            continue
+
+        country = await countries_collection.find_one(
+            {"_id": ObjectId(cid)},
+            {"name": 1, "code": 1}
+        )
+        if country:
+            preferred_countries.append({
+                "id": str(country["_id"]),
+                "name": country["name"],
+            })
+
+    birthdate = onboarding.get("birthdate") if onboarding else None
+    age = calculate_age(birthdate) if birthdate else None
 
     data = {
         "username": user.get("username"),
@@ -89,7 +102,7 @@ async def build_edit_profile_response(user: dict, onboarding: dict):
                 enum_values(GenderEnum),
                 onboarding.get("gender")
             ),
-
+            "age": age,
             "sexual_orientation": build_selectable_options(
                 enum_values(SexualOrientationEnum),
                 onboarding.get("sexual_orientation")
@@ -118,7 +131,7 @@ async def build_edit_profile_response(user: dict, onboarding: dict):
                 onboarding.get("sexual_preferences", [])
             ),
 
-            "preferred_country": preferred_country_names
+            "preferred_country": preferred_countries
         },
 
         "security": {

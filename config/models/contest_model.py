@@ -336,20 +336,19 @@ async def get_leaderboard(
 
 async def fetch_contest_participants(
     contest_id: str,
-    skip: int,
-    limit: int
+    skip: int = 0,
+    limit: Optional[int] = None
 ):
-    cursor = (
-        contest_participant_collection
-        .find(
-            {
-                "contest_id": contest_id,
-                "is_deleted": {"$ne": True}
-            }
-        )
-        .skip(skip)
-        .limit(limit)
+    cursor = contest_participant_collection.find(
+        {
+            "contest_id": contest_id,
+            "is_deleted": {"$ne": True}
+        }
     )
+
+    # Apply pagination ONLY when page_size is provided
+    if limit is not None:
+        cursor = cursor.skip(skip).limit(limit)
 
     participants = []
     async for p in cursor:
@@ -387,3 +386,54 @@ def resolve_badge(rank: int | None):
         return {"type": "bronze", "label": "Top 3"}
     return None
 
+async def get_participant_by_user(
+    contest_id: str,
+    contest_history_id: str,
+    participant_user_id: str
+):
+    return await contest_participant_collection.find_one({
+        "contest_id": contest_id,
+        "contest_history_id": contest_history_id,
+        "user_id": participant_user_id
+    })
+
+async def get_user_vote_count(
+    contest_id: str,
+    contest_history_id: str,
+    voter_user_id: str
+) -> int:
+    return await contest_vote_collection.count_documents({
+        "contest_id": contest_id,
+        "contest_history_id": contest_history_id,
+        "voter_user_id": voter_user_id
+    })
+
+async def has_user_voted_for_participant(
+    contest_id: str,
+    contest_history_id: str,
+    participant_id: str,
+    voter_user_id: str
+):
+    return await contest_vote_collection.find_one({
+        "contest_id": contest_id,
+        "contest_history_id": contest_history_id,
+        "participant_id": participant_id,
+        "voter_user_id": voter_user_id
+    })
+
+async def create_vote_entry(data: dict):
+    await contest_vote_collection.insert_one(data)
+
+async def increment_vote_counts(
+    participant_id: ObjectId,
+    contest_history_id: str
+):
+    await contest_participant_collection.update_one(
+        {"_id": participant_id},
+        {"$inc": {"total_votes": 1}}
+    )
+
+    await contest_history_collection.update_one(
+        {"_id": ObjectId(contest_history_id)},
+        {"$inc": {"total_votes": 1}}
+    )

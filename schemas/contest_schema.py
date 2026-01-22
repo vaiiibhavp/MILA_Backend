@@ -70,3 +70,6 @@ class ContestDetailResponse(BaseModel):
     can_participate: bool
     can_vote: bool
     action_button: str  # participate | vote_now | view_leaderboard | view_winners
+
+class VoteRequestSchema(BaseModel):
+    participant_user_id: Optional[str] = None
