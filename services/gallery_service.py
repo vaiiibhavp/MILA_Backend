@@ -78,13 +78,9 @@ async def resolve_private_gallery_items(
 
         is_unlocked = is_owner or file_id in viewer_unlocked_images
 
-        url = (
-            await generate_file_url(
-                file_doc["storage_key"],
-                file_doc["storage_backend"]
-            )
-            if is_unlocked
-            else None
+        url = await generate_file_url(
+            file_doc["storage_key"],
+            file_doc["storage_backend"]
         )
 
         resolved.append({
