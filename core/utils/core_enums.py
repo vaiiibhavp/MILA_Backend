@@ -107,3 +107,8 @@ class DashboardFilter(str , Enum):
     WEEKLY = "weekly"
     MONTHLY = "monthly"
     YEARLY = "yearly"
+
+class TransactionTab(str, Enum):
+    SUBSCRIPTION = "subscription"
+    TOKEN_PURCHASE = "token_purchase"
+    TOKEN_WITHDRAWAL = "token_withdrawal"

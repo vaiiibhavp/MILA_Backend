@@ -1,13 +1,23 @@
 from bson import ObjectId
 from datetime import datetime
 from pymongo.errors import DuplicateKeyError
-from config.db_config import user_collection  , favorite_collection ,user_like_history ,user_match_history , user_passed_hostory,user_passed_hostory
+from config.db_config import (
+    user_collection ,
+    favorite_collection ,
+    user_like_history ,
+    user_match_history ,
+    user_passed_hostory,
+    user_passed_hostory,
+    onboarding_collection,
+    file_collection
+)
 from core.utils.helper import serialize_datetime_fields
 from core.utils.response_mixin import CustomResponseMixin
 from core.utils.helper import serialize_datetime_fields
 from services.translation import translate_message
 from core.utils.core_enums import MembershipType
-
+from core.utils.age_calculation import calculate_age
+from api.controller.files_controller import generate_file_url
 
 response = CustomResponseMixin()
 
@@ -291,16 +301,48 @@ async def get_my_favorites(user_id: str, lang: str = "en"):
 
     users_cursor = user_collection.find(
         {"_id": {"$in": [ObjectId(uid) for uid in favorite_user_ids]}},
-        {"_id": 1, "username": 1, "is_verified": 1, "profile_photo_id": 1}
+        {"_id": 1, "username": 1, "is_verified": 1}
     )
 
     users = []
     async for user in users_cursor:
+        uid = str(user["_id"])
+
+        onboarding = await onboarding_collection.find_one(
+            {"user_id": uid},
+            {"birthdate": 1, "images": 1}
+        )
+
+        # -------- Age --------
+        age = None
+        if onboarding and onboarding.get("birthdate"):
+            age = calculate_age(onboarding["birthdate"].date())
+
+        # -------- Profile Photo --------
+        profile_photo_id = None
+        profile_photo_url = None
+
+        image_ids = onboarding.get("images", []) if onboarding else []
+        if image_ids:
+            file_doc = await file_collection.find_one(
+                {"_id": ObjectId(image_ids[0])},
+                {"storage_key": 1, "storage_backend": 1}
+            )
+
+            if file_doc:
+                profile_photo_id = str(file_doc["_id"])
+                profile_photo_url = await generate_file_url(
+                    file_doc["storage_key"],
+                    file_doc.get("storage_backend")
+                )
+
         users.append({
-            "user_id": str(user["_id"]),
+            "user_id": uid,
             "username": user.get("username"),
             "is_verified": user.get("is_verified"),
-            "profile_photo_id": user.get("profile_photo_id")
+            "age": age,
+            "profile_photo_id": profile_photo_id,
+            "profile_photo_url": profile_photo_url
         })
 
     return response.success_message(
