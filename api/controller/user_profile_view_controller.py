@@ -159,6 +159,38 @@ async def retry_verification_selfie_controller(
             status_code=400
         )
 
+    verification = await verification_collection.find_one(
+        {"user_id": user_id},
+        {"status": 1}
+    )
+
+    # If verification exists, validate status
+    if verification:
+        status = verification.get("status")
+
+        # Allow ONLY when rejected
+        if status == VerificationStatusEnum.PENDING:
+            return response.error_message(
+                translate_message("VERIFICATION_ALREADY_PENDING", lang),
+                status_code=400
+            )
+
+        if status == VerificationStatusEnum.APPROVED:
+            return response.error_message(
+                translate_message("ALREADY_VERIFIED", lang),
+                status_code=400
+            )
+
+        if status in [
+            VerificationStatusEnum.SUSPENDED,
+            VerificationStatusEnum.BLOCKED,
+            VerificationStatusEnum.DELETED
+        ]:
+            return response.error_message(
+                translate_message("VERIFICATION_NOT_ALLOWED", lang),
+                status_code=403
+            )
+
     # SAVE SELFIE FILE
     _, storage_key, backend = await save_file(
         file_obj=selfie,

@@ -153,10 +153,11 @@ async def get_contests_paginated(
         contest_collection
         .find(query)
         .sort("created_at", -1)
-        .skip(pagination.skip)
-        .limit(pagination.limit)
     )
 
+    if pagination.limit is not None:
+        cursor = cursor.skip(pagination.skip).limit(pagination.limit)
+        
     results = []
 
     async for contest in cursor:

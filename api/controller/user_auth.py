@@ -332,7 +332,8 @@ async def login_controller(payload: LoginRequest, lang):
             "password",
             "two_factor_enabled",
             "membership_type",
-            "is_verified"
+            "is_verified",
+            "is_deleted"
         ]
     )
 
@@ -342,6 +343,12 @@ async def login_controller(payload: LoginRequest, lang):
             status_code=400
         )
     
+    if user.get("is_deleted"):
+        return response.error_message(
+            translate_message("ACCOUNT_NOT_FOUND", lang=lang),
+            status_code=400
+        )
+      
     # Check user accout is deleted or not
     deleted_account = await deleted_account_collection.find_one({
         "email": payload.email
