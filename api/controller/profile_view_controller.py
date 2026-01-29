@@ -1,7 +1,7 @@
 #profile_view_controller.py:
 
 from bson import ObjectId
-from config.db_config import contest_participant_collection, countries_collection, private_gallery_purchases_collection, profile_view_history, user_collection, onboarding_collection, file_collection, gift_collection
+from config.db_config import gift_transaction_collection, contest_participant_collection, countries_collection, private_gallery_purchases_collection, profile_view_history, user_collection, onboarding_collection, file_collection, gift_collection
 from core.utils.response_mixin import CustomResponseMixin
 from core.utils.age_calculation import calculate_age
 from api.controller.files_controller import get_profile_photo_url, generate_file_url, profile_photo_from_onboarding
@@ -18,6 +18,7 @@ from services.notification_service import send_notification
 from services.premium_guard import require_premium
 from services.gallery_service import *
 from config.models.contest_model import resolve_badge
+from schemas.gift_transaction_schema import *
 
 response = CustomResponseMixin()
 
@@ -540,6 +541,20 @@ async def send_gift_to_profile(
             balance_after=str(receiver_new_balance)
         )
     )
+
+    gift_tx = GiftTransactionCreate(
+        sender_id=str(viewer["_id"]),
+        receiver_id=str(profile_user_id),
+        gift_id=str(gift["_id"]),
+        gift_name=gift["name"],
+        gift_token_value=gift_price,
+        sender_balance_before=sender_tokens,
+        sender_balance_after=sender_new_balance,
+        receiver_balance_before=receiver_tokens,
+        receiver_balance_after=receiver_new_balance,
+    )
+
+    await gift_transaction_collection.insert_one(gift_tx.dict())
 
     return response.success_message(
         translate_message("GIFT_SENT_SUCCESSFULLY", lang=lang),

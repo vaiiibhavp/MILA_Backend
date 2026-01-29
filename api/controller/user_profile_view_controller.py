@@ -164,6 +164,13 @@ async def retry_verification_selfie_controller(
         {"status": 1}
     )
 
+    # No verification record → treat as pending
+    if not verification:
+        return response.error_message(
+            translate_message("VERIFICATION_ALREADY_PENDING", lang),
+            status_code=400
+        )
+
     # If verification exists, validate status
     if verification:
         status = verification.get("status")
