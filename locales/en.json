@@ -485,5 +485,17 @@
   "ACCOUNT_NOT_FOUND": "Account not found",
   "VERIFICATION_ALREADY_PENDING": "Verification already pending",
   "VERIFICATION_NOT_ALLOWED": "Verification not allowed",
-  "DAILY_LIMIT_REACHED":"You’ve reached today’s limit of 10 actions. Upgrade to Premium to continue."
+  "DAILY_LIMIT_REACHED":"You’ve reached today’s limit of 10 actions. Upgrade to Premium to continue.",
+  "PUSH_TITLE_MATCHED": "It’s a Match",
+  "PUSH_MESSAGE_MATCHED": "You and this user liked each other. Start chatting now",
+  "PUSH_TITLE_USER_REPORTED":"User Reported",
+  "PUSH_MESSAGE_USER_REPORTED": "A user has been reported. Please review the report.",
+  "ADMIN_CRED":"Admin credentials not found.",
+  "PUSH_TITLE_USER_BLOCKED": "User Blocked",
+  "PUSH_MESSAGE_USER_BLOCKED": "A user has blocked another user.",
+  "PUSH_TITLE_VERIFICATION_APPROVED":"Verification Approved",
+  "PUSH_MESSAGE_VERIFICATION_APPROVED": "Your account has been verified.",
+  "PUSH_TITLE_VERIFICATION_REJECTED": "Verification Rejected",
+  "PUSH_MESSAGE_VERIFICATION_REJECTED": "Your verification request has been rejected."
+
 }

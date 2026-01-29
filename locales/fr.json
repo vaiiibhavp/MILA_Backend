@@ -488,5 +488,16 @@
   "ACCOUNT_NOT_FOUND": "Compte introuvable",
   "VERIFICATION_ALREADY_PENDING": "La vérification est déjà en cours",
   "VERIFICATION_NOT_ALLOWED": "La vérification n’est pas autorisée",
-  "DAILY_LIMIT_REACHED": "Vous avez atteint la limite quotidienne de 10 actions. Passez à Premium pour continuer."
+  "DAILY_LIMIT_REACHED": "Vous avez atteint la limite quotidienne de 10 actions. Passez à Premium pour continuer.",
+  "PUSH_TITLE_MATCHED": "C’est un match",
+  "PUSH_MESSAGE_MATCHED": "Vous et cet utilisateur vous êtes aimés mutuellement. Commencez à discuter maintenant",
+  "PUSH_TITLE_USER_REPORTED": "Utilisateur signalé",
+  "PUSH_MESSAGE_USER_REPORTED": "Un utilisateur a été signalé. Veuillez examiner le signalement.",
+  "ADMIN_CRED": "Identifiants administrateur introuvables",
+  "PUSH_TITLE_USER_BLOCKED": "Utilisateur bloqué",
+  "PUSH_MESSAGE_USER_BLOCKED": "Un utilisateur a bloqué un autre utilisateur.",
+  "PUSH_TITLE_VERIFICATION_APPROVED": "Vérification approuvée",
+  "PUSH_MESSAGE_VERIFICATION_APPROVED": "Votre compte a été vérifié.",
+  "PUSH_TITLE_VERIFICATION_REJECTED": "Vérification rejetée",
+  "PUSH_MESSAGE_VERIFICATION_REJECTED": "Votre demande de vérification a été rejetée."
 }

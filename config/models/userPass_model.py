@@ -14,12 +14,13 @@ from config.db_config import (
 )
 from core.utils.helper import serialize_datetime_fields
 from core.utils.response_mixin import CustomResponseMixin
-from core.utils.helper import serialize_datetime_fields
 from services.translation import translate_message
 from core.utils.core_enums import MembershipType
 from core.utils.age_calculation import calculate_age
 from api.controller.files_controller import generate_file_url
 from core.utils.action_limit import check_daily_action_limit , increment_daily_counter
+from core.utils.core_enums import NotificationType, NotificationRecipientType
+from services.notification_service import send_notification
 
 response = CustomResponseMixin()
 
@@ -229,6 +230,50 @@ async def like_user(user_id: str, liked_user_id: str, lang: str = "en"):
 
             # True only if match was created now
             is_match = bool(result.upserted_id)
+            if is_match:
+                # Fetch language preferences
+                user_1 = await user_collection.find_one(
+                    {"_id": ObjectId(user_id)},
+                    {"lang": 1}
+                )
+                user_2 = await user_collection.find_one(
+                    {"_id": ObjectId(liked_user_id)},
+                    {"lang": 1}
+                )
+
+                user_1_lang = user_1.get("lang", "en")
+                user_2_lang = user_2.get("lang", "en")
+
+                # Notify user who was liked
+                await send_notification(
+                    recipient_id=liked_user_id,
+                    recipient_type=NotificationRecipientType.USER,
+                    notification_type=NotificationType.MATCH,
+                    title=translate_message("PUSH_TITLE_MATCHED", user_2_lang),
+                    message=translate_message("PUSH_MESSAGE_MATCHED", user_2_lang),
+                    reference={
+                        "entity": "match",
+                        "entity_id": user_id
+                    },
+                    sender_user_id=user_id,
+                    send_push=True
+                )
+
+                # Notify current user
+                await send_notification(
+                    recipient_id=user_id,
+                    recipient_type=NotificationRecipientType.USER,
+                    notification_type=NotificationType.MATCH,
+                    title=translate_message("PUSH_TITLE_MATCHED", user_1_lang),
+                    message=translate_message("PUSH_MESSAGE_MATCHED", user_1_lang),
+                    reference={
+                        "entity": "match",
+                        "entity_id": liked_user_id
+                    },
+                    sender_user_id=liked_user_id,
+                    send_push=True
+                )
+
 
         except DuplicateKeyError:
             # Another request already created the match

@@ -9,6 +9,9 @@ from config.db_config import verification_collection , user_collection
 from services.translation import translate_message
 from config.basic_config import settings
 from core.utils.helper import credit_tokens_for_verification
+from core.utils.core_enums import NotificationType, NotificationRecipientType
+from services.notification_service import send_notification
+from core.utils.helper import get_admin_id_by_email
 
 response = CustomResponseMixin()
 
@@ -264,6 +267,19 @@ async def approve_verification(
         user_id=user_id,
         admin_id=str(admin["_id"])
     )
+    await send_notification(
+        recipient_id=user_id,
+        recipient_type=NotificationRecipientType.USER,
+        notification_type=NotificationType.VERIFICATION_APPROVED,
+        title=translate_message("PUSH_TITLE_VERIFICATION_APPROVED", lang),
+        message=translate_message("PUSH_MESSAGE_VERIFICATION_APPROVED", lang),
+        reference={
+            "entity": "verification",
+            "entity_id": user_id
+        },
+        sender_user_id=str(admin["_id"]),
+        send_push=True
+    )
 
     # ------------------ RESPONSE ------------------
     return response.success_message(
@@ -340,7 +356,19 @@ async def reject_verification(
             "status": VerificationStatusEnum.REJECTED,
             "verified_at": datetime.utcnow()
         })
-
+    await send_notification(
+        recipient_id=user_id,
+        recipient_type=NotificationRecipientType.USER,
+        notification_type=NotificationType.VERIFICATION_REJECTED,
+        title=translate_message("PUSH_TITLE_VERIFICATION_REJECTED", lang),
+        message=translate_message("PUSH_MESSAGE_VERIFICATION_REJECTED", lang),
+        reference={
+            "entity": "verification",
+            "entity_id": user_id
+        },
+        sender_user_id=str(admin["_id"]),
+        send_push=True
+    )
     return response.success_message(
         message=translate_message("USER_VERIFICATION_REJECTED", lang),
         data=[{
