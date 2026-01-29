@@ -8,7 +8,7 @@ from pydantic_core import core_schema
 from bson import ObjectId
 from datetime import datetime,date
 from config.db_config import db
-from config.db_config import user_collection,token_collection, file_collection, onboarding_collection
+from config.db_config import user_like_history, user_passed_hostory, favorite_collection, user_collection,token_collection, file_collection, onboarding_collection
 from core.utils.response_mixin import CustomResponseMixin
 from enum import Enum
 import asyncio
@@ -313,3 +313,86 @@ async def update_user_token_balance(
             }
         }
     )
+
+from bson import ObjectId
+
+async def get_excluded_profile_user_ids(viewer_id: str):
+    excluded_user_ids = set()
+
+    # Passed users
+    passed = await user_passed_hostory.find_one(
+        {"user_id": viewer_id},
+        {"passed_user_ids": 1}
+    )
+    if passed:
+        excluded_user_ids.update(passed.get("passed_user_ids", []))
+
+    # Favorited users
+    favorites = await favorite_collection.find_one(
+        {"user_id": viewer_id},
+        {"favorite_user_ids": 1}
+    )
+    if favorites:
+        excluded_user_ids.update(favorites.get("favorite_user_ids", []))
+
+    # Liked users (reverse lookup)
+    liked_cursor = user_like_history.find(
+        {"liked_by_user_ids": viewer_id},
+        {"user_id": 1}
+    )
+    async for doc in liked_cursor:
+        excluded_user_ids.add(doc["user_id"])
+
+    # Exclude self
+    excluded_user_ids.add(viewer_id)
+
+    # Convert to ObjectIds
+    return [
+        ObjectId(uid)
+        for uid in excluded_user_ids
+        if ObjectId.is_valid(uid)
+    ]
+
+async def search_profiles_aggregate(
+    query: dict,
+    excluded_object_ids: list,
+    pagination
+):
+    base_pipeline = [
+        {"$match": query},
+        {"$match": {"user_id": {"$ne": None}}},
+        {"$addFields": {"user_obj_id": {"$toObjectId": "$user_id"}}},
+        {
+            "$lookup": {
+                "from": "users",
+                "localField": "user_obj_id",
+                "foreignField": "_id",
+                "as": "user"
+            }
+        },
+        {"$unwind": "$user"},
+        {"$match": {"user.is_deleted": {"$ne": True}}},
+    ]
+
+    if excluded_object_ids:
+        base_pipeline.append(
+            {"$match": {"user._id": {"$nin": excluded_object_ids}}}
+        )
+
+    # Count
+    count_pipeline = base_pipeline + [{"$count": "total"}]
+    count_cursor = onboarding_collection.aggregate(count_pipeline)
+    count_result = await count_cursor.to_list(length=1)
+    total = count_result[0]["total"] if count_result else 0
+
+    # Data
+    data_pipeline = base_pipeline + [{"$sort": {"_id": 1}}]
+
+    if pagination.page and pagination.page_size:
+        data_pipeline.extend([
+            {"$skip": pagination.skip},
+            {"$limit": pagination.page_size}
+        ])
+
+    cursor = onboarding_collection.aggregate(data_pipeline)
+    return cursor, total
