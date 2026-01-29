@@ -312,8 +312,8 @@ async def buy_private_gallery_image(
         CreateTokenHistory(
             user_id=str(viewer["_id"]),
             delta=-price,
-            type="DEBIT",
-            reason="PRIVATE_IMAGE_UNLOCK",
+            type=TokenTransactionType.DEBIT,
+            reason=TokenTransactionReason.PRIVATE_IMAGE_UNLOCK,
             balance_before=str(available_tokens),
             balance_after=str(new_token_balance)
         )
@@ -541,8 +541,8 @@ async def send_gift_to_profile(
         CreateTokenHistory(
             user_id=str(viewer["_id"]),
             delta=-gift_price,
-            type="DEBIT",
-            reason="GIFT_SENT",
+            type=TokenTransactionType.DEBIT,
+            reason=TokenTransactionReason.GIFT_SENT,
             balance_before=str(sender_tokens),
             balance_after=str(sender_new_balance),
             txn_id=gift_tx_id
@@ -554,8 +554,8 @@ async def send_gift_to_profile(
         CreateTokenHistory(
             user_id=str(profile_user_id),
             delta=gift_price,
-            type="CREDIT",
-            reason="GIFT_RECEIVED",
+            type=TokenTransactionType.CREDIT,
+            reason=TokenTransactionReason.GIFT_RECEIVED,
             balance_before=str(receiver_tokens),
             balance_after=str(receiver_new_balance),
             txn_id=gift_tx_id
