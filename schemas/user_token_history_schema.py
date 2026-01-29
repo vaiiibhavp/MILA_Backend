@@ -20,6 +20,9 @@ class TokenHistory(BaseModel):
     txn_id: Optional[str] = None
     user_id: str
     gift_username: Optional[str] = None
+    plan_amount: Optional[float] = 0
+    paid_amount: Optional[float] = 0
+    remaining_amount: Optional[float] = 0
     delta: int
     type: str
     reason: str

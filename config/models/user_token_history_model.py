@@ -164,6 +164,33 @@ async def get_user_token_history(user_id:str,lang:str, pagination:StandardResult
                             ]
                         }
                     ]
+                },
+
+                # ✅ plan_amount
+                "plan_amount": {
+                    "$cond": [
+                        {"$eq": ["$type", TokenTransactionType.WITHDRAW.value]},
+                        {"$arrayElemAt": ["$withdraw_txn.request_amount", 0]},
+                        {"$arrayElemAt": ["$normal_txn.plan_amount", 0]}
+                    ]
+                },
+
+                # ✅ paid_amount
+                "paid_amount": {
+                    "$cond": [
+                        {"$eq": ["$type", TokenTransactionType.WITHDRAW.value]},
+                        {"$arrayElemAt": ["$withdraw_txn.paid_amount", 0]},
+                        {"$arrayElemAt": ["$normal_txn.paid_amount", 0]}
+                    ]
+                },
+
+                # ✅ remaining_amount
+                "remaining_amount": {
+                    "$cond": [
+                        {"$eq": ["$type", TokenTransactionType.WITHDRAW.value]},
+                        {"$arrayElemAt": ["$withdraw_txn.remaining_amount", 0]},
+                        {"$arrayElemAt": ["$normal_txn.remaining_amount", 0]}
+                    ]
                 }
             }
         },
@@ -186,6 +213,9 @@ async def get_user_token_history(user_id:str,lang:str, pagination:StandardResult
                 doc.get("gift_user", {}).get("username")
                 if doc.get("gift_user") else None
             ),
+            "plan_amount": doc.get("plan_amount"),
+            "paid_amount": doc.get("paid_amount"),
+            "remaining_amount": doc.get("remaining_amount"),
             "status": doc.get("status"),
             "reason": translate_message(doc["reason"], lang),
             "balance_before": str(doc["balance_before"]),
