@@ -483,5 +483,7 @@
   "FAILED_TO_FETCH_TRANSACTIONS": "Échec de la récupération des transactions",
   "FAILED_TO_FETCH_SUBSCRIPTION_BONUS_TOKEN":"Échec de la récupération du jeton bonus d’abonnement",
   "SUBSCRIPTION_BONUS_TOKEN_UPDATED_SUCCESSFULLY": "Subscription bonus token updated successfully",
-  "FAILED_TO_UPDATE_SUBSCRIPTION_BONUS_TOKEN":"Failed to update subscription bonus token"
+  "FAILED_TO_UPDATE_SUBSCRIPTION_BONUS_TOKEN":"Failed to update subscription bonus token",
+  "PUSH_TITLE_SUBSCRIPTION_EXPIRING_SOON": "Votre abonnement expire bientôt",
+  "PUSH_MESSAGE_SUBSCRIPTION_EXPIRING_SOON": "Votre abonnement expire dans 3 jours. Renouvelez-le dès maintenant pour continuer à bénéficier d'un accès ininterrompu."
 }

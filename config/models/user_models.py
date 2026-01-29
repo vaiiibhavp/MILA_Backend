@@ -6,9 +6,10 @@ from pydantic import GetJsonSchemaHandler
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
 from bson import ObjectId
-from datetime import datetime,date
+from datetime import datetime, date, timedelta
 from config.db_config import db
 from config.db_config import user_collection,token_collection, file_collection, onboarding_collection
+from core.utils.core_enums import MembershipStatus
 from core.utils.response_mixin import CustomResponseMixin
 from enum import Enum
 import asyncio
@@ -289,3 +290,51 @@ async def debit_user_tokens(
     )
 
     return balance_after, balance_before
+
+
+async def find_expiring_subscriptions(days_before:int):
+    today = datetime.utcnow().date()
+    target_date = today + timedelta(days=days_before)
+
+    start = datetime.combine(target_date, datetime.min.time())
+    end = datetime.combine(target_date, datetime.max.time())
+
+    pipeline = [
+        {
+            "$match": {
+                "membership_status": MembershipStatus.ACTIVE.value,
+                "is_deleted": False
+            }
+        },
+        {
+            "$lookup": {
+                "from": "transactions",
+                "let": { "transId": { "$toObjectId": "$membership_trans_id" } },
+                "pipeline": [
+                    {
+                        "$match": {
+                            "$expr": {
+                                "$and": [
+                                    { "$eq": ["$_id", "$$transId"] },
+                                    { "$eq": ["$trans_type", "subscription_transaction"] },
+                                    { "$eq": ["$status", "success"] },
+                                    { "$gte": ["$expires_at", start] },
+                                    { "$lte": ["$expires_at", end] },
+                                    { "$eq": ["$expiry_notified_at", None] }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "as": "active_subscription"
+            }
+        },
+        {
+            "$match": {
+                "active_subscription": { "$ne": [] }
+            }
+        },
+        { "$limit": 1000 }
+    ]
+
+    return user_collection.aggregate(pipeline)
