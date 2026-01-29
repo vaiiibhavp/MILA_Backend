@@ -25,6 +25,8 @@ class TokenTransactionReason(str, Enum):
     TOKEN_PURCHASE = "Token_Purchase"
     TOKEN_WITHDRAWAL = "Token_Withdrawal"
     TOKEN_WITHDRAWAL_REJECTED = "Token_Withdrawal_Rejected"
+    GIFT_SENT= "GIFT_SENT"
+    GIFT_RECEIVED = "GIFT_RECEIVED"
 
 class LoginStatus(str, Enum):
     ACTIVE = "active"
