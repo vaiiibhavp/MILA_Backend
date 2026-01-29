@@ -73,8 +73,8 @@ async def reject_withdrawal_request_controller(
             recipient_id=str(user["_id"]),
             recipient_type=NotificationRecipientType.USER,
             notification_type=NotificationType.TOKEN_WITHDRAW_STATUS,
-            title=translate_message(message="PUSH_TITLE_WITHDRAWAL_REQUEST_REJECTED", lang=recipient_lang),
-            message=translate_message(message="PUSH_MESSAGE_WITHDRAWAL_REQUEST_REJECTED", lang=recipient_lang),
+            title="PUSH_TITLE_WITHDRAWAL_REQUEST_REJECTED",
+            message="PUSH_MESSAGE_WITHDRAWAL_REQUEST_REJECTED",
             reference={
                 "entity": "token_withdrawal_request",
                 "entity_id": request_id
@@ -128,8 +128,8 @@ async def complete_withdrawal_request_controller(
             recipient_id=str(user["_id"]),
             recipient_type=NotificationRecipientType.USER,
             notification_type=NotificationType.TOKEN_WITHDRAW_STATUS,
-            title=translate_message(message="PUSH_TITLE_WITHDRAWAL_COMPLETED", lang=recipient_lang),
-            message=translate_message(message="PUSH_MESSAGE_WITHDRAWAL_COMPLETED", lang=recipient_lang),
+            title="PUSH_TITLE_WITHDRAWAL_COMPLETED",
+            message="PUSH_MESSAGE_WITHDRAWAL_COMPLETED",
             reference={
                 "entity": "token_withdrawal_request",
                 "entity_id": request_id
