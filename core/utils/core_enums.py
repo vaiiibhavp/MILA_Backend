@@ -24,6 +24,7 @@ class TokenTransactionReason(str, Enum):
     ACCOUNT_VERIFIED = "Account_Verified"
     TOKEN_PURCHASE = "Token_Purchase"
     TOKEN_WITHDRAWAL = "Token_Withdrawal"
+    TOKEN_WITHDRAWAL_REJECTED = "Token_Withdrawal_Rejected"
 
 class LoginStatus(str, Enum):
     ACTIVE = "active"

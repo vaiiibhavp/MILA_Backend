@@ -57,6 +57,17 @@ async def reject_withdrawal_request_controller(
         )
 
         user = await user_collection.find_one({"_id": ObjectId(result.get("user_id"))})
+
+        await update_user_tokens_and_history(
+            user_id=str(user["_id"]),
+            user_details=user,
+            tokens=int(result['tokens']),
+            transaction_type=TokenTransactionType.CREDIT,
+            reason=TokenTransactionReason.TOKEN_WITHDRAWAL_REJECTED,
+            transaction_id=ObjectId(request_id),
+            lang=lang
+        )
+
         recipient_lang = user.get("lang", "en")
         await send_notification(
             recipient_id=str(user["_id"]),
@@ -112,15 +123,6 @@ async def complete_withdrawal_request_controller(
         if not user:
             return response.error_message(translate_message("USER_NOT_FOUND", lang=lang), data=[], status_code=404)
 
-        await update_user_tokens_and_history(
-            user_id=str(user["_id"]),
-            user_details=user,
-            tokens=int(result['tokens']),
-            transaction_type=TokenTransactionType.WITHDRAW,
-            reason=TokenTransactionReason.TOKEN_WITHDRAWAL,
-            transaction_id=ObjectId(request_id),
-            lang=lang
-        )
         recipient_lang = user.get("lang", "en")
         await send_notification(
             recipient_id=str(user["_id"]),

@@ -183,7 +183,8 @@ async def reject_withdrawal_request(
     return {
         "id": request_id,
         "user_id": str(withdrawal["user_id"]),
-        "status": WithdrawalStatus.rejected.value
+        "status": WithdrawalStatus.rejected.value,
+        "tokens": withdrawal["tokens"]
     }
 
 async def complete_withdrawal_request(
