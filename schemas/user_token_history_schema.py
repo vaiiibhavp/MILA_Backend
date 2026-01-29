@@ -17,7 +17,7 @@ class CreateTokenHistory(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class TokenHistory(BaseModel):
-    txn_id: str
+    txn_id: Optional[str] = None
     user_id: str
     gift_username: Optional[str] = None
     delta: int
