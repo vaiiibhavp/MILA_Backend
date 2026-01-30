@@ -664,18 +664,18 @@ async def search_profiles_controller(
         )
         profile_photo = await profile_photo_from_onboarding(onboarding)
 
-    profile_user_id = str(user["_id"])
+        profile_user_id = str(user["_id"])
 
-    results.append({
-        "user_id": profile_user_id,
-        "name": user.get("username"),
-        "age": age,
-        "country": country_name,
-        "profile_photo": profile_photo,
-        "is_verified": user.get("is_verified", False),
-        "login_status": user.get("login_status"),
-        "liked_me": profile_user_id in liked_me_user_ids
-    })
+        results.append({
+            "user_id": profile_user_id,
+            "name": user.get("username"),
+            "age": age,
+            "country": country_name,
+            "profile_photo": profile_photo,
+            "is_verified": user.get("is_verified", False),
+            "login_status": user.get("login_status"),
+            "liked_me": profile_user_id in liked_me_user_ids
+        })
 
     return response.success_message(
         translate_message("SEARCH_RESULTS_FETCHED", lang),
