@@ -65,7 +65,8 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str
     DAILY_FREE_LIMIT:int
     CONTEST_TOKEN_COST:int
-    
+    LEADERBOARD_REDIS_DB:int
+
     class ConfigDict:
         env_file = ".env"
         extra = "ignore"
