@@ -6,9 +6,12 @@ from core.utils.core_enums import ContestFrequency
 from config.models.onboarding_model import GenderEnum
 from core.utils.core_enums import *
 from config.db_config import contest_collection
+from core.utils.leaderboard.leaderboard_helper import LeaderboardRedisHelper
 from core.utils.pagination import pagination_params, StandardResultsSetPagination
 from api.controller.files_controller import *
 from schemas.contest_schema import *
+
+leaderboard_redis_helper = LeaderboardRedisHelper()
 
 class ContestModel(BaseModel):
 
@@ -438,3 +441,4 @@ async def increment_vote_counts(
         {"_id": ObjectId(contest_history_id)},
         {"$inc": {"total_votes": 1}}
     )
+    await leaderboard_redis_helper.add_vote(str(participant_id))

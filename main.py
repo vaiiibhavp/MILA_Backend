@@ -1,6 +1,6 @@
 import asyncio
 import os
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 
 from api.routes import (
     user_profile_api, files_api,
@@ -22,6 +22,8 @@ from api.routes.admin import (
 from core.utils.exceptions import CustomValidationError, custom_validation_error_handler, validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+
+from core.utils.permissions import websocket_authenticate
 from tasks import send_email_task
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -40,8 +42,11 @@ from config.db_seeder.SubscriptionPlanSeeder import seed_subscription_plan
 from core.firebase import init_firebase
 from config.basic_config import *
 
-init_firebase()
+from core.utils.leaderboard.listener import leaderboard_listener
+from core.utils.leaderboard.websocket import manager
 
+init_firebase()
+leaderboard_task = None
 from starlette.middleware.base import BaseHTTPMiddleware
 app = FastAPI()
 
@@ -296,7 +301,6 @@ async def init_scheduler():
             except Exception as index_error:
                 print(f"[ERROR] Index creation failed: {index_error}")
             try:
-                await create_indexes()
                 await seed_admin()
                 print("[SUCCESS] Admin seeding completed")
                 await seed_subscription_plan()
@@ -305,7 +309,10 @@ async def init_scheduler():
                 print(f"[ERROR] Admin seeding failed: {seeder_error}")
     except Exception as e:
         print(f"[ERROR] Database initialization error: {e}")
-    
+
+    global leaderboard_task
+    leaderboard_task = asyncio.create_task(leaderboard_listener())
+    print("🔥 Leaderboard listener started")
 
     scheduler.start()
     print("✅ Scheduler initialized successfully")
@@ -318,8 +325,13 @@ async def init_scheduler():
 
 @app.on_event("shutdown")
 async def shutdown_event():
+    global leaderboard_task
     print("🛑 Starting application shutdown...")
-    
+
+    # ---- STOP LEADERBOARD LISTENER ----
+    if leaderboard_task:
+        leaderboard_task.cancel()
+        print("🛑 Leaderboard listener stopped")
     # Shutdown scheduler
     try:
         logger.info("Shutting down scheduler...")
@@ -340,6 +352,8 @@ async def shutdown_event():
     try:
         from core.utils.redis_helper import close_redis_connections
         await close_redis_connections()
+        from core.utils.baseRedisHelper import BaseRedisHelper
+        await BaseRedisHelper.get_client(1).close()  # Leaderboard DB
         print("✅ Redis connections closed")
     except Exception as e:
         print(f"❌ Error closing Redis connections: {e}")
@@ -366,6 +380,26 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         },
         status_code=422  # Use 422 for validation errors
     )
+
+@app.websocket("/ws/leaderboard")
+async def leaderboard_ws(ws: WebSocket):
+    try:
+        current_user = await websocket_authenticate(
+            websocket=ws,
+            allowed_roles=["user"],
+        )
+
+        # ws.state.user = current_user
+        await manager.connect(ws)
+
+        while True:
+            await ws.receive_text()
+
+    except WebSocketDisconnect:
+        manager.disconnect(ws)
+
+    except Exception:
+        await ws.close(code=1008)
 
 
 # Configure comprehensive logging
