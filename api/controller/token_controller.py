@@ -128,6 +128,7 @@ async def verify_token_purchase(request: TokenTransactionRequestModel,user_id:st
 
         doc = serialize_datetime_fields(doc)
         doc = convert_objectid_to_str(doc)
+        doc['tokens'] = plan_data['tokens']
 
         return response.success_message(
             translate_message("TRANSACTION_DETAILS_VERIFIED_SUCCESSFULLY", lang=lang),
@@ -196,7 +197,7 @@ async def validate_remaining_token_payment(request: CompleteTokenTransactionRequ
 
         doc = serialize_datetime_fields(doc)
         doc = convert_objectid_to_str(doc)
-
+        doc['tokens'] = plan_data['tokens']
 
         return response.success_message(
             translate_message("TRANSACTION_DETAILS_VERIFIED_SUCCESSFULLY", lang=lang),
