@@ -84,6 +84,7 @@ class ContestStatus(str, Enum):
     winner_announced = "winner_announced"
 
 class ContestFrequency(str, Enum):
+    NON_RECURRING = "non_recurring"
     weekly = "weekly"
     bi_weekly = "bi_weekly"
     monthly = "monthly"

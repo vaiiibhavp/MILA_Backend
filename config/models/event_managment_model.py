@@ -1,5 +1,7 @@
 from datetime import datetime
 from bson import ObjectId
+import re
+from bson.errors import InvalidId
 from config.db_config import contest_collection, file_collection , contest_participant_collection
 from core.utils.helper import serialize_datetime_fields
 from api.controller.files_controller import save_file
@@ -7,8 +9,7 @@ from api.controller.files_controller import generate_file_url
 from config.models.user_models import Files
 from config.basic_config import settings
 from services.translation import translate_message
-from core.utils.helper import calculate_visibility
-
+from core.utils.helper import calculate_visibility , parse_date_format
 
 
 class ContestModel:
@@ -30,14 +31,81 @@ class ContestModel:
             "launch_time": payload.launch_time,
         }
 
-        for field, value in text_fields.items():
-            if not value or not value.strip():
-                return {
-                    "error": True,
-                    "message": translate_message("EMPTY_FIELDS_NOT_ALLOWED", lang),
-                    "status_code": 400
-                }
+        # ---------------- BANNER IMAGE ID FORMAT VALIDATION ----------------
+        try:
+            banner_object_id = ObjectId(payload.banner_image_id)
+        except (InvalidId, TypeError):
+            return {
+                "error": True,
+                "message": translate_message("INVALID_BANNER_IMAGE_ID", lang),
+                "status_code": 400
+            }
 
+        # ---------------- BANNER IMAGE EXISTENCE VALIDATION ----------------
+        banner_file = await file_collection.find_one({
+            "_id": banner_object_id
+        })
+
+        if not banner_file:
+            return {
+                "error": True,
+                "message": translate_message("BANNER_IMAGE_NOT_FOUND", lang),
+                "status_code": 400
+            }
+
+
+        # ---------------- TITLE MIN CHARACTER VALIDATION ----------------
+        title_length = len(payload.title.strip())
+
+        if title_length < 5:
+            return {
+                "error": True,
+                "message": translate_message("CONTEST_TITLE_MIN_CHARS", lang),
+                "status_code": 400
+            }
+
+
+        # ---------------- TITLE READABILITY ----------------
+        if not re.search(r"[a-zA-Z]", payload.title):
+            return {
+                "error": True,
+                "message": translate_message("INVALID_CONTEST_TITLE", lang),
+                "status_code": 400
+            }
+
+        # ---------------- BADGE VALIDATION ----------------
+        if not payload.badge or not payload.badge.strip():
+            return {
+                "error": True,
+                "message": translate_message("EMPTY_BADGE_NOT_ALLOWED", lang),
+                "status_code": 400
+            }
+
+        badge = payload.badge.strip()
+
+        if len(badge) < 3:
+            return {
+                "error": True,
+                "message": translate_message("BADGE_MIN_CHARS", lang),
+                "status_code": 400
+            }
+
+        if not re.search(r"[a-zA-Z]", badge):
+            return {
+                "error": True,
+                "message": translate_message("INVALID_BADGE", lang),
+                "status_code": 400
+            }
+
+        # ---------------- DESCRIPTION VALIDATION ----------------
+        if not payload.description or not payload.description.strip():
+            return {
+                "error": True,
+                "message": translate_message("EMPTY_CONTEST_DESCRIPTION", lang),
+                "status_code": 400
+            }
+
+        # ---------------- RULES VALIDATION ----------------
         if not payload.rules or any(not r or not r.strip() for r in payload.rules):
             return {
                 "error": True,
@@ -45,14 +113,98 @@ class ContestModel:
                 "status_code": 400
             }
 
-        # ---------------- DATE VALIDATION ----------------
-        if payload.start_date >= payload.end_date:
+        # ---------------- LAUNCH TIME VALIDATION ----------------
+        try:
+            hour, minute = map(int, payload.launch_time.split(":"))
+        except Exception:
+            return {
+                "error": True,
+                "message": translate_message("INVALID_LAUNCH_TIME_FORMAT", lang),
+                "status_code": 400
+            }
+
+        if not (0 <= hour <= 23):
+            return {
+                "error": True,
+                "message": translate_message("INVALID_LAUNCH_TIME_HOUR", lang),
+                "status_code": 400
+            }
+
+        if not (0 <= minute <= 59):
+            return {
+                "error": True,
+                "message": translate_message("INVALID_LAUNCH_TIME_MINUTE", lang),
+                "status_code": 400
+            }
+
+        today = datetime.utcnow()
+
+        start_date_dt = parse_date_format(payload.start_date)
+        end_date_dt = parse_date_format(payload.end_date)
+        registration_until_dt = parse_date_format(payload.registration_until)
+        voting_starts_dt = parse_date_format(payload.voting_starts)
+        voting_ends_dt = parse_date_format(payload.voting_ends)
+
+        # ---------- FORMAT VALIDATION ----------
+        if not start_date_dt:
+            return {"error": True, "message": translate_message("INVALID_START_DATE_FORMAT", lang), "status_code": 400}
+
+        if not end_date_dt:
+            return {"error": True, "message": translate_message("INVALID_END_DATE_FORMAT", lang), "status_code": 400}
+
+        if not registration_until_dt:
+            return {"error": True, "message": translate_message("INVALID_REGISTRATION_UNTIL_DATE_FORMAT", lang), "status_code": 400}
+
+        if not voting_starts_dt:
+            return {"error": True, "message": translate_message("INVALID_VOTING_START_DATE_FORMAT", lang), "status_code": 400}
+
+        if not voting_ends_dt:
+            return {"error": True, "message": translate_message("INVALID_VOTING_END_DATE_FORMAT", lang), "status_code": 400}
+
+        # ---------- PAST DATE VALIDATION ----------
+        if start_date_dt < today:
+            return {"error": True, "message": translate_message("FEATURE_START_DATE_REQUIRED", lang), "status_code": 400}
+
+        if end_date_dt < today:
+            return {"error": True, "message": translate_message("FEATURE_END_DATE_REQUIRED", lang), "status_code": 400}
+
+        if registration_until_dt >= start_date_dt:
+            return {
+                "error": True,
+                "message": translate_message("INVALID_REGISTRATION_UNTIL_DATE", lang),
+                "status_code": 400
+            }
+
+        # Voting must start exactly when contest starts
+        if voting_starts_dt != start_date_dt:
+            return {
+                "error": True,
+                "message": translate_message("INVALID_VOTING_START_DATE", lang),
+                "status_code": 400
+            }
+
+        # Voting must end exactly when contest ends
+        if voting_ends_dt != end_date_dt:
+            return {
+                "error": True,
+                "message": translate_message("INVALID_VOTING_END_DATE", lang),
+                "status_code": 400
+            }
+
+        # Contest must have a valid duration
+        if start_date_dt >= end_date_dt:
             return {
                 "error": True,
                 "message": translate_message("INVALID_CONTEST_DATES", lang),
                 "status_code": 400
             }
-
+        if payload.judging_criteria is not None:
+            if not payload.judging_criteria or any(not c.strip() for c in payload.judging_criteria):
+                return {
+                    "error": True,
+                    "message": translate_message("INVALID_JUDGING_CRITERIA", lang),
+                    "status_code": 400
+                }
         # ---------------- DUPLICATE TITLE CHECK ----------------
         existing = await contest_collection.find_one({
             "title": payload.title.strip(),
@@ -66,16 +218,13 @@ class ContestModel:
                 "status_code": 400
             }
 
-        # ---------------- BLOCK ONLY IF DATE RANGE OVERLAPS ----------------
-        new_start = payload.start_date
-        new_end = payload.end_date
-
+        # ---------------- DATE RANGE OVERLAP ----------------
         overlapping_contest = await contest_collection.find_one({
             "is_deleted": {"$ne": True},
             "$expr": {
                 "$and": [
-                    {"$lte": [new_start, "$end_date"]},
-                    {"$gte": [new_end, "$start_date"]}
+                    {"$lte": [payload.start_date, "$end_date"]},
+                    {"$gte": [payload.end_date, "$start_date"]}
                 ]
             }
         })
@@ -97,6 +246,30 @@ class ContestModel:
                 "status_code": 400
             }
 
+
+        min_participant = payload.min_participant
+        max_participant = payload.max_participant
+
+        if min_participant <= 0:
+            return {
+                "error": True,
+                "message": translate_message("INVALID_MIN_PARTICIPANT", lang),
+                "status_code": 400
+            }
+
+        if max_participant <= 0:
+            return {
+                "error": True,
+                "message": translate_message("INVALID_MAX_PARTICIPANT", lang),
+                "status_code": 400
+            }
+
+        if min_participant > max_participant:
+            return {
+                "error": True,
+                "message": translate_message("MIN_PARTICIPANT_GREATER_THAN_MAX", lang),
+                "status_code": 400
+            }
         # ---------------- CREATE CONTEST ----------------
         now = datetime.utcnow()
 
@@ -110,7 +283,7 @@ class ContestModel:
             "end_date": payload.end_date,
             "launch_time": payload.launch_time.strip(),
 
-            "frequency": payload.frequency.value,
+            "frequency": payload.frequency.value if payload.frequency else None,
 
             "prize_distribution": {
                 "first_place": prizes.first_place,
@@ -119,15 +292,22 @@ class ContestModel:
             },
 
             "cost_per_vote": payload.cost_per_vote,
-            "max_votes_per_user": payload.max_votes_per_user,
+            "min_participant": payload.min_participant,
+            "max_participant": payload.max_participant,
 
-            "participant_limit": payload.participant_limit,
             "photos_per_participant": payload.photos_per_participant,
 
             "created_by": admin_id,
 
             "total_participants": 0,
             "total_votes": 0,
+
+            "registration_until": registration_until_dt,
+            "voting_starts": voting_starts_dt,
+            "voting_ends": voting_ends_dt,
+            "start_date": start_date_dt,
+            "end_date": end_date_dt,
+            "judging_criteria": payload.judging_criteria or [],
 
             "is_active": True,
             "is_deleted": False,
@@ -157,6 +337,14 @@ class ContestModel:
         lang: str = "en"
     ):
         try:
+            # ---------------- IMAGE REQUIRED VALIDATION ----------------
+            if not image or not getattr(image, "filename", None):
+                return {
+                    "error": True,
+                    "message": translate_message("IMAGE_FIELD_REQUIRED", lang),
+                    "status_code": 400
+                }
+
             # ---------------- FILE TYPE VALIDATION ----------------
             allowed_extensions = {"jpg", "jpeg", "png", "webp"}
             ext = image.filename.split(".")[-1].lower()
@@ -205,6 +393,9 @@ class ContestModel:
 
             return {
                 "error": False,
+                "message": translate_message("FILE_UPLOADED_SUCCESS", lang).format(
+                    file_type=translate_message("CONTEST_BANNER", lang)
+                ),
                 "data": serialize_datetime_fields({
                     "file_id": str(inserted.inserted_id),
                     "storage_key": storage_key,
@@ -212,7 +403,7 @@ class ContestModel:
                 })
             }
 
-        except Exception as e:
+        except Exception:
             return {
                 "error": True,
                 "message": translate_message("ERROR_WHILE_UPLOADING_FILE", lang),
@@ -423,10 +614,26 @@ class ContestModel:
         update_data = {}
 
         # ---------------- TITLE DUPLICATE CHECK ----------------
-        if payload.title:
+        if payload.title is not None:
+            title = payload.title.strip()
+
+            if len(title) < 5:
+                return {
+                    "error": True,
+                    "message": translate_message("CONTEST_TITLE_MIN_CHARS", lang),
+                    "status_code": 400
+                }
+
+            if not re.search(r"[a-zA-Z]", title):
+                return {
+                    "error": True,
+                    "message": translate_message("INVALID_CONTEST_TITLE", lang),
+                    "status_code": 400
+                }
+
             existing = await contest_collection.find_one({
                 "_id": {"$ne": ObjectId(contest_id)},
-                "title": payload.title,
+                "title": title,
                 "is_deleted": {"$ne": True}
             })
 
@@ -437,44 +644,293 @@ class ContestModel:
                     "status_code": 400
                 }
 
-            update_data["title"] = payload.title
+            update_data["title"] = title
 
-        # ---------------- BASIC FIELDS ----------------
-        fields = [
-            "banner_image_id",
+        # ---------------- BANNER IMAGE ID VALIDATION ----------------
+        if payload.banner_image_id is not None:
+            try:
+                banner_object_id = ObjectId(payload.banner_image_id)
+            except (InvalidId, TypeError):
+                return {
+                    "error": True,
+                    "message": translate_message("INVALID_BANNER_IMAGE_ID", lang),
+                    "status_code": 400
+                }
+
+            banner_file = await file_collection.find_one({
+                "_id": banner_object_id
+            })
+
+            if not banner_file:
+                return {
+                    "error": True,
+                    "message": translate_message("BANNER_IMAGE_NOT_FOUND", lang),
+                    "status_code": 400
+                }
+
+            update_data["banner_image_id"] = payload.banner_image_id.strip()
+
+        # ---------------- BADGE VALIDATION ----------------
+        if not payload.badge or not payload.badge.strip():
+            return {
+                "error": True,
+                "message": translate_message("EMPTY_BADGE_NOT_ALLOWED", lang),
+                "status_code": 400
+            }
+
+        badge = payload.badge.strip()
+
+        if len(badge) < 3:
+            return {
+                "error": True,
+                "message": translate_message("BADGE_MIN_CHARS", lang),
+                "status_code": 400
+            }
+
+        if not re.search(r"[a-zA-Z]", badge):
+            return {
+                "error": True,
+                "message": translate_message("INVALID_BADGE", lang),
+                "status_code": 400
+            }
+
+        # ---------------- DESCRIPTION VALIDATION ----------------
+        if not payload.description or not payload.description.strip():
+            return {
+                "error": True,
+                "message": translate_message("EMPTY_CONTEST_DESCRIPTION", lang),
+                "status_code": 400
+            }
+        
+        # ---------------- BASIC STRING & NUMBER FIELDS ----------------
+        basic_fields = [
             "description",
-            "rules",
             "launch_time",
             "cost_per_vote",
             "max_votes_per_user",
-            "participant_limit",
+            "min_participant",
+            "max_participant",
             "photos_per_participant"
         ]
 
-        for field in fields:
+        for field in basic_fields:
             value = getattr(payload, field)
             if value is not None:
                 update_data[field] = value
 
-        # ---------------- FREQUENCY (ENUM SAFE) ----------------
-        if payload.frequency:
+        # ---------------- RULES VALIDATION ----------------
+        if payload.rules is not None:
+            if not payload.rules or any(not r or not r.strip() for r in payload.rules):
+                return {
+                    "error": True,
+                    "message": translate_message("EMPTY_RULES_NOT_ALLOWED", lang),
+                    "status_code": 400
+                }
+            update_data["rules"] = [r.strip() for r in payload.rules]
+
+        # ---------------- LAUNCH TIME VALIDATION ----------------
+        if payload.launch_time is not None:
+            try:
+                hour, minute = map(int, payload.launch_time.split(":"))
+            except Exception:
+                return {
+                    "error": True,
+                    "message": translate_message("INVALID_LAUNCH_TIME_FORMAT", lang),
+                    "status_code": 400
+                }
+
+            if not (0 <= hour <= 23):
+                return {
+                    "error": True,
+                    "message": translate_message("INVALID_LAUNCH_TIME_HOUR", lang),
+                    "status_code": 400
+                }
+
+            if not (0 <= minute <= 59):
+                return {
+                    "error": True,
+                    "message": translate_message("INVALID_LAUNCH_TIME_MINUTE", lang),
+                    "status_code": 400
+                }
+
+            update_data["launch_time"] = payload.launch_time.strip()
+
+        # ---------------- FREQUENCY ----------------
+        if payload.frequency is not None:
             update_data["frequency"] = payload.frequency.value
 
         # ---------------- DATE VALIDATION ----------------
-        start_date = payload.start_date or contest["start_date"]
-        end_date = payload.end_date or contest["end_date"]
+        today = datetime.utcnow()
 
-        if start_date >= end_date:
+        # Existing dates from DB (already datetime)
+        existing_start_date = contest["start_date"]
+        existing_end_date = contest["end_date"]
+
+        # Parse incoming values if present
+        new_start_date = parse_date_format(payload.start_date) if payload.start_date else None
+        new_end_date = parse_date_format(payload.end_date) if payload.end_date else None
+
+        # If user provided invalid format
+        if payload.start_date and not new_start_date:
+            return {
+                "error": True,
+                "message": translate_message("INVALID_START_DATE_FORMAT", lang),
+                "status_code": 400
+            }
+
+        if payload.end_date and not new_end_date:
+            return {
+                "error": True,
+                "message": translate_message("INVALID_END_DATE_FORMAT", lang),
+                "status_code": 400
+            }
+
+        # Final dates to compare
+        final_start_date = new_start_date or existing_start_date
+        final_end_date = new_end_date or existing_end_date
+
+        # Past-date validation
+        if final_start_date < today:
+            return {
+                "error": True,
+                "message": translate_message("FEATURE_START_DATE_REQUIRED", lang),
+                "status_code": 400
+            }
+
+        if final_end_date < today:
+            return {
+                "error": True,
+                "message": translate_message("FEATURE_END_DATE_REQUIRED", lang),
+                "status_code": 400
+            }
+
+        existing_registration_until = contest.get("registration_until")
+        existing_voting_starts = contest.get("voting_starts")
+        existing_voting_ends = contest.get("voting_ends")
+
+        new_registration_until = (
+            parse_date_format(payload.registration_until)
+            if payload.registration_until else existing_registration_until
+        )
+
+        new_voting_starts = (
+            parse_date_format(payload.voting_starts)
+            if payload.voting_starts else existing_voting_starts
+        )
+
+        new_voting_ends = (
+            parse_date_format(payload.voting_ends)
+            if payload.voting_ends else existing_voting_ends
+        )
+
+        # -------- FORMAT VALIDATION --------
+        if payload.registration_until and not new_registration_until:
+            return {
+                "error": True,
+                "message": translate_message("INVALID_REGISTRATION_UNTIL_DATE_FORMAT", lang),
+                "status_code": 400
+            }
+
+        if payload.voting_starts and not new_voting_starts:
+            return {
+                "error": True,
+                "message": translate_message("INVALID_VOTING_START_DATE_FORMAT", lang),
+                "status_code": 400
+            }
+
+        if payload.voting_ends and not new_voting_ends:
+            return {
+                "error": True,
+                "message": translate_message("INVALID_VOTING_END_DATE_FORMAT", lang),
+                "status_code": 400
+            }
+
+        # -------- FLOW VALIDATION --------
+        if new_registration_until >= final_start_date:
+            return {
+                "error": True,
+                "message": translate_message("INVALID_REGISTRATION_UNTIL_DATE", lang),
+                "status_code": 400
+            }
+
+        if new_voting_starts != final_start_date:
+            return {
+                "error": True,
+                "message": translate_message("INVALID_VOTING_START_DATE", lang),
+                "status_code": 400
+            }
+
+        if new_voting_ends != final_end_date:
+            return {
+                "error": True,
+                "message": translate_message("INVALID_VOTING_END_DATE", lang),
+                "status_code": 400
+            }
+
+        # -------- APPLY UPDATES --------
+        if payload.registration_until:
+            update_data["registration_until"] = new_registration_until
+
+        if payload.voting_starts:
+            update_data["voting_starts"] = new_voting_starts
+
+        if payload.voting_ends:
+            update_data["voting_ends"] = new_voting_ends
+
+        if payload.judging_criteria is not None:
+            if not payload.judging_criteria or any(not c.strip() for c in payload.judging_criteria):
+                return {
+                    "error": True,
+                    "message": translate_message("INVALID_JUDGING_CRITERIA", lang),
+                    "status_code": 400
+                }
+            update_data["judging_criteria"] = payload.judging_criteria
+
+        # Ordering validation
+        if final_start_date >= final_end_date:
             return {
                 "error": True,
                 "message": translate_message("INVALID_CONTEST_DATES", lang),
                 "status_code": 400
             }
+        existing_min = contest.get("min_participant")
+        existing_max = contest.get("max_participant")
 
-        if payload.start_date:
-            update_data["start_date"] = payload.start_date
-        if payload.end_date:
-            update_data["end_date"] = payload.end_date
+        new_min = payload.min_participant if payload.min_participant is not None else existing_min
+        new_max = payload.max_participant if payload.max_participant is not None else existing_max
+
+        if new_min is not None and new_min <= 0:
+            return {
+                "error": True,
+                "message": translate_message("INVALID_MIN_PARTICIPANT", lang),
+                "status_code": 400
+            }
+
+        if new_max is not None and new_max <= 0:
+            return {
+                "error": True,
+                "message": translate_message("INVALID_MAX_PARTICIPANT", lang),
+                "status_code": 400
+            }
+
+        if new_min is not None and new_max is not None and new_min > new_max:
+            return {
+                "error": True,
+                "message": translate_message("MIN_PARTICIPANT_GREATER_THAN_MAX", lang),
+                "status_code": 400
+            }
+
+        if payload.min_participant is not None:
+            update_data["min_participant"] = payload.min_participant
+
+        if payload.max_participant is not None:
+            update_data["max_participant"] = payload.max_participant
+        # Apply updates
+        if new_start_date:
+            update_data["start_date"] = new_start_date
+
+        if new_end_date:
+            update_data["end_date"] = new_end_date
 
         # ---------------- PRIZE VALIDATION ----------------
         if payload.prize_distribution:
@@ -515,7 +971,6 @@ class ContestModel:
             "error": False,
             "data": {
                 "contest_id": contest_id,
-                "updated_fields": list(update_data.keys())
             }
         }
 
@@ -525,9 +980,19 @@ class ContestModel:
         admin_id: str,
         lang: str = "en"
     ):
+        # ---------------- VALIDATE CONTEST ID ----------------
+        try:
+            contest_object_id = ObjectId(contest_id)
+        except (InvalidId, TypeError):
+            return {
+                "error": True,
+                "message": translate_message("INVALID_CONTEST_ID", lang),
+                "status_code": 400
+            }
+
         # ---------------- CHECK CONTEST EXISTS ----------------
         contest = await contest_collection.find_one({
-            "_id": ObjectId(contest_id)
+            "_id": contest_object_id
         })
 
         if not contest:
@@ -548,7 +1013,7 @@ class ContestModel:
         now = datetime.utcnow()
 
         # ---------------- BLOCK DELETE IF CONTEST STARTED ----------------
-        if now >= contest["start_date"]:
+        if now >= contest.get("start_date"):
             return {
                 "error": True,
                 "message": translate_message("CONTEST_ALREADY_STARTED_CANNOT_DELETE", lang),
@@ -557,7 +1022,7 @@ class ContestModel:
 
         # ---------------- SOFT DELETE ----------------
         await contest_collection.update_one(
-            {"_id": ObjectId(contest_id)},
+            {"_id": contest_object_id},
             {
                 "$set": {
                     "is_deleted": True,
