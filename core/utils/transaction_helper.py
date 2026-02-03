@@ -536,41 +536,35 @@ async def validate_withdrawal_tokens(user_tokens: int, lang:str):
                                         required_tokens=required_tokens),
                                         data=[], status_code=400)
 
-async def calculate_tokens_based_on_amount(amount_usd:int | float | str, lang:str) -> int:
+async def calculate_amount_based_on_tokens(tokens:int | str, lang:str) -> float:
     """
         Calculate the number of tokens based on USD amount.
 
         Args:
-            amount_usd: Amount in USD
+            tokens: number of tokens
 
         Returns:
-            Number of tokens (integer)
+            Amount in USD (float)
 
         Raises:
             ValueError: If amount is invalid or < 25
 
     """
     try:
-        amount = Decimal(str(amount_usd))
+        amount = Decimal(str(tokens))
     except InvalidOperation:
-        raise ValueError("Invalid_Amount_Value")
+        raise ValueError("Invalid_Token_Value")
 
-    if amount < MIN_WITHDRAWAL_USD:
-        response.raise_exception(
-            translate_message(
-                "MINIMUM_WITHDRAWAL_AMOUNT_REQUIRED",
-                lang=lang,
-                amount=MIN_WITHDRAWAL_USD
-            ),
-            data=[], status_code=400
-        )
+    usd_value = tokens * TOKEN_TO_USD_RATE
 
-    tokens = (amount / Decimal(str(TOKEN_TO_USD_RATE))).quantize(
-        Decimal("1"),
-        rounding=ROUND_DOWN
-    )
+    if usd_value < MIN_WITHDRAWAL_USD:
+        required_tokens = int(MIN_WITHDRAWAL_USD / TOKEN_TO_USD_RATE)
+        raise response.raise_exception(translate_message("MINIMUM_WITHDRAWN_TOKENS_REQUIRED",
+                                                         lang=lang,
+                                                         required_tokens=required_tokens),
+                                       data=[], status_code=400)
 
-    return int(tokens)
+    return float(usd_value)
 
 async def is_valid_tron_address(
     address: str,

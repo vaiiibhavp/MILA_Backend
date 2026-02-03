@@ -17,7 +17,8 @@ from core.utils.helper import serialize_datetime_fields, convert_objectid_to_str
 from core.utils.transaction_helper import get_transaction_details, validate_destination_wallet, \
     validate_transaction_status, build_transaction_model, handle_full_payment, mark_full_payment_received, \
     handle_token_full_payment, mark_token_full_payment_received, validate_withdrawal_tokens, \
-    calculate_tokens_based_on_amount, is_valid_tron_address, update_user_tokens_and_history
+    is_valid_tron_address, update_user_tokens_and_history, \
+    calculate_amount_based_on_tokens
 from config.models.transaction_models import (store_transaction_details, get_existing_transaction,
                                               get_subscription_payment_details, update_transaction_details,
                                               store_withdrawn_token_request, ensure_no_pending_token_withdrawal,
@@ -224,23 +225,23 @@ async def request_withdrawn_token_amount(request: WithdrawnTokenRequestModel, us
         await ensure_no_pending_token_withdrawal(user_id=user_id, lang=lang)
 
         available_tokens = await get_user_details(condition={"_id": ObjectId(user_id)}, fields=["tokens"])
-        await validate_withdrawal_tokens(int(available_tokens.get("tokens", "0")), lang=lang)
 
-        withdrawn_token = await calculate_tokens_based_on_amount(request.amount, lang=lang)
-
-        if int(withdrawn_token) > int(available_tokens.get("tokens", "0")):
+        if int(request.amount) > int(available_tokens.get("tokens", "0")):
             return response.error_message(
                 message=translate_message("INSUFFICIENT_AMOUNT", lang=lang),
                 data=[],
                 status_code=400
             )
+        await validate_withdrawal_tokens(int(available_tokens.get("tokens", "0")), lang=lang)
+
+        withdrawn_amount = await calculate_amount_based_on_tokens(int(request.amount), lang=lang)
 
         withdrawn_request_data = TokenWithdrawTransactionCreateModel(
             user_id=str(ObjectId(user_id)),
-            request_amount=request.amount,
-            remaining_amount=request.amount,
+            request_amount=withdrawn_amount,
+            remaining_amount=withdrawn_amount,
             status=WithdrawalStatus.pending.value,
-            tokens=withdrawn_token,
+            tokens=request.amount,
             wallet_address=request.wallet_address,
         )
         doc = await store_withdrawn_token_request(doc=withdrawn_request_data)
@@ -251,7 +252,7 @@ async def request_withdrawn_token_amount(request: WithdrawnTokenRequestModel, us
         await update_user_tokens_and_history(
             user_id=str(user["_id"]),
             user_details=user,
-            tokens=int(withdrawn_token),
+            tokens=int(request.amount),
             transaction_type=TokenTransactionType.WITHDRAW,
             reason=TokenTransactionReason.TOKEN_WITHDRAWAL,
             transaction_id=ObjectId(doc["_id"]),

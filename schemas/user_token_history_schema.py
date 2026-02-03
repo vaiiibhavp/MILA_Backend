@@ -88,8 +88,8 @@ class CompleteTokenTransactionRequestModel(BaseModel):
 
 
 class WithdrawnTokenRequestModel(BaseModel):
-    amount: float = Field(
-        description="Withdrawal amount in USD. Must be greater than 0."
+    amount: int = Field(
+        description="Withdrawal tokens Must be greater than 0."
     )
     wallet_address: str = Field(
         description="User Tron wallet address. "
@@ -98,7 +98,7 @@ class WithdrawnTokenRequestModel(BaseModel):
     @field_validator("amount")
     def validate_amount(cls, value: float):
         if value <= 0:
-            raise ValueError("Amount must be greater than 0")
+            raise ValueError("tokens must be greater than 0")
         return value
 
     @field_validator("wallet_address")
