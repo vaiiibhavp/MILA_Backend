@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query, Path
 
 from api.controller.admin.admin_token_controller import create_token_package_plan, update_token_package_plan_controller, \
     soft_delete_token_package_plan_controller, fetch_active_token_package_plans
+from core.utils.pagination import StandardResultsSetPagination, pagination_params
 from core.utils.permissions import AdminPermission
 from schemas.token_package_schema import TokenPackagePlanResponseModel, TokenPackageCreateRequestModel, \
     TokenPackagePlanUpdateRequestModel
@@ -12,6 +13,8 @@ supported_langs = ["en", "fr"]
 @admin_router.get("")
 async def list_token_plans(
     current_user: dict = Depends(AdminPermission(allowed_roles=["admin"])),
+    pagination: StandardResultsSetPagination = Depends(pagination_params),
+    search:str = Query(None),
     lang: str = Query(None)
 ):
     """
@@ -22,6 +25,8 @@ async def list_token_plans(
     lang = lang if lang in supported_langs else "en"
 
     return await fetch_active_token_package_plans(
+        pagination=pagination,
+        search=search,
         lang=lang
     )
 

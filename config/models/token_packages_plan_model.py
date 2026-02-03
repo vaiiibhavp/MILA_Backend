@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Optional, List
 from bson import ObjectId
 
+from core.utils.pagination import StandardResultsSetPagination
 from schemas.token_package_schema import TokenPackagePlanCreateModel, TokenPackagePlanUpdateRequestModel
 from services.translation import translate_message
 from core.utils.response_mixin import CustomResponseMixin
@@ -10,8 +11,15 @@ from core.utils.helper import convert_objectid_to_str, calculate_usdt_amount
 
 response = CustomResponseMixin()
 
-async def get_token_packages_plans(condition:dict):
-    return await token_packages_plan_collection.find(condition).sort("created_at", -1).to_list()
+async def get_token_packages_plans(condition:dict, pagination:StandardResultsSetPagination):
+    cursor = (
+        token_packages_plan_collection.
+        find(condition)
+        .sort("created_at", -1)
+        .skip(pagination.skip)
+        .limit(pagination.limit)
+    )
+    return await cursor.to_list(length=pagination.limit)
 
 async def get_token_packages_plan(plan_id, lang:str) -> Any:
     """
