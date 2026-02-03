@@ -22,3 +22,31 @@ def pagination_params(
         page=page,
         page_size=page_size
     )
+
+def build_paginated_response(
+    records: list,
+    page: int,
+    page_size: int,
+    total_records: int
+) -> list:
+    """
+    Build a standardized paginated response.
+    """
+
+    total_pages = (
+        (total_records + page_size - 1) // page_size
+        if page_size > 0 else 0
+    )
+
+    return [{
+        "records": records,
+        "pagination": {
+            "page": page,
+            "page_size": page_size,
+            "total_records": total_records,
+            "total_pages": total_pages,
+            "has_next": page < total_pages,
+            "has_previous": page > 1
+        }
+    }]
+
