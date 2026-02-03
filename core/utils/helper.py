@@ -322,3 +322,11 @@ async def get_admin_id_by_email() -> str | None:
     )
 
     return str(admin["_id"]) if admin else None
+
+def parse_date_format(value: str | None):
+    if not value or not isinstance(value, str):
+        return None
+    try:
+        return datetime.strptime(value, "%d-%m-%Y")
+    except ValueError:
+        return None
