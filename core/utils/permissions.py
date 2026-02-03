@@ -50,7 +50,7 @@ class AdminPermission:
 
         except JWTError:
             return response.raise_exception(
-                    message="Acces Token Expired,please login",
+                    message="Access Token Expired,please login",
                     data={},
                     status_code=401
                 )
