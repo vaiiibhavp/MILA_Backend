@@ -11,15 +11,23 @@ from core.utils.helper import convert_objectid_to_str, calculate_usdt_amount
 
 response = CustomResponseMixin()
 
-async def get_token_packages_plans(condition:dict, pagination:StandardResultsSetPagination):
+async def get_token_packages_plans(condition:dict, pagination:StandardResultsSetPagination | None = None):
     cursor = (
         token_packages_plan_collection.
         find(condition)
         .sort("created_at", -1)
-        .skip(pagination.skip)
-        .limit(pagination.limit)
     )
-    return await cursor.to_list(length=pagination.limit)
+    # ✅ Apply pagination only if provided
+    if pagination:
+        cursor = (
+            cursor
+            .skip(pagination.skip)
+            .limit(pagination.limit)
+        )
+        return await cursor.to_list(length=pagination.limit)
+
+    # ✅ No pagination → return all
+    return await cursor.to_list()
 
 async def get_token_packages_plan(plan_id, lang:str) -> Any:
     """
