@@ -46,11 +46,17 @@ celery_app.conf.task_routes = {
 }
 
 # Include the tasks module
-celery_app.conf.update(include=["tasks","jobs"])
+celery_app.conf.update(include=["tasks"])
 
 celery_app.conf.beat_schedule = {
-    "subscription-expiry-notifier-daily": {
-        "task": "jobs.subscription_job.subscription_expiry_notifier",
-        "schedule": crontab(minute="*/1"),  # ⏰ 0:10 UTC daily
-    }
+
+    "mark_expired_subscriptions_daily": {
+        "task": "tasks.mark_expired_subscriptions",
+        "schedule": crontab(hour=0, minute=5),  # ⏰ 0:05 UTC daily
+    },
+
+    "subscription_expiry_notifier_daily": {
+        "task": "tasks.subscription_expiry_notifier",
+        "schedule": crontab(hour=0, minute=10),  # ⏰ 0:10 UTC daily
+    },
 }

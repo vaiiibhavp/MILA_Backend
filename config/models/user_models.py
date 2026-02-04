@@ -6,7 +6,7 @@ from pydantic import GetJsonSchemaHandler
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
 from bson import ObjectId
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from config.db_config import db
 from config.db_config import user_collection,token_collection, file_collection, onboarding_collection
 from core.utils.core_enums import MembershipStatus
@@ -293,48 +293,81 @@ async def debit_user_tokens(
 
 
 async def find_expiring_subscriptions(days_before:int):
-    today = datetime.utcnow().date()
+    today = datetime.now(tz=timezone.utc).date()
     target_date = today + timedelta(days=days_before)
 
-    start = datetime.combine(target_date, datetime.min.time())
-    end = datetime.combine(target_date, datetime.max.time())
+    start = datetime.combine(target_date, datetime.min.time(), tzinfo=timezone.utc)
+    end = datetime.combine(target_date, datetime.max.time(), tzinfo=timezone.utc)
 
     pipeline = [
         {
             "$match": {
                 "membership_status": MembershipStatus.ACTIVE.value,
-                "is_deleted": False
+                "membership_trans_id": {"$ne": None}
+            }
+        },
+        # 🔹 SAFE ObjectId conversion
+        {
+            "$addFields": {
+                "membership_trans_id_obj": {
+                    "$cond": [
+                        {
+                            "$and": [
+                                {"$ne": ["$membership_trans_id", None]},
+                                {"$eq": [{"$type": "$membership_trans_id"}, "string"]}
+                            ]
+                        },
+                        {"$toObjectId": "$membership_trans_id"},
+                        None
+                    ]
+                }
             }
         },
         {
             "$lookup": {
-                "from": "transactions",
-                "let": { "transId": { "$toObjectId": "$membership_trans_id" } },
+                "from": "transaction",
+                "let": {"transId": "$membership_trans_id_obj"},
                 "pipeline": [
                     {
                         "$match": {
                             "$expr": {
                                 "$and": [
-                                    { "$eq": ["$_id", "$$transId"] },
-                                    { "$eq": ["$trans_type", "subscription_transaction"] },
-                                    { "$eq": ["$status", "success"] },
-                                    { "$gte": ["$expires_at", start] },
-                                    { "$lte": ["$expires_at", end] },
-                                    { "$eq": ["$expiry_notified_at", None] }
+                                    {"$eq": ["$_id", "$$transId"]},
+                                    {"$eq": ["$trans_type", "subscription_transaction"]},
+                                    {"$eq": ["$status", "success"]},
+                                    {"$gte": ["$expires_at", start]},
+                                    {"$lte": ["$expires_at", end]},
+
+                                    # ✅ FIX: handles missing field
+                                    {
+                                        "$eq": [
+                                            {"$ifNull": ["$expiry_notified_at", None]},
+                                            None
+                                        ]
+                                    }
                                 ]
                             }
+                        }
+                    },
+                    {
+                        "$project": {
+                            "_id": 1,
+                            "expires_at": 1
                         }
                     }
                 ],
                 "as": "active_subscription"
             }
         },
+
         {
             "$match": {
-                "active_subscription": { "$ne": [] }
+                "active_subscription.0": {"$exists": True}
             }
-        },
-        { "$limit": 1000 }
+        }
     ]
 
-    return user_collection.aggregate(pipeline)
+    cursor = user_collection.aggregate(pipeline)
+
+    # Convert to list to see results
+    return await cursor.to_list(length=None)
