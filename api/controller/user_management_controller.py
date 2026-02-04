@@ -48,32 +48,23 @@ async def get_admin_users(
         )
 
     except ValueError as ve:
-        logger.error("ValueError in get_admin_users")
-        logger.error(traceback.format_exc())
-
         return response.error_message(
-            "Invalid request: " + str(ve),
+            translate_message("INVALID_REQUEST", lang),
             data=str(ve),
             status_code=400
         )
 
     except RuntimeError as re:
-        logger.error("RuntimeError in get_admin_users")
-        logger.error(traceback.format_exc())
-
         return response.error_message(
-            "Runtime error while fetching users: " + str(re),
+            translate_message("FAILED_TO_FETCH_USERS", lang),
             data=str(re),
             status_code=500
         )
 
     except Exception as e:
-        logger.error("Unhandled Exception in get_admin_users")
-        logger.error(traceback.format_exc())
-
         return response.error_message(
-            f"Internal Server Error: {str(e)}",
-            data=traceback.format_exc(),
+            translate_message("SOMETHING_WENT_WRONG", lang),
+            data=str(e),
             status_code=500
         )
 
@@ -144,7 +135,6 @@ async def get_admin_user_details(user_id: str, lang: str = "en"):
         )
 
     except Exception as e:
-        print("the error while fetching the users  list",str(e))
         return response.error_message(
             translate_message("FAILED_TO_FETCH_USER_DETAILS", lang),
             data=str(e),

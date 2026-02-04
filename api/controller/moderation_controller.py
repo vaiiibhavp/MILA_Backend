@@ -35,32 +35,23 @@ async def get_reported_users_controller(
         )
 
     except ValueError as ve:
-        logger.error("ValueError in get_reported_users_controller")
-        logger.error(traceback.format_exc())
-
         return response.error_message(
-            "Invalid request: " + str(ve),
+            translate_message("INVALID_REQUEST", lang),
             data=str(ve),
             status_code=400
         )
 
     except RuntimeError as re:
-        logger.error("RuntimeError in get_reported_users_controller")
-        logger.error(traceback.format_exc())
-
         return response.error_message(
-            "Runtime error while fetching reported users: " + str(re),
+            translate_message("FAILED_TO_FETCH_REPORTED_USERS", lang),
             data=str(re),
             status_code=500
         )
 
     except Exception as e:
-        logger.error("Unhandled Exception in get_reported_users_controller")
-        logger.error(traceback.format_exc())
-
         return response.error_message(
-            f"Internal Server Error: {str(e)}",
-            data=traceback.format_exc(),  # TEMP for debugging
+            translate_message("SOMETHING_WENT_WRONG", lang),
+            data=str(e),
             status_code=500
         )
 

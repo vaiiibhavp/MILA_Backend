@@ -38,8 +38,22 @@ class ModerationModel:
             # ---------------- STRING IDS ----------------
             pipeline.append({
                 "$addFields": {
-                    "reporterObjId": {"$toObjectId": "$reporter_id"},
-                    "reportedObjId": {"$toObjectId": "$reported_id"}
+                    "reporterObjId": {
+                        "$convert": {
+                            "input": "$reporter_id",
+                            "to": "objectId",
+                            "onError": None,
+                            "onNull": None
+                        }
+                    },
+                    "reportedObjId": {
+                        "$convert": {
+                            "input": "$reported_id",
+                            "to": "objectId",
+                            "onError": None,
+                            "onNull": None
+                        }
+                    }
                 }
             })
 
@@ -93,15 +107,14 @@ class ModerationModel:
             # ---------------- SORT ----------------
             pipeline.append({"$sort": {"created_at": -1}})
 
-            # ---------------- PAGINATION (SAFE) ----------------
-            if pagination.page is not None and pagination.page_size is not None:
-                skip = max(pagination.skip, 0)
-                limit = max(pagination.page_size, 1)
+            # ---------------- SAFE PAGINATION ----------------
+            page_size = pagination.page_size or 10
+            skip = pagination.skip or 0
 
-                pipeline.extend([
-                    {"$skip": skip},
-                    {"$limit": limit}
-                ])
+            pipeline.extend([
+                {"$skip": max(skip, 0)},
+                {"$limit": max(page_size, 1)}
+            ])
 
             # ---------------- FINAL PROJECTION ----------------
             pipeline.append({
