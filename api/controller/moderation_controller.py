@@ -8,7 +8,6 @@ from config.models.moderation_model import ModerationModel
 
 response = CustomResponseMixin()
 
-
 async def get_reported_users_controller(
     status: Optional[str],
     search: Optional[str],
@@ -52,7 +51,6 @@ async def get_reported_users_controller(
             data=str(e),
             status_code=500
         )
-
 
 async def get_report_details_controller(report_id: str, lang: str = "en"):
     try:

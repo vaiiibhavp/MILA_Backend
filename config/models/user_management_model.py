@@ -138,7 +138,12 @@ class UserManagementModel:
             pipeline.append({
                 "$addFields": {
                     "countryObjId": {
-                        "$toObjectId": "$onboarding.country"
+                        "$convert": {
+                            "input": "$onboarding.country",
+                            "to": "objectId",
+                            "onError": None,
+                            "onNull": None
+                        }
                     }
                 }
             })
@@ -193,9 +198,7 @@ class UserManagementModel:
         except ValueError as ve:
             # logger.warning(f"Validation error: {ve}")
             raise ve
-
-        except PyMongoError as db_error:
-            # logger.error(f"Database error: {db_error}")
+        except PyMongoError:
             raise RuntimeError("Database operation failed")
 
         except Exception as e:
