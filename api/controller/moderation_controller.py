@@ -1,3 +1,5 @@
+import traceback
+import logging
 from typing import Optional
 from datetime import datetime
 from core.utils.response_mixin import CustomResponseMixin
@@ -7,7 +9,7 @@ from config.models.moderation_model import ModerationModel
 
 
 response = CustomResponseMixin()
-
+logger = logging.getLogger(__name__)
 
 async def get_reported_users_controller(
     status: Optional[str],
@@ -33,29 +35,34 @@ async def get_reported_users_controller(
         )
 
     except ValueError as ve:
-        print("the value error is",str(ve))
+        logger.error("ValueError in get_reported_users_controller")
+        logger.error(traceback.format_exc())
+
         return response.error_message(
-            translate_message("INVALID_REQUEST", lang),
+            "Invalid request: " + str(ve),
             data=str(ve),
             status_code=400
         )
 
     except RuntimeError as re:
-        print("rune time error is",str(re))
+        logger.error("RuntimeError in get_reported_users_controller")
+        logger.error(traceback.format_exc())
+
         return response.error_message(
-            translate_message("FAILED_TO_FETCH_REPORTED_USERS", lang),
+            "Runtime error while fetching reported users: " + str(re),
             data=str(re),
             status_code=500
         )
 
     except Exception as e:
-        print("final error is",str(e))
+        logger.error("Unhandled Exception in get_reported_users_controller")
+        logger.error(traceback.format_exc())
+
         return response.error_message(
-            translate_message("SOMETHING_WENT_WRONG", lang),
-            data=str(e),
+            f"Internal Server Error: {str(e)}",
+            data=traceback.format_exc(),  # TEMP for debugging
             status_code=500
         )
-
 
 async def get_report_details_controller(report_id: str, lang: str = "en"):
     try:

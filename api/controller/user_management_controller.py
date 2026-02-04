@@ -1,3 +1,5 @@
+import traceback
+import logging
 from typing import Optional
 from datetime import datetime
 from core.utils.response_mixin import CustomResponseMixin
@@ -7,6 +9,7 @@ from config.models.user_management_model import UserManagementModel
 from core.utils.helper import serialize_datetime_fields
 
 response = CustomResponseMixin()
+logger = logging.getLogger(__name__)
 
 # Get all users table
 async def get_admin_users(
@@ -45,23 +48,32 @@ async def get_admin_users(
         )
 
     except ValueError as ve:
+        logger.error("ValueError in get_admin_users")
+        logger.error(traceback.format_exc())
+
         return response.error_message(
-            translate_message("INVALID_REQUEST", lang),
+            "Invalid request: " + str(ve),
             data=str(ve),
             status_code=400
         )
 
     except RuntimeError as re:
+        logger.error("RuntimeError in get_admin_users")
+        logger.error(traceback.format_exc())
+
         return response.error_message(
-            translate_message("FAILED_TO_FETCH_USERS", lang),
+            "Runtime error while fetching users: " + str(re),
             data=str(re),
             status_code=500
         )
 
     except Exception as e:
+        logger.error("Unhandled Exception in get_admin_users")
+        logger.error(traceback.format_exc())
+
         return response.error_message(
-            translate_message("SOMETHING_WENT_WRONG", lang),
-            data=str(e),
+            f"Internal Server Error: {str(e)}",
+            data=traceback.format_exc(),
             status_code=500
         )
 
