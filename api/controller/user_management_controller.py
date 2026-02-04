@@ -132,6 +132,7 @@ async def get_admin_user_details(user_id: str, lang: str = "en"):
         )
 
     except Exception as e:
+        print("the error while fetching the users  list",str(e))
         return response.error_message(
             translate_message("FAILED_TO_FETCH_USER_DETAILS", lang),
             data=str(e),

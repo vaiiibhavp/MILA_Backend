@@ -33,6 +33,7 @@ async def get_reported_users_controller(
         )
 
     except ValueError as ve:
+        print("the value error is",str(ve))
         return response.error_message(
             translate_message("INVALID_REQUEST", lang),
             data=str(ve),
@@ -40,6 +41,7 @@ async def get_reported_users_controller(
         )
 
     except RuntimeError as re:
+        print("rune time error is",str(re))
         return response.error_message(
             translate_message("FAILED_TO_FETCH_REPORTED_USERS", lang),
             data=str(re),
@@ -47,6 +49,7 @@ async def get_reported_users_controller(
         )
 
     except Exception as e:
+        print("final error is",str(e))
         return response.error_message(
             translate_message("SOMETHING_WENT_WRONG", lang),
             data=str(e),
