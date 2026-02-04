@@ -523,6 +523,8 @@
   "INVALID_REGISTRATION_UNTIL_DATE_FORMAT":"Invalid registeration until date format",
   "INVALID_VOTING_START_DATE_FORMAT":"Invalid voting start date format",
   "INVALID_VOTING_END_DATE_FORMAT":"Invalid voting end date format",
-  "EMPTY_BADGE_NOT_ALLOWED":"Empty badge not allowed"
+  "EMPTY_BADGE_NOT_ALLOWED":"Empty badge not allowed",
+  "PUSH_TITLE_SUBSCRIPTION_EXPIRING_SOON": "Subscription Expiring Soon",
+  "PUSH_MESSAGE_SUBSCRIPTION_EXPIRING_SOON": "Your subscription will expire in 3 days. Renew now to continue enjoying uninterrupted access."
 
 }

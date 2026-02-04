@@ -169,3 +169,8 @@ uploads
 ecosystem.config.js
 
 credentials/
+
+# Celery beat schedule files
+celerybeat-schedule.db
+celerybeat-schedule-shm
+celerybeat-schedule-wal

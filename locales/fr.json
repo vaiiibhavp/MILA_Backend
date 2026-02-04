@@ -526,5 +526,7 @@
   "INVALID_REGISTRATION_UNTIL_DATE_FORMAT": "Format de la date limite d’inscription invalide",
   "INVALID_VOTING_START_DATE_FORMAT": "Format de la date de début du vote invalide",
   "INVALID_VOTING_END_DATE_FORMAT": "Format de la date de fin du vote invalide",
-  "EMPTY_BADGE_NOT_ALLOWED": "Le badge ne peut pas être vide"
+  "EMPTY_BADGE_NOT_ALLOWED": "Le badge ne peut pas être vide",
+  "PUSH_TITLE_SUBSCRIPTION_EXPIRING_SOON": "Votre abonnement expire bientôt",
+  "PUSH_MESSAGE_SUBSCRIPTION_EXPIRING_SOON": "Votre abonnement expire dans 3 jours. Renouvelez-le dès maintenant pour continuer à bénéficier d'un accès ininterrompu."
 }

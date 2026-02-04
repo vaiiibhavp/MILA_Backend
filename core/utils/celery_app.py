@@ -1,6 +1,8 @@
 from celery import Celery
 from config.basic_config import settings
 
+from celery.schedules import crontab
+
 # Use the prefix from settings
 prefix = settings.CELERY_PREFIX
 
@@ -45,3 +47,16 @@ celery_app.conf.task_routes = {
 
 # Include the tasks module
 celery_app.conf.update(include=["tasks"])
+
+celery_app.conf.beat_schedule = {
+
+    "mark_expired_subscriptions_daily": {
+        "task": "tasks.mark_expired_subscriptions",
+        "schedule": crontab(hour=0, minute=5),  # ⏰ 0:05 UTC daily
+    },
+
+    "subscription_expiry_notifier_daily": {
+        "task": "tasks.subscription_expiry_notifier",
+        "schedule": crontab(hour=0, minute=10),  # ⏰ 0:10 UTC daily
+    },
+}

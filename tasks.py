@@ -10,6 +10,9 @@ import traceback
 import concurrent.futures
 from celery.exceptions import MaxRetriesExceededError
 
+from services.job_services.subscription_job_service import notify_expiring_subscriptions, \
+    expire_and_activate_subscriptions_job
+
 ADMIN_EMAIL = os.getenv("EMAIL_FROM")
 
 # Celery task for run_async_in_celery
@@ -70,3 +73,25 @@ def send_email_task(to_email: str, subject: str, body: str, is_html: bool = Fals
 @celery_app.task(name="tasks.send_password_reset_email_task")
 def send_password_reset_email_task(to_email: str, subject: str, body: str):
     smtp_send_email(to_email=to_email, subject=subject, body=body)
+
+@celery_app.task(name="tasks.subscription_expiry_notifier")
+def subscription_expiry_notifier():
+    try:
+        asyncio.run(notify_expiring_subscriptions(3))
+        return {"status": "success", "message": "subscription_expiry_notifier marked"}
+    except Exception as e:
+        print(f"Error marking subscription_expiry_notifier: {e}")
+        return {"status": "error", "message": str(e)}
+
+@celery_app.task(name="tasks.mark_expired_subscriptions")
+def mark_expired_subscriptions():
+    """
+        Scheduled task to mark users with expired subscriptions as EXPIRED.
+        Runs periodically (e.g. daily) to update membership status.
+    """
+    try:
+        asyncio.run(expire_and_activate_subscriptions_job())
+        return {"status": "success", "message": "mark_expired_subscriptions marked"}
+    except Exception as e:
+        print(f"Error marking mark_expired_subscriptions: {e}")
+        return {"status": "error", "message": str(e)}
