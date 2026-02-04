@@ -59,3 +59,32 @@ def reset_password_otp_template(username, otp):
     <p>This code will expire in 5 minutes.</p>
     """
     return subject, body
+
+def onboarding_completed_template(username: str):
+    subject = "Onboarding Completed Successfully 🎉"
+
+    body = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; background-color: #f6f6f6; padding: 20px;">
+        <div style="max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 10px;">
+            <h2 style="color: #333;">
+                Hi {username},
+            </h2>
+
+            <p style="font-size: 15px; color: #555;">
+                Your onboarding has been completed successfully.
+            </p>
+
+            <p style="font-size: 15px; color: #555;">
+                You can now explore all features and start connecting on <strong>MILA</strong>.
+            </p>
+
+            <p style="margin-top: 25px; font-size: 14px; color: #aaa;">
+                — MILA Team
+            </p>
+        </div>
+    </body>
+    </html>
+    """
+
+    return subject, body

@@ -64,7 +64,7 @@ async def upload_contest_banner(
             )
 
         return response.success_message(
-            translate_message("FILE_UPLOADED_SUCCESS", lang),
+            message=result["message"],
             data=[result["data"]],
             status_code=200
         )

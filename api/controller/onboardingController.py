@@ -11,7 +11,8 @@ from config.db_config import (
     file_collection,
     user_collection,
     countries_collection,
-    interest_categories_collection
+    interest_categories_collection,
+    user_collection
 )
 from core.utils.response_mixin import CustomResponseMixin
 from core.utils.core_enums import MembershipType
@@ -28,6 +29,8 @@ from config.models.user_models import Files
 from core.utils.helper import serialize_datetime_fields
 from services.translation import translate_message
 from core.utils.age_calculation import calculate_age
+from core.templates.email_templates import onboarding_completed_template
+from core.utils.auth_utils import send_email
 
 response = CustomResponseMixin()
 
@@ -280,6 +283,23 @@ async def save_onboarding_step(
         )
         doc["onboarding_completed"] = True
 
+        # ------------------ SEND EMAIL ------------------
+        user = await user_collection.find_one(
+            {"_id": ObjectId(user_id)},
+            {"email": 1, "username": 1}
+        )
+
+        if user and user.get("email"):
+            subject, body = onboarding_completed_template(
+                username=user.get("username", "User")
+            )
+            await send_email(
+                to_email=user["email"],
+                subject=subject,
+                body=body,
+                is_html=True
+            )
+
     formatted = await format_onboarding_response(doc)
 
     return response.success_message(
@@ -517,6 +537,16 @@ async def get_onboarding_steps_by_user_id(user_id: str, lang: str = "en"):
             status_code=404
         )
 
+    # FETCH USER (FREE / PREMIUM)
+    user_doc = await user_collection.find_one(
+        {"_id": ObjectId(user_id)},
+        {"membership_type": 1}
+    )
+
+    membership_type = MembershipType.FREE
+    if user_doc and user_doc.get("membership_type"):
+        membership_type = user_doc["membership_type"]
+
     formatted = await format_onboarding_response(onboarding)
 
     country_out = None
@@ -574,6 +604,7 @@ async def get_onboarding_steps_by_user_id(user_id: str, lang: str = "en"):
         translate_message("ONBOARDING_STEPS_FETCHED", lang),
         data=[{
             "user_id": user_id,
+            "membership_type": membership_type,
             "onboarding_completed": formatted.get("onboarding_completed", False),
             "steps": steps
         }]

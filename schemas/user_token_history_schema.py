@@ -17,10 +17,16 @@ class CreateTokenHistory(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class TokenHistory(BaseModel):
+    txn_id: Optional[str] = None
     user_id: str
+    gift_username: Optional[str] = None
+    plan_amount: Optional[float] = 0
+    paid_amount: Optional[float] = 0
+    remaining_amount: Optional[float] = 0
     delta: int
     type: str
     reason: str
+    status: Optional[str] = None
     balance_before: str
     balance_after: str
     created_at: datetime
@@ -82,8 +88,8 @@ class CompleteTokenTransactionRequestModel(BaseModel):
 
 
 class WithdrawnTokenRequestModel(BaseModel):
-    amount: float = Field(
-        description="Withdrawal amount in USD. Must be greater than 0."
+    amount: int = Field(
+        description="Withdrawal tokens Must be greater than 0."
     )
     wallet_address: str = Field(
         description="User Tron wallet address. "
@@ -92,7 +98,7 @@ class WithdrawnTokenRequestModel(BaseModel):
     @field_validator("amount")
     def validate_amount(cls, value: float):
         if value <= 0:
-            raise ValueError("Amount must be greater than 0")
+            raise ValueError("tokens must be greater than 0")
         return value
 
     @field_validator("wallet_address")

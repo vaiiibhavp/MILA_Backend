@@ -40,7 +40,7 @@ TOKEN_TO_USDT_RATE = Decimal("0.05")
 
 load_dotenv()
 
-ADMIN_EMAIL = os.getenv("TEST_ADMIN_EMAIL")
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 AWS_S3_BUCKET_NAME = os.getenv("AWS_S3_BUCKET_NAME")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
@@ -311,3 +311,22 @@ def calculate_visibility(start_date, end_date):
         return ContestVisibility.in_progress.value
     else:
         return ContestVisibility.completed.value
+
+async def get_admin_id_by_email() -> str | None:
+    if not ADMIN_EMAIL:
+        return None
+
+    admin = await admin_collection.find_one(
+        {"email": ADMIN_EMAIL},
+        {"_id": 1}
+    )
+
+    return str(admin["_id"]) if admin else None
+
+def parse_date_format(value: str | None):
+    if not value or not isinstance(value, str):
+        return None
+    try:
+        return datetime.strptime(value, "%d-%m-%Y")
+    except ValueError:
+        return None

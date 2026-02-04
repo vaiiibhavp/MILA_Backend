@@ -1,3 +1,6 @@
+import re
+from typing import Optional
+
 from bson import ObjectId
 
 from config.db_config import token_packages_plan_collection
@@ -6,6 +9,7 @@ from config.models.token_packages_plan_model import store_token_packages_plan, u
 from core.utils.core_enums import TokenPlanStatus
 from core.utils.exceptions import CustomValidationError
 from core.utils.helper import convert_objectid_to_str, serialize_datetime_fields, calculate_usdt_amount
+from core.utils.pagination import StandardResultsSetPagination, build_paginated_response
 from schemas.token_package_schema import TokenPackageCreateRequestModel, TokenPackagePlanCreateModel, \
     TokenPackagePlanResponseModel, TokenPackagePlanUpdateRequestModel
 from core.utils.response_mixin import CustomResponseMixin
@@ -127,36 +131,76 @@ async def soft_delete_token_package_plan_controller(
         )
 
 async def fetch_active_token_package_plans(
-    lang: str
+    lang: str,
+    pagination:StandardResultsSetPagination,
+    search: Optional[str] = None
 ):
     """
-    Controller to fetch token package plans.
+       Fetch token package plans with optional search.
+       Search is applied on title, amount, and tokens.
     """
 
     try:
-        token_plans = await get_token_packages_plans(
-            condition={
-                "status": {
-                    "$in": [
-                        TokenPlanStatus.active.value,
-                        TokenPlanStatus.inactive.value
-                    ]
-                },
-                "$or": [
-                    {"deleted": {"$exists": False}},
-                    {"deleted": None},
-                    {"deleted": False}
+        # 🔹 Base condition (status + not deleted)
+        condition = {
+            "status": {
+                "$in": [
+                    TokenPlanStatus.active.value,
+                    TokenPlanStatus.inactive.value
+                ]
+            },
+            "$or": [
+                {"deleted": {"$exists": False}},
+                {"deleted": None},
+                {"deleted": False}
+            ]
+        }
+        # 🔹 Apply search if provided
+        if search:
+            search = search.strip()
+
+            search_or = [
+                {"title": {"$regex": re.escape(search), "$options": "i"}}
+            ]
+
+            # numeric search (amount / tokens)
+            if search.replace(".", "", 1).isdigit():
+                if "." in search:
+                    search_or.append({"amount": search})
+                else:
+                    search_or.append({"tokens": search})
+                    search_or.append({"amount": search})
+
+            # 🔥 Merge search safely using $and
+            condition = {
+                "$and": [
+                    {"status": condition["status"]},
+                    {"$or": condition["$or"]},
+                    {"$or": search_or}
                 ]
             }
+
+        # 🔹 Total count (IMPORTANT)
+        total_records = await token_packages_plan_collection.count_documents(condition)
+
+        token_plans = await get_token_packages_plans(
+            condition=condition,
+            pagination=pagination
         )
         token_plans = convert_objectid_to_str(token_plans)
         token_plans = serialize_datetime_fields(token_plans)
+        data = build_paginated_response(
+            records=token_plans,
+            page=pagination.page,
+            page_size=pagination.page_size,
+            total_records=total_records
+        )
         return response.success_message(
             translate_message(
                 message="TOKEN_PACKAGE_PLANS_FETCHED_SUCCESSFULLY",
                 lang=lang
             ),
-            data=token_plans
+            data=data
         )
 
     except Exception as e:

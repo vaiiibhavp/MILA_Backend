@@ -3,7 +3,8 @@ from typing import Optional
 from bson import ObjectId
 from core.firebase_push import send_push_notification
 from core.utils.core_enums import NotificationType, NotificationRecipientType
-from config.db_config import notification_collection
+from config.db_config import notification_collection , user_collection , admin_collection
+from services.translation import translate_message
 
 async def send_notification(
     *,
@@ -22,12 +23,36 @@ async def send_notification(
     - Stores notification in DB
     - Optionally sends Firebase push
     """
+
+    # ------------------ RESOLVE LANGUAGE ------------------
+    lang = "en"
+
+    if recipient_type == NotificationRecipientType.USER:
+        user = await user_collection.find_one(
+            {"_id": ObjectId(recipient_id)},
+            {"lang": 1}
+        )
+        if user:
+            lang = user.get("lang", "en")
+
+    elif recipient_type == NotificationRecipientType.ADMIN:
+        admin = await admin_collection.find_one(
+            {"_id": ObjectId(recipient_id)},
+            {"lang": 1}
+        )
+        if admin:
+            lang = admin.get("lang", "en")
+
+    # ------------------ TRANSLATE ------------------
+    translated_title = translate_message(title, lang)
+    translated_message = translate_message(message, lang)
+
     notification_doc = {
         "recipient_id": recipient_id,
         "recipient_type": recipient_type.value,
         "type": notification_type.value,
-        "title": title,
-        "message": message,
+        "title": translated_title,
+        "message": translated_message,
         "reference": reference,
         "sender_user_id": sender_user_id,
         "is_read": False,
@@ -43,8 +68,8 @@ async def send_notification(
         try:
             await send_push_notification(
                 user_id=recipient_id,
-                title=title,
-                body=message,
+                title=translated_title,
+                body=translated_message,
                 data=push_data or {}
             )
         except Exception as e:

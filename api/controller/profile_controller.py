@@ -51,7 +51,7 @@ async def get_user_profile_controller(current_user: dict, lang: str = "en"):
 
     verification_record = await verification_collection.find_one(
         {"user_id": str(user["_id"])},
-        sort=[("verified_at", -1)]
+        sort=[("created_at", -1)]
     )
 
     screen_state = "unverified_pending"

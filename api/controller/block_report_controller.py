@@ -6,6 +6,11 @@ from core.utils.helper import serialize_datetime_fields
 from api.controller.onboardingController import fetch_user_by_id
 from config.db_config import blocked_users_collection , reported_users_collection , user_collection
 from services.translation import translate_message
+from core.utils.core_enums import NotificationType, NotificationRecipientType
+from services.notification_service import send_notification
+from core.utils.helper import get_admin_id_by_email
+
+
 
 response = CustomResponseMixin()
 
@@ -66,6 +71,22 @@ async def block_user_controller(
         "blocked_id": blocked_id,
         "created_at": datetime.utcnow()
     })
+
+    admin_id = await get_admin_id_by_email()
+    await send_notification(
+        recipient_id=admin_id,
+        recipient_type=NotificationRecipientType.ADMIN,
+        notification_type=NotificationType.BLOCK,
+        title="PUSH_TITLE_USER_BLOCKED",
+        message="PUSH_MESSAGE_USER_BLOCKED",
+        reference={
+            "entity": "user_block",
+            "entity_id": blocked_id,
+            "blocked_by": blocker_id
+        },
+        sender_user_id=blocker_id,
+        send_push=False
+    )
 
     return response.success_message(
         translate_message("USER_BLOCKED_SUCCESSFULLY", lang),
@@ -161,6 +182,28 @@ async def report_user_controller(
         "status": "pending",
         "created_at": datetime.utcnow()
     })
+
+    admin_id = await get_admin_id_by_email()
+    if not admin_id:
+        return response.error_message(
+            translate_message("ADMIN_CRED"),
+            data=[],
+            status_code=404
+        )
+    await send_notification(
+        recipient_id=admin_id,
+        recipient_type=NotificationRecipientType.ADMIN,
+        notification_type=NotificationType.REPORT,
+        title="PUSH_TITLE_USER_REPORTED",
+        message="PUSH_MESSAGE_USER_REPORTED",
+        reference={
+            "entity": "user_report",
+            "entity_id": reported_id,
+            "reported_by": reporter_id
+        },
+        sender_user_id=reporter_id,
+        send_push=False
+    )
 
     return response.success_message(
         translate_message("USER_REPORTED_SUCCESSFULLY", lang),

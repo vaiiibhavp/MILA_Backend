@@ -63,6 +63,7 @@ class Settings(BaseSettings):
 
     PUBLIC_DIR: str
     UPLOAD_DIR: str
+    DAILY_FREE_LIMIT:int
     
     class ConfigDict:
         env_file = ".env"

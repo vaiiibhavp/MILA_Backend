@@ -86,24 +86,23 @@ async def logout(request: LogoutRequest, lang: str = "en"):
     if not existing_token:
         raise response.raise_exception(message=translate_message("REFRESH_TOKEN_NOT_FOUND", lang), data={}, status_code=400)
 
-    # Step 3: Check if the token is already blacklisted
-    if existing_token.get("is_blacklisted", True):
-        raise response.raise_exception(message=translate_message("TOKEN_ALREADY_BLACKLISTED", lang), data={}, status_code=400)
-
-    login_user = existing_token.get("user_id", "")
-    if not login_user:
-        raise response.raise_exception(message=translate_message("USER_ID_NOT_FOUND", lang),  data={}, status_code=400)
+    user_id = existing_token.get("user_id")
+    if not user_id:
+        raise response.raise_exception(
+            message=translate_message("USER_ID_NOT_FOUND", lang),
+            data={},
+            status_code=400
+        )
 
     # Blacklist the token
-    await token_collection.update_one(
-        {"refresh_token": request.refresh_token},
-        {"$set": {"is_blacklisted": True}}
+    await token_collection.update_many(
+        {"user_id": user_id, "is_blacklisted": False},
+        {"$set": {"is_blacklisted": True, "updated_at": datetime.utcnow()}}
     )
 
-    user_object_id = ObjectId(login_user)
-
+    # Update user login status
     await user_collection.update_one(
-        {"_id": user_object_id},
+        {"_id": ObjectId(user_id)},
         {
             "$set": {
                 "login_status": LoginStatus.INACTIVE,
@@ -332,7 +331,8 @@ async def login_controller(payload: LoginRequest, lang):
             "password",
             "two_factor_enabled",
             "membership_type",
-            "is_verified"
+            "is_verified",
+            "is_deleted"
         ]
     )
 
@@ -342,6 +342,12 @@ async def login_controller(payload: LoginRequest, lang):
             status_code=400
         )
     
+    if user.get("is_deleted"):
+        return response.error_message(
+            translate_message("ACCOUNT_NOT_FOUND", lang=lang),
+            status_code=400
+        )
+      
     # Check user accout is deleted or not
     deleted_account = await deleted_account_collection.find_one({
         "email": payload.email

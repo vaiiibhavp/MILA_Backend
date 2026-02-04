@@ -105,6 +105,8 @@ contest_collection = db["contests"]
 contest_participant_collection = db["contests_participants"]
 contest_history_collection = db["contest_history"]
 contest_vote_collection = db["contest_vote"]
+daily_action_history = db["daily_action_history"]
+gift_transaction_collection = db["gift_transaction"]
 
 async def create_indexes():
     """

@@ -413,6 +413,7 @@ async def handle_token_full_payment(
     transaction_data: TransactionCreateModel,
     plan_data: Dict[str, Any],
     user_id: str,
+    insert_token: bool = False,
 ) -> Dict[str, Any]:
     """
         Handles token credit processing for fully paid transactions.
@@ -424,6 +425,7 @@ async def handle_token_full_payment(
                                  transaction information for the token purchase.
         :param plan_data: Dictionary containing token plan details.
         :param user_id: Unique identifier of the user receiving the tokens.
+        :param insert_token: Boolean indicating whether token purchase should be
         :return: Dictionary containing the persisted transaction record.
     """
     transaction_data= await _prepare_transaction_for_token_purchase(
@@ -435,12 +437,13 @@ async def handle_token_full_payment(
     doc = await store_transaction_details(transaction_data)
 
     # 4. Token history and user token updates
-    await _add_user_token_history_and_tokens(
-        user_id=user_id,
-        user_details=user_details,
-        on_token_package=int(transaction_data.tokens),
-        transaction_id=doc["_id"],
-    )
+    if insert_token:
+        await _add_user_token_history_and_tokens(
+            user_id=user_id,
+            user_details=user_details,
+            on_token_package=int(transaction_data.tokens),
+            transaction_id=doc["_id"],
+        )
     return doc
 
 async def _add_user_token_history_and_tokens(
@@ -513,13 +516,12 @@ async def mark_token_full_payment_received(
 
 
     # 4. Token history and user token updates
-    await _add_user_token_history_and_tokens(
-        user_id=user_id,
-        user_details=user_details,
-        on_token_package=int(transaction_data.tokens),
-        transaction_id=doc["_id"],
+    current_tokens = int(user_details.get("tokens") or 0)
+    new_balance = current_tokens + int(transaction_data.tokens)
+    await user_collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"tokens": str(new_balance)}},
     )
-
     return doc
 
 async def validate_withdrawal_tokens(user_tokens: int, lang:str):
@@ -534,41 +536,35 @@ async def validate_withdrawal_tokens(user_tokens: int, lang:str):
                                         required_tokens=required_tokens),
                                         data=[], status_code=400)
 
-async def calculate_tokens_based_on_amount(amount_usd:int | float | str, lang:str) -> int:
+async def calculate_amount_based_on_tokens(tokens:int | str, lang:str) -> float:
     """
         Calculate the number of tokens based on USD amount.
 
         Args:
-            amount_usd: Amount in USD
+            tokens: number of tokens
 
         Returns:
-            Number of tokens (integer)
+            Amount in USD (float)
 
         Raises:
             ValueError: If amount is invalid or < 25
 
     """
     try:
-        amount = Decimal(str(amount_usd))
+        amount = Decimal(str(tokens))
     except InvalidOperation:
-        raise ValueError("Invalid_Amount_Value")
+        raise ValueError("Invalid_Token_Value")
 
-    if amount < MIN_WITHDRAWAL_USD:
-        response.raise_exception(
-            translate_message(
-                "MINIMUM_WITHDRAWAL_AMOUNT_REQUIRED",
-                lang=lang,
-                amount=MIN_WITHDRAWAL_USD
-            ),
-            data=[], status_code=400
-        )
+    usd_value = tokens * TOKEN_TO_USD_RATE
 
-    tokens = (amount / Decimal(str(TOKEN_TO_USD_RATE))).quantize(
-        Decimal("1"),
-        rounding=ROUND_DOWN
-    )
+    if usd_value < MIN_WITHDRAWAL_USD:
+        required_tokens = int(MIN_WITHDRAWAL_USD / TOKEN_TO_USD_RATE)
+        raise response.raise_exception(translate_message("MINIMUM_WITHDRAWN_TOKENS_REQUIRED",
+                                                         lang=lang,
+                                                         required_tokens=required_tokens),
+                                       data=[], status_code=400)
 
-    return int(tokens)
+    return float(usd_value)
 
 async def is_valid_tron_address(
     address: str,

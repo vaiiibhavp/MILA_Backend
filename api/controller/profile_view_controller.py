@@ -1,7 +1,7 @@
 #profile_view_controller.py:
 
 from bson import ObjectId
-from config.db_config import contest_participant_collection, countries_collection, private_gallery_purchases_collection, profile_view_history, user_collection, onboarding_collection, file_collection, gift_collection
+from config.db_config import gift_transaction_collection, contest_participant_collection, countries_collection, private_gallery_purchases_collection, profile_view_history, user_collection, onboarding_collection, file_collection, gift_collection
 from core.utils.response_mixin import CustomResponseMixin
 from core.utils.age_calculation import calculate_age
 from api.controller.files_controller import get_profile_photo_url, generate_file_url, profile_photo_from_onboarding
@@ -18,6 +18,8 @@ from services.notification_service import send_notification
 from services.premium_guard import require_premium
 from services.gallery_service import *
 from config.models.contest_model import resolve_badge
+from schemas.gift_transaction_schema import *
+from config.models.userPass_model import *
 
 response = CustomResponseMixin()
 
@@ -311,8 +313,8 @@ async def buy_private_gallery_image(
         CreateTokenHistory(
             user_id=str(viewer["_id"]),
             delta=-price,
-            type="DEBIT",
-            reason="PRIVATE_IMAGE_UNLOCK",
+            type=TokenTransactionType.DEBIT,
+            reason=TokenTransactionReason.PRIVATE_IMAGE_UNLOCK,
             balance_before=str(available_tokens),
             balance_after=str(new_token_balance)
         )
@@ -506,6 +508,24 @@ async def send_gift_to_profile(
     sender_new_balance = sender_tokens - gift_price
     receiver_new_balance = receiver_tokens + gift_price
 
+    gift_tx = GiftTransactionCreate(
+        sender_id=str(viewer["_id"]),
+        receiver_id=str(profile_user_id),
+        gift_id=str(gift["_id"]),
+        gift_name=gift["name"],
+        gift_token_value=gift_price,
+        sender_balance_before=sender_tokens,
+        sender_balance_after=sender_new_balance,
+        receiver_balance_before=receiver_tokens,
+        receiver_balance_after=receiver_new_balance,
+    )
+
+    gift_tx_result = await gift_transaction_collection.insert_one(
+        gift_tx.dict()
+    )
+
+    gift_tx_id = str(gift_tx_result.inserted_id)
+
     # Update users
     await user_collection.update_one(
         {"_id": viewer["_id"]},
@@ -522,10 +542,11 @@ async def send_gift_to_profile(
         CreateTokenHistory(
             user_id=str(viewer["_id"]),
             delta=-gift_price,
-            type="DEBIT",
-            reason="GIFT_SENT",
+            type=TokenTransactionType.DEBIT,
+            reason=TokenTransactionReason.GIFT_SENT,
             balance_before=str(sender_tokens),
-            balance_after=str(sender_new_balance)
+            balance_after=str(sender_new_balance),
+            txn_id=gift_tx_id
         )
     )
 
@@ -534,13 +555,13 @@ async def send_gift_to_profile(
         CreateTokenHistory(
             user_id=str(profile_user_id),
             delta=gift_price,
-            type="CREDIT",
-            reason="GIFT_RECEIVED",
+            type=TokenTransactionType.CREDIT,
+            reason=TokenTransactionReason.GIFT_RECEIVED,
             balance_before=str(receiver_tokens),
-            balance_after=str(receiver_new_balance)
+            balance_after=str(receiver_new_balance),
+            txn_id=gift_tx_id
         )
     )
-
     return response.success_message(
         translate_message("GIFT_SENT_SUCCESSFULLY", lang=lang),
         data=[{
@@ -613,46 +634,23 @@ async def search_profiles_controller(
                 if birthdate_query:
                     query[db_field] = birthdate_query
 
-    total_matching = await onboarding_collection.count_documents(query)
+    liked_me_user_ids = await get_liked_user_ids(
+        user_id=str(current_user["_id"])
+    )
 
-    # QUERY WITH PAGINATION
-    base_pipeline = [
-        {"$match": query},
-        {"$match": {"user_id": {"$ne": None}}},
-        {"$addFields": {"user_obj_id": {"$toObjectId": "$user_id"}}},
-        {
-            "$lookup": {
-                "from": "users",
-                "localField": "user_obj_id",
-                "foreignField": "_id",
-                "as": "user"
-            }
-        },
-        {"$unwind": "$user"},
-        {"$match": {"user.is_deleted": {"$ne": True}}},
-    ]
+    # --- Get excluded profile IDs (SERVICE LAYER) ---
+    excluded_object_ids = await get_excluded_profile_user_ids(
+        viewer_id=str(current_user["_id"])
+    )
 
-    count_pipeline = base_pipeline + [
-        {"$count": "total"}
-    ]
+    # --- Search profiles (MODEL LAYER) ---
+    cursor, total_matching = await search_profiles_aggregate(
+        query=query,
+        excluded_object_ids=excluded_object_ids,
+        pagination=pagination
+    )
 
-    count_cursor = onboarding_collection.aggregate(count_pipeline)
-    count_result = await count_cursor.to_list(length=1)
-
-    total_matching = count_result[0]["total"] if count_result else 0
-
-    data_pipeline = base_pipeline + [
-        {"$sort": {"_id": 1}}
-    ]
-
-    if pagination.page is not None and pagination.page_size is not None:
-        data_pipeline.extend([
-            {"$skip": pagination.skip},
-            {"$limit": pagination.page_size}
-        ])
-
-    cursor = onboarding_collection.aggregate(data_pipeline)
-
+    # --- Build response ---
     results = []
 
     async for onboarding in cursor:
@@ -660,19 +658,23 @@ async def search_profiles_controller(
         birthdate = onboarding.get("birthdate")
 
         age = calculate_age(birthdate) if birthdate else None
-
-        country_name = await get_country_name_by_id(onboarding.get("country"), countries_collection)
-
+        country_name = await get_country_name_by_id(
+            onboarding.get("country"),
+            countries_collection
+        )
         profile_photo = await profile_photo_from_onboarding(onboarding)
 
+        profile_user_id = str(user["_id"])
+
         results.append({
-            "user_id": str(user["_id"]),
+            "user_id": profile_user_id,
             "name": user.get("username"),
             "age": age,
             "country": country_name,
             "profile_photo": profile_photo,
             "is_verified": user.get("is_verified", False),
-            "login_status": user.get("login_status")
+            "login_status": user.get("login_status"),
+            "liked_me": profile_user_id in liked_me_user_ids
         })
 
     return response.success_message(

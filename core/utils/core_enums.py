@@ -24,6 +24,10 @@ class TokenTransactionReason(str, Enum):
     ACCOUNT_VERIFIED = "Account_Verified"
     TOKEN_PURCHASE = "Token_Purchase"
     TOKEN_WITHDRAWAL = "Token_Withdrawal"
+    TOKEN_WITHDRAWAL_REJECTED = "Token_Withdrawal_Rejected"
+    GIFT_SENT= "GIFT_SENT"
+    GIFT_RECEIVED = "GIFT_RECEIVED"
+    PRIVATE_IMAGE_UNLOCK = "PRIVATE_IMAGE_UNLOCK"
 
 class LoginStatus(str, Enum):
     ACTIVE = "active"
@@ -60,6 +64,8 @@ class NotificationType(str, Enum):
     REPORT = "report"
     BLOCK = "block"
     TOKEN_WITHDRAW_STATUS = "token_withdrawn_status_updated"
+    VERIFICATION_APPROVED = "verification_approved",
+    VERIFICATION_REJECTED = "verification_rejected"
 
 class VerificationStatusEnum(str, Enum):
     PENDING = "pending"
@@ -78,6 +84,7 @@ class ContestStatus(str, Enum):
     winner_announced = "winner_announced"
 
 class ContestFrequency(str, Enum):
+    NON_RECURRING = "non_recurring"
     weekly = "weekly"
     bi_weekly = "bi_weekly"
     monthly = "monthly"
