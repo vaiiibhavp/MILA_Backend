@@ -1,5 +1,3 @@
-import traceback
-import logging
 from typing import Optional
 from datetime import datetime
 from core.utils.response_mixin import CustomResponseMixin
@@ -9,7 +7,6 @@ from config.models.user_management_model import UserManagementModel
 from core.utils.helper import serialize_datetime_fields
 
 response = CustomResponseMixin()
-logger = logging.getLogger(__name__)
 
 # Get all users table
 async def get_admin_users(

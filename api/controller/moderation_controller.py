@@ -1,5 +1,3 @@
-import traceback
-import logging
 from typing import Optional
 from datetime import datetime
 from core.utils.response_mixin import CustomResponseMixin
@@ -9,7 +7,6 @@ from config.models.moderation_model import ModerationModel
 
 
 response = CustomResponseMixin()
-logger = logging.getLogger(__name__)
 
 async def get_reported_users_controller(
     status: Optional[str],
