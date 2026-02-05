@@ -1,7 +1,8 @@
+from fastapi import Depends
 from typing import Optional
 from datetime import datetime
 from core.utils.response_mixin import CustomResponseMixin
-from core.utils.pagination import StandardResultsSetPagination
+from core.utils.pagination import StandardResultsSetPagination ,pagination_params ,build_paginated_response
 from services.translation import translate_message
 from config.models.user_management_model import UserManagementModel
 from core.utils.helper import serialize_datetime_fields
@@ -19,10 +20,10 @@ async def get_admin_users(
     membership: Optional[str] = None,
     date_from: Optional[datetime] = None,
     date_to: Optional[datetime] = None,
-    pagination: StandardResultsSetPagination = None
+    pagination: StandardResultsSetPagination = Depends(pagination_params)
 ):
     try:
-        users = await UserManagementModel.get_admin_users_pipeline(
+        users, total_records = await UserManagementModel.get_admin_users_pipeline(
             status,
             search,
             gender,
@@ -38,24 +39,17 @@ async def get_admin_users(
             if user.get("registration_date"):
                 user["registration_date"] = user["registration_date"].isoformat()
 
+        paginated_response = build_paginated_response(
+            records=users,
+            page=pagination.page or 1,
+            page_size=pagination.limit or len(users),
+            total_records=total_records
+        )
+
         return response.success_message(
             translate_message("USERS_FETCHED_SUCCESSFULLY", lang),
-            data=users,
+            data=paginated_response,
             status_code=200
-        )
-
-    except ValueError as ve:
-        return response.error_message(
-            translate_message("INVALID_REQUEST", lang),
-            data=str(ve),
-            status_code=400
-        )
-
-    except RuntimeError as re:
-        return response.error_message(
-            translate_message("FAILED_TO_FETCH_USERS", lang),
-            data=str(re),
-            status_code=500
         )
 
     except Exception as e:

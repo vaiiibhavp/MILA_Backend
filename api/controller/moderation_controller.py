@@ -1,7 +1,7 @@
 from typing import Optional
 from datetime import datetime
 from core.utils.response_mixin import CustomResponseMixin
-from core.utils.pagination import StandardResultsSetPagination
+from core.utils.pagination import StandardResultsSetPagination ,build_paginated_response
 from services.translation import translate_message
 from config.models.moderation_model import ModerationModel
 
@@ -15,7 +15,7 @@ async def get_reported_users_controller(
     lang: str = "en"
 ):
     try:
-        reports = await ModerationModel.get_reported_users_pipeline(
+        reports, total_records = await ModerationModel.get_reported_users_pipeline(
             status=status,
             search=search,
             pagination=pagination
@@ -25,9 +25,16 @@ async def get_reported_users_controller(
             if report.get("reported_at"):
                 report["reported_at"] = report["reported_at"].isoformat()
 
+        paginated_response = build_paginated_response(
+            records=reports,
+            page=pagination.page or 1,
+            page_size=pagination.page_size or len(reports),
+            total_records=total_records
+        )
+
         return response.success_message(
             translate_message("REPORTED_USERS_FETCHED_SUCCESSFULLY", lang),
-            data=reports,
+            data=paginated_response,
             status_code=200
         )
 
@@ -83,7 +90,7 @@ async def get_report_details_controller(report_id: str, lang: str = "en"):
 
         return response.success_message(
             translate_message("REPORT_DETAILS_FETCHED_SUCCESSFULLY", lang),
-            report,
+            [report],
             200
         )
 

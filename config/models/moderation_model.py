@@ -1,4 +1,5 @@
 from typing import Optional
+import copy
 from pymongo.errors import PyMongoError
 from bson import ObjectId
 from config.db_config import (
@@ -58,38 +59,40 @@ class ModerationModel:
             })
 
             # ---------------- REPORTER LOOKUP ----------------
-            pipeline.append({
-                "$lookup": {
-                    "from": "users",
-                    "localField": "reporterObjId",
-                    "foreignField": "_id",
-                    "as": "reporter"
+            pipeline.extend([
+                {
+                    "$lookup": {
+                        "from": "users",
+                        "localField": "reporterObjId",
+                        "foreignField": "_id",
+                        "as": "reporter"
+                    }
+                },
+                {
+                    "$unwind": {
+                        "path": "$reporter",
+                        "preserveNullAndEmptyArrays": True
+                    }
                 }
-            })
-
-            pipeline.append({
-                "$unwind": {
-                    "path": "$reporter",
-                    "preserveNullAndEmptyArrays": True
-                }
-            })
+            ])
 
             # ---------------- REPORTED USER LOOKUP ----------------
-            pipeline.append({
-                "$lookup": {
-                    "from": "users",
-                    "localField": "reportedObjId",
-                    "foreignField": "_id",
-                    "as": "reported_user"
+            pipeline.extend([
+                {
+                    "$lookup": {
+                        "from": "users",
+                        "localField": "reportedObjId",
+                        "foreignField": "_id",
+                        "as": "reported_user"
+                    }
+                },
+                {
+                    "$unwind": {
+                        "path": "$reported_user",
+                        "preserveNullAndEmptyArrays": True
+                    }
                 }
-            })
-
-            pipeline.append({
-                "$unwind": {
-                    "path": "$reported_user",
-                    "preserveNullAndEmptyArrays": True
-                }
-            })
+            ])
 
             # ---------------- SEARCH ----------------
             if search:
@@ -104,16 +107,28 @@ class ModerationModel:
                     }
                 })
 
+            # =====================================================
+            #  COUNT PIPELINE (BEFORE PAGINATION)
+            # =====================================================
+            count_pipeline = copy.deepcopy(pipeline)
+            count_pipeline.append({"$count": "total"})
+
+            count_result = await reported_users_collection.aggregate(
+                count_pipeline
+            ).to_list(1)
+
+            total_records = count_result[0]["total"] if count_result else 0
+
             # ---------------- SORT ----------------
             pipeline.append({"$sort": {"created_at": -1}})
 
-            # ---------------- SAFE PAGINATION ----------------
-            page_size = pagination.page_size or 10
-            skip = pagination.skip or 0
+            # ---------------- PAGINATION ----------------
+            skip = pagination.skip if isinstance(pagination.skip, int) and pagination.skip >= 0 else 0
+            limit = pagination.page_size if isinstance(pagination.page_size, int) and pagination.page_size > 0 else 10
 
             pipeline.extend([
-                {"$skip": max(skip, 0)},
-                {"$limit": max(page_size, 1)}
+                {"$skip": skip},
+                {"$limit": limit}
             ])
 
             # ---------------- FINAL PROJECTION ----------------
@@ -136,7 +151,9 @@ class ModerationModel:
                 }
             })
 
-            return await reported_users_collection.aggregate(pipeline).to_list(None)
+            reports = await reported_users_collection.aggregate(pipeline).to_list(None)
+
+            return reports, total_records
 
         except ValueError:
             raise

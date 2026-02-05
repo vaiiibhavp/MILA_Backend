@@ -446,14 +446,7 @@ class ContestModel:
         # ---------------- SORT BY LATEST ----------------
         pipeline.append({"$sort": {"created_at": -1}})
 
-        # ---------------- PAGINATION (SAFE FIX) ----------------
-        if pagination and pagination.skip is not None and pagination.limit is not None:
-            pipeline.extend([
-                {"$skip": int(pagination.skip)},
-                {"$limit": int(pagination.limit)}
-            ])
-
-        # ---------------- PROJECTION (UI TABLE FIELDS) ----------------
+        # ---------------- PROJECTION ----------------
         pipeline.append({
             "$project": {
                 "_id": 0,
@@ -484,27 +477,25 @@ class ContestModel:
                 if c["visibility"] == visibility.value
             ]
 
+        # ---------------- TOTAL COUNT ----------------
+        total_count = len(contests)
+
+        # ---------------- PAGINATION (IN-MEMORY, SAFE) ----------------
+        page = pagination.page if pagination and pagination.page else 1
+        page_size = (
+            pagination.page_size
+            if pagination and pagination.page_size
+            else pagination.limit
+            if pagination and pagination.limit
+            else total_count
+        )
+
+        start = (page - 1) * page_size
+        end = start + page_size
+        contests = contests[start:end]
+
         # ---------------- SERIALIZE ----------------
-        contests = [serialize_datetime_fields(contest)for contest in contests]
-
-        # ---------------- TOTAL COUNT (ACCURATE FIX) ----------------
-        count_match = match_stage.copy()
-
-        raw_contests = await contest_collection.find(count_match).to_list(None)
-
-        for contest in raw_contests:
-            contest["visibility"] = calculate_visibility(
-                contest["start_date"],
-                contest["end_date"]
-            )
-
-        if visibility:
-            raw_contests = [
-                c for c in raw_contests
-                if c["visibility"] == visibility.value
-            ]
-
-        total_count = len(raw_contests)
+        contests = [serialize_datetime_fields(c) for c in contests]
 
         return {
             "data": contests,
@@ -1050,19 +1041,11 @@ class ContestModel:
         pipeline = []
 
         # ---------------- MATCH CONTEST ----------------
-        pipeline.append({
-            "$match": {
-                "contest_id": contest_id
-            }
-        })
+        pipeline.append({"$match": {"contest_id": contest_id}})
 
         # ---------------- USER LOOKUP ----------------
         pipeline.extend([
-            {
-                "$addFields": {
-                    "userObjId": {"$toObjectId": "$user_id"}
-                }
-            },
+            {"$addFields": {"userObjId": {"$toObjectId": "$user_id"}}},
             {
                 "$lookup": {
                     "from": "users",
@@ -1074,7 +1057,7 @@ class ContestModel:
             {"$unwind": "$user"}
         ])
 
-        # ---------------- SEARCH BY USERNAME ----------------
+        # ---------------- SEARCH ----------------
         if search:
             pipeline.append({
                 "$match": {
@@ -1082,10 +1065,22 @@ class ContestModel:
                 }
             })
 
-        # ---------------- SORT BY VOTES DESC ----------------
+        # ==================================================
+        # COUNT PIPELINE (BEFORE PAGINATION)
+        # ==================================================
+        count_pipeline = pipeline.copy()
+        count_pipeline.append({"$count": "total"})
+
+        count_result = await contest_participant_collection.aggregate(
+            count_pipeline
+        ).to_list(1)
+
+        total_records = count_result[0]["total"] if count_result else 0
+
+        # ---------------- SORT ----------------
         pipeline.append({"$sort": {"total_votes": -1}})
 
-        # ---------------- PAGINATION (DOUBLE SAFE) ----------------
+        # ---------------- PAGINATION ----------------
         if pagination and pagination.skip is not None and pagination.limit is not None:
             pipeline.extend([
                 {"$skip": int(pagination.skip)},
@@ -1131,36 +1126,6 @@ class ContestModel:
             p.pop("uploaded_file_ids", None)
 
         participants = serialize_datetime_fields(participants)
-
-        # ---------------- TOTAL COUNT (ACCURATE) ----------------
-        count_pipeline = [
-            {"$match": {"contest_id": contest_id}},
-            {
-                "$addFields": {
-                    "userObjId": {"$toObjectId": "$user_id"}
-                }
-            },
-            {
-                "$lookup": {
-                    "from": "users",
-                    "localField": "userObjId",
-                    "foreignField": "_id",
-                    "as": "user"
-                }
-            },
-            {"$unwind": "$user"}
-        ]
-
-        if search:
-            count_pipeline.append({
-                "$match": {
-                    "user.username": {"$regex": search, "$options": "i"}
-                }
-            })
-
-        total_records = len(
-            await contest_participant_collection.aggregate(count_pipeline).to_list(None)
-        )
 
         return {
             "data": participants,

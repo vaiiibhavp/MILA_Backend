@@ -1,4 +1,5 @@
 from datetime import datetime
+import copy
 from bson import ObjectId
 from typing import Optional
 from config.db_config import withdraw_token_transaction_collection ,transaction_collection,system_config_collection
@@ -95,6 +96,15 @@ class TransactionModel:
                 }
             ])
 
+        # ==================================================
+        # COUNT PIPELINE (BEFORE PAGINATION)
+        # ==================================================
+        count_pipeline = copy.deepcopy(pipeline)
+        count_pipeline.append({"$count": "total"})
+
+        count_result = await collection.aggregate(count_pipeline).to_list(1)
+        total = count_result[0]["total"] if count_result else 0
+
         # --------------------------------------------------
         # SORT
         # --------------------------------------------------
@@ -188,7 +198,7 @@ class TransactionModel:
                 }
             })
 
-        else:  # TOKEN PURCHASE (UPDATED)
+        else:  # TOKEN PURCHASE
             pipeline.append({
                 "$project": {
                     "_id": 0,
@@ -208,15 +218,6 @@ class TransactionModel:
         # EXECUTE
         # --------------------------------------------------
         data = await collection.aggregate(pipeline).to_list(None)
-
-        # --------------------------------------------------
-        # TOTAL COUNT
-        # --------------------------------------------------
-        count_pipeline = pipeline[:-3]
-        count_pipeline.append({"$count": "total"})
-        count_result = await collection.aggregate(count_pipeline).to_list(None)
-
-        total = count_result[0]["total"] if count_result else 0
 
         return {
             "data": serialize_datetime_fields(data),

@@ -3,7 +3,7 @@ from core.utils.response_mixin import CustomResponseMixin
 from config.models.event_managment_model import ContestModel
 from schemas.event_management_schema import ContestUpdateSchema
 from services.translation import translate_message
-
+from core.utils.pagination import build_paginated_response
 
 response = CustomResponseMixin()
 
@@ -96,14 +96,26 @@ async def fetch_contests(
             lang=lang
         )
 
+        page = pagination.page or 1
+        page_size = pagination.page_size or pagination.limit or 10
+        total_records = result.get("total", 0)
+        records = result.get("data", [])
+
+        data = build_paginated_response(
+            records=records,
+            page=page,
+            page_size=page_size,
+            total_records=total_records
+        )
+
         return response.success_message(
             translate_message("CONTESTS_FETCHED_SUCCESSFULLY", lang),
-            data=result["data"],
+            data=[data],
             status_code=200
         )
 
     except Exception as e:
-        return response.error_message(
+        raise response.raise_exception(
             translate_message("FAILED_TO_FETCH_CONTESTS", lang),
             data=str(e),
             status_code=500
@@ -219,15 +231,29 @@ async def get_contest_participants_controller(
             lang=lang
         )
 
+        page = pagination.page or 1
+        page_size = pagination.page_size or pagination.limit or len(result["data"])
+
+        paginated_data = build_paginated_response(
+            records=result["data"],
+            page=page,
+            page_size=page_size,
+            total_records=result["total"]
+        )
+
         return response.success_message(
-            translate_message("CONTEST_PARTICIPANTS_FETCHED_SUCCESSFULLY", lang),
-            data=result["data"],
+            translate_message(
+                "CONTEST_PARTICIPANTS_FETCHED_SUCCESSFULLY", lang
+            ),
+            data=[paginated_data],
             status_code=200
         )
 
     except Exception as e:
         return response.error_message(
-            translate_message("FAILED_TO_FETCH_CONTEST_PARTICIPANTS", lang),
+            translate_message(
+                "FAILED_TO_FETCH_CONTEST_PARTICIPANTS", lang
+            ),
             data=str(e),
             status_code=500
         )
