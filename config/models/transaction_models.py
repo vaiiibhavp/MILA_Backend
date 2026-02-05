@@ -225,3 +225,27 @@ async def get_user_transaction_details(trans_id:str, user_id:str) -> Optional[Li
 
     doc = serialize_datetime_fields(doc)
     return [doc]
+
+async def get_latest_membership_expiry(user_id: str) -> Optional[datetime]:
+        """
+        Returns the latest expires_at among all successful subscription transactions.
+        If no subscription exists, returns None.
+        """
+
+        cursor = (
+            transaction_collection
+            .find(
+                {
+                    "user_id": ObjectId(user_id),
+                    "trans_type": "subscription_transaction",
+                    "status": "success",
+                    "expires_at": {"$exists": True}
+                },
+                {"expires_at": 1}
+            )
+            .sort("expires_at", -1)  # 🔥 latest expiry first
+            .limit(1)
+        )
+
+        docs = await cursor.to_list(length=1)
+        return docs[0]["expires_at"] if docs else None

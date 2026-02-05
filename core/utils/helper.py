@@ -109,10 +109,12 @@ def convert_objectid_to_str(obj):
 
 def get_membership_period(validity_value: int, validity_unit: str, current_expiry: Optional[datetime] = None) -> Tuple[datetime, datetime]:
     """
-       Returns (start_date, end_date) in UTC.
+        Returns (start_date, end_date) in UTC.
 
-       - If no current_expiry: start = now (UTC)
-       - If current_expiry in the future or today: start = next day after expiry at 00:00 UTC
+        Rules:
+        - If no current_expiry → start = now (UTC, exact time)
+        - If current_expiry >= now → start = current_expiry (exact time)
+        - If current_expiry < now → start = now
     """
     unit_map = {
         "day": relativedelta(days=validity_value),
@@ -126,30 +128,17 @@ def get_membership_period(validity_value: int, validity_unit: str, current_expir
 
     now_utc = datetime.now(timezone.utc)
 
-    # --- Determine start_date ---
-    if current_expiry is None:
-        # No previous membership
-        start_date = now_utc
+    # ✅ Normalize Mongo datetime (naive → UTC-aware)
+    if current_expiry and current_expiry.tzinfo is None:
+        current_expiry = current_expiry.replace(tzinfo=timezone.utc)
+
+    # 🔹 Determine start_date
+    if current_expiry and current_expiry >= now_utc:
+        start_date = current_expiry
     else:
-        # current_expiry might be date or datetime; normalize to a date
-        if isinstance(current_expiry, datetime):
-            expiry_date = current_expiry.date()
-        elif isinstance(current_expiry, date):
-            expiry_date = current_expiry
-        else:
-            raise TypeError("current_expiry must be datetime, date, or None")
+        start_date = now_utc
 
-        today_utc = now_utc.date()
-
-        if expiry_date >= today_utc:
-            # Start from the next day after the expiry date, at 00:00 UTC
-            next_day = expiry_date + timedelta(days=1)
-            start_date = datetime.combine(next_day, time.min, tzinfo=timezone.utc)
-        else:
-            # Existing membership already expired in the past → start now
-            start_date = now_utc
-
-        # --- Determine end_date ---
+    # 🔹 Determine end_date
     end_date = start_date + unit_map[validity_unit]
 
     return start_date, end_date

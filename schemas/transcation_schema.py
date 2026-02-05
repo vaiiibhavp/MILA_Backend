@@ -47,6 +47,7 @@ class TransactionCreateModel(BaseModel):
     expires_at: Optional[datetime] = None
     tokens:Optional[int] = 0
     trans_type:TransactionType
+    is_activated:bool = False
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class CompleteTransactionRequestModel(BaseModel):
