@@ -9,7 +9,8 @@ from config.basic_config import settings
 from schemas.transcation_schema import PaymentDetailsModel, TransactionCreateModel, TransactionUpdateModel
 from core.utils.core_enums import MembershipType, MembershipStatus, TokenTransactionType, TokenTransactionReason, TransactionStatus, TransactionType
 from config.db_config import transaction_collection, system_config_collection, user_collection
-from config.models.transaction_models import store_transaction_details, update_transaction_details
+from config.models.transaction_models import store_transaction_details, update_transaction_details, \
+    get_latest_membership_expiry
 from bson import ObjectId
 from config.models.user_token_history_model import create_user_token_history
 from schemas.user_token_history_schema import CreateTokenHistory
@@ -248,7 +249,7 @@ async def handle_full_payment(
 async def _calculate_membership_period_for_user(
     plan_data: Dict[str, Any],
     user_id: str,
-) -> Tuple[Any, Any]:
+) -> Tuple[Any, Any, Any]:
     """
     Calculates membership start and expiry dates.
     Extends existing membership if current membership is active.
@@ -262,6 +263,7 @@ async def _calculate_membership_period_for_user(
 
     user_details = await user_collection.find_one({"_id": ObjectId(user_id)})
     membership_status = user_details.get("membership_status", MembershipStatus.EXPIRED)
+    is_activated = True
 
     # If user already has active membership, extend from current expiry
     if membership_status == MembershipStatus.ACTIVE.value:
@@ -271,15 +273,16 @@ async def _calculate_membership_period_for_user(
                 {"_id": ObjectId(current_mem_txn_id)}
             )
             if current_mem_txn_details:
-                _, expiry_date = get_membership_period(
+                # 🔹 Step 1: Get latest expiry (STACK-AWARE)
+                latest_expiry = await get_latest_membership_expiry(user_id)
+                start_date, expiry_date = get_membership_period(
                     validity_value,
                     validity_unit,
-                    current_mem_txn_details["expires_at"],
+                    latest_expiry,
                 )
-                # If extending, start_date can be same as previous expiry
-                start_date = current_mem_txn_details["expires_at"]
+                is_activated = False
 
-    return start_date, expiry_date
+    return start_date, expiry_date, is_activated
 
 
 async def _update_user_membership_and_tokens(
@@ -345,13 +348,14 @@ async def _prepare_transaction_for_subscription(
           (transaction_data, system_config)
     """
     # 1. Determine membership period (may extend current membership)
-    start_date, expiry_date = await _calculate_membership_period_for_user(
+    start_date, expiry_date, is_activated = await _calculate_membership_period_for_user(
         plan_data=plan_data,
         user_id=user_id,
     )
 
     transaction_data.start_date = start_date
     transaction_data.expires_at = expiry_date
+    transaction_data.is_activated = is_activated
 
     # 2. Fetch system config and user
     system_config = await system_config_collection.find_one()
