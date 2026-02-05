@@ -90,7 +90,7 @@ async def handle_subscription_expiry(user_id):
     # Find the next available (unused) subscription
     next_subscription = await transaction_collection.find_one(
         {
-            "user_id": str(user_id),
+            "user_id": user_id,
             "trans_type": "subscription_transaction",
             "status": "success",
             "is_activated": False,  # Not yet activated
