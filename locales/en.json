@@ -525,6 +525,8 @@
   "INVALID_VOTING_END_DATE_FORMAT":"Invalid voting end date format",
   "EMPTY_BADGE_NOT_ALLOWED":"Empty badge not allowed",
   "PUSH_TITLE_SUBSCRIPTION_EXPIRING_SOON": "Subscription Expiring Soon",
-  "PUSH_MESSAGE_SUBSCRIPTION_EXPIRING_SOON": "Your subscription will expire in 3 days. Renew now to continue enjoying uninterrupted access."
+  "PUSH_MESSAGE_SUBSCRIPTION_EXPIRING_SOON": "Your subscription will expire in 3 days. Renew now to continue enjoying uninterrupted access.",
+  "VERIFICATION_USER_DETAILS_FETCHED_SUCCESSFULLY":"Verification user details fetched successfully",
+  "FAILED_TO_FETCH_VERIFICATION_USER_DETAILS":"Failed to fetch verification user details"
 
 }

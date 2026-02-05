@@ -528,5 +528,7 @@
   "INVALID_VOTING_END_DATE_FORMAT": "Format de la date de fin du vote invalide",
   "EMPTY_BADGE_NOT_ALLOWED": "Le badge ne peut pas être vide",
   "PUSH_TITLE_SUBSCRIPTION_EXPIRING_SOON": "Votre abonnement expire bientôt",
-  "PUSH_MESSAGE_SUBSCRIPTION_EXPIRING_SOON": "Votre abonnement expire dans 3 jours. Renouvelez-le dès maintenant pour continuer à bénéficier d'un accès ininterrompu."
+  "PUSH_MESSAGE_SUBSCRIPTION_EXPIRING_SOON": "Votre abonnement expire dans 3 jours. Renouvelez-le dès maintenant pour continuer à bénéficier d'un accès ininterrompu.",
+  "VERIFICATION_USER_DETAILS_FETCHED_SUCCESSFULLY": "Détails de l’utilisateur pour la vérification récupérés avec succès",
+  "FAILED_TO_FETCH_VERIFICATION_USER_DETAILS": "Échec de la récupération des détails de l’utilisateur pour la vérification"
 }

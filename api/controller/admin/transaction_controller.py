@@ -1,6 +1,7 @@
 from datetime import datetime
 from core.utils.response_mixin import CustomResponseMixin
 from config.models.transaction_model import TransactionModel
+from core.utils.pagination import build_paginated_response
 from services.translation import translate_message
 from config.db_config import system_config_collection
 
@@ -26,14 +27,32 @@ async def fetch_all_transactions_controller(
             pagination=pagination
         )
 
+        records = result.get("data", [])
+        total_records = result.get("total", 0)
+
+        # ---------------- COMMON PAGINATION RESPONSE ----------------
+        page = pagination.page if pagination and pagination.page else 1
+        page_size = (
+            pagination.page_size
+            if pagination and pagination.page_size
+            else len(records)
+        )
+
+        paginated_response = build_paginated_response(
+            records=records,
+            page=page,
+            page_size=page_size,
+            total_records=total_records
+        )
+
         return response.success_message(
             translate_message("TRANSACTIONS_FETCHED_SUCCESSFULLY", lang),
-            data=result,
+            data=[paginated_response],
             status_code=200
         )
 
     except Exception as e:
-        print("the error is",str(e))
+        print("the error is", str(e))
         return response.error_message(
             translate_message("FAILED_TO_FETCH_TRANSACTIONS", lang),
             data=str(e),

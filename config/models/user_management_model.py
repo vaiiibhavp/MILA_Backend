@@ -1,4 +1,5 @@
 from bson import ObjectId
+import copy
 from datetime import datetime, timedelta
 from typing import Optional
 from pymongo.errors import PyMongoError
@@ -58,9 +59,7 @@ class UserManagementModel:
 
             # ---------------- STRING ID ----------------
             pipeline.append({
-                "$addFields": {
-                    "userIdStr": {"$toString": "$_id"}
-                }
+                "$addFields": {"userIdStr": {"$toString": "$_id"}}
             })
 
             # ---------------- ONBOARDING ----------------
@@ -105,7 +104,12 @@ class UserManagementModel:
                 "$addFields": {
                     "verification_status": {
                         "$cond": {
-                            "if": {"$gt": [{"$size": "$verification"}, 0]},
+                            "if": {
+                                "$gt": [
+                                    {"$size": {"$ifNull": ["$verification", []]}},
+                                    0
+                                ]
+                            },
                             "then": {"$arrayElemAt": ["$verification.status", 0]},
                             "else": VerificationStatusEnum.PENDING
                         }
@@ -117,58 +121,69 @@ class UserManagementModel:
                 pipeline.append({"$match": {"verification_status": verification}})
 
             # ---------------- MATCHES ----------------
-            pipeline.append({
-                "$lookup": {
-                    "from": "users_matched_history",
-                    "let": {"uid": "$userIdStr"},
-                    "pipeline": [
-                        {"$match": {"$expr": {"$in": ["$$uid", "$user_ids"]}}}
-                    ],
-                    "as": "matches"
-                }
-            })
-
-            pipeline.append({
-                "$addFields": {
-                    "match_count": {"$size": "$matches"}
-                }
-            })
+            pipeline.extend([
+                {
+                    "$lookup": {
+                        "from": "users_matched_history",
+                        "let": {"uid": "$userIdStr"},
+                        "pipeline": [
+                            {"$match": {"$expr": {"$in": ["$$uid", "$user_ids"]}}}
+                        ],
+                        "as": "matches"
+                    }
+                },
+                {"$addFields": {"match_count": {"$size": "$matches"}}}
+            ])
 
             # ---------------- COUNTRY ----------------
-            pipeline.append({
-                "$addFields": {
-                    "countryObjId": {
-                        "$convert": {
-                            "input": "$onboarding.country",
-                            "to": "objectId",
-                            "onError": None,
-                            "onNull": None
+            pipeline.extend([
+                {
+                    "$addFields": {
+                        "countryObjId": {
+                            "$convert": {
+                                "input": "$onboarding.country",
+                                "to": "objectId",
+                                "onError": None,
+                                "onNull": None
+                            }
                         }
                     }
+                },
+                {
+                    "$lookup": {
+                        "from": "countries",
+                        "localField": "countryObjId",
+                        "foreignField": "_id",
+                        "as": "country"
+                    }
+                },
+                {
+                    "$unwind": {
+                        "path": "$country",
+                        "preserveNullAndEmptyArrays": True
+                    }
                 }
-            })
+            ])
 
-            pipeline.append({
-                "$lookup": {
-                    "from": "countries",
-                    "localField": "countryObjId",
-                    "foreignField": "_id",
-                    "as": "country"
-                }
-            })
+            # =====================================================
+            # COUNT PIPELINE (BEFORE PAGINATION)
+            # =====================================================
+            count_pipeline = copy.deepcopy(pipeline)
+            count_pipeline.append({"$count": "total"})
 
-            pipeline.append({
-                "$unwind": {
-                    "path": "$country",
-                    "preserveNullAndEmptyArrays": True
-                }
-            })
+            count_result = await user_collection.aggregate(count_pipeline).to_list(1)
+            total_records = count_result[0]["total"] if count_result else 0
 
-            # ---------------- PAGINATION ----------------
+            # =====================================================
+            # PAGINATION
+            # =====================================================
+            skip = pagination.skip if isinstance(pagination.skip, int) and pagination.skip >= 0 else 0
+            limit = pagination.limit if isinstance(pagination.limit, int) and pagination.limit > 0 else 10
+
             pipeline.extend([
                 {"$sort": {"created_at": -1}},
-                {"$skip": max(pagination.skip, 0)},
-                {"$limit": max(pagination.limit, 1)}
+                {"$skip": skip},
+                {"$limit": limit}
             ])
 
             # ---------------- FINAL PROJECTION ----------------
@@ -193,13 +208,9 @@ class UserManagementModel:
                 }
             })
 
-            return await user_collection.aggregate(pipeline).to_list(None)
+            users = await user_collection.aggregate(pipeline).to_list(None)
 
-        except ValueError as ve:
-            # logger.warning(f"Validation error: {ve}")
-            raise ve
-        except PyMongoError:
-            raise RuntimeError("Database operation failed")
+            return users, total_records
 
         except Exception as e:
             # logger.exception("Unexpected error while fetching admin users")
