@@ -74,7 +74,7 @@ def validate_password_value(v: str) -> str:
     if not re.search(r"[!@#$%^&*]", v):
         raise ValueError("Password must include a special character.")
 
-    if not re.fullmatch(r"[A-Za-z0-9!@#$%^&*]+", v):
+    if not re.fullmatch(r"[.A-Za-z0-9]+", v):
         raise ValueError("Password contains invalid characters.")
 
     return v

@@ -67,7 +67,7 @@ async def get_contest_details_controller(
         standings,
         cta
     ) = await asyncio.gather(
-        resolve_banner_url(contest["banner_file_id"]),
+        resolve_banner_url(contest["banner_image_id"]),
         fetch_participant_avatars(contest_id, contest_history_id),
         fetch_current_standings(contest_id, contest_history),
         resolve_cta_state(
@@ -501,7 +501,7 @@ async def cast_vote_controller(
 
     balance_after, balance_before = await debit_user_tokens(
         user_id=user_id,
-        amount=contest["vote_cost"],
+        amount=contest["cost_per_vote"],
         reason=f"contest_vote:{contest_id}"
     )
 
@@ -520,7 +520,7 @@ async def cast_vote_controller(
         "contest_history_id": contest_history_id,
         "participant_id": str(participant["_id"]),
         "voter_user_id": user_id,
-        "vote_cost": contest["vote_cost"],
+        "vote_cost": contest["cost_per_vote"],
         "voted_at": datetime.utcnow()
     })
 
