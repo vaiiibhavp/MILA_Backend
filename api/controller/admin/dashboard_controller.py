@@ -14,7 +14,7 @@ async def get_dashboard_controller(
 
         return response.success_message(
             translate_message("DASHBOARD_FETCHED_SUCCESSFULLY", lang),
-            data=[data],
+            data=data,
             status_code=200
         )
 

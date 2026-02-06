@@ -90,7 +90,7 @@ async def get_report_details_controller(report_id: str, lang: str = "en"):
 
         return response.success_message(
             translate_message("REPORT_DETAILS_FETCHED_SUCCESSFULLY", lang),
-            [report],
+            report,
             200
         )
 

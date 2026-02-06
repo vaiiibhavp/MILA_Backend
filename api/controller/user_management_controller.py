@@ -121,7 +121,7 @@ async def get_admin_user_details(user_id: str, lang: str = "en"):
 
         return response.success_message(
             translate_message("USER_DETAILS_FETCHED_SUCCESSFULLY", lang),
-            data=[serialize_datetime_fields(result)],
+            data=serialize_datetime_fields(result),
             status_code=200
         )
 

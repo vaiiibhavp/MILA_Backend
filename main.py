@@ -255,7 +255,6 @@ app.include_router(event_management_route.admin_router)
 app.include_router(withdrawal_request_routes.admin_router)
 app.include_router(dashboard_route.adminrouter)
 app.include_router(transctions_route.admin_router)
-
 # Scheduler Instance
 scheduler = BackgroundScheduler()
 

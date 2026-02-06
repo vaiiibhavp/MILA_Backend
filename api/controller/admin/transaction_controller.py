@@ -47,7 +47,7 @@ async def fetch_all_transactions_controller(
 
         return response.success_message(
             translate_message("TRANSACTIONS_FETCHED_SUCCESSFULLY", lang),
-            data=[paginated_response],
+            data=paginated_response,
             status_code=200
         )
 
@@ -66,7 +66,7 @@ async def get_subscription_bonus_token_controller(lang="en"):
 
         return response.success_message(
             translate_message("SUBSCRIPTION_BONUS_TOKEN_FETCHED_SUCCESSFULLY" , lang),
-            data=[data],
+            data=data,
             status_code=200
         )
 

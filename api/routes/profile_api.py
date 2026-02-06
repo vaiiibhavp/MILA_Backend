@@ -6,6 +6,7 @@ from core.utils.permissions import UserPermission
 from schemas.response_schema import Response
 from typing import List, Optional
 from schemas.language_schema import *
+from core.auth import get_current_user
 
 router = APIRouter(prefix="/profile", tags=["User Profile"])
 
@@ -124,3 +125,10 @@ async def delete_private_gallery_image(
         current_user=current_user,
         lang=lang
     )
+
+@router.get("/user-info")
+async def get_user_details(
+    current_user: dict = Depends(get_current_user),
+    lang: str = "en"
+):
+    return await get_user_details_controller(current_user, lang)

@@ -42,7 +42,7 @@ def build_paginated_response(
         if page_size > 0 else 0
     )
 
-    return [{
+    return {
         "records": records,
         "pagination": {
             "page": page,
@@ -52,5 +52,5 @@ def build_paginated_response(
             "has_next": page < total_pages,
             "has_previous": page > 1
         }
-    }]
+    }
 
