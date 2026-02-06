@@ -9,7 +9,7 @@ from api.routes import (
     profile_api, token_history_route, profile_api_route ,
     userPass_route, like_route_api, block_report_route, user_profile_view_api_route,
     fcm_route,
-    verification_routes, contest_api_route, user_management , moderation_route , video_call_route
+    verification_routes, contest_api_route, user_management , moderation_route
 )
 
 from api.routes.admin import (
@@ -255,7 +255,6 @@ app.include_router(event_management_route.admin_router)
 app.include_router(withdrawal_request_routes.admin_router)
 app.include_router(dashboard_route.adminrouter)
 app.include_router(transctions_route.admin_router)
-app.include_router(video_call_route.router)
 # Scheduler Instance
 scheduler = BackgroundScheduler()
 
