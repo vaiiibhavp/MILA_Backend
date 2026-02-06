@@ -66,7 +66,7 @@ async def get_subscription_bonus_token_controller(lang="en"):
 
         return response.success_message(
             translate_message("SUBSCRIPTION_BONUS_TOKEN_FETCHED_SUCCESSFULLY" , lang),
-            data=[data],
+            data=data,
             status_code=200
         )
 

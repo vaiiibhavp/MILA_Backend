@@ -140,7 +140,7 @@ async def get_contest_details_controller(
 
         return response.success_message(
             translate_message("CONTEST_DETAILS_FETCHED_SUCCESSFULLY", lang),
-            data=[result["data"]],
+            data=result,
             status_code=200
         )
 
@@ -245,7 +245,7 @@ async def get_contest_participants_controller(
             translate_message(
                 "CONTEST_PARTICIPANTS_FETCHED_SUCCESSFULLY", lang
             ),
-            data=[paginated_data],
+            data=paginated_data,
             status_code=200
         )
 

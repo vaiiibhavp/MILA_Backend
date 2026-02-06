@@ -149,7 +149,7 @@ async def get_verification_user_details_controller(
 
         return response.success_message(
             translate_message("VERIFICATION_USER_DETAILS_FETCHED_SUCCESSFULLY", lang),
-            data=[user_data],
+            data=user_data,
             status_code=200
         )
 
