@@ -720,7 +720,8 @@ async def fetch_user_by_id(user_id: str, lang: str):
                 "is_verified": 1,
                 "profile_photo_id": 1,
                 "login_status": 1,
-                "tokens": 1
+                "tokens": 1,
+                "membership_type":1
             }
         )
 
@@ -788,7 +789,8 @@ async def fetch_user_by_id(user_id: str, lang: str):
             "country": country_data, 
             "passions": user_data.get("passions"),
             "profile_photo": profile_photo,
-            "tokens":user.get("tokens")
+            "tokens":user.get("tokens"),
+            "membership_type":user.get("membership_type")
         })
 
     except Exception as e:

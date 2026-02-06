@@ -1,11 +1,13 @@
-from fastapi import APIRouter
+from fastapi import APIRouter , Depends
 from api.controller.video_call_controller import get_user_details_controller
+from core.auth import get_current_user
+
 router = APIRouter()
 
-@router.get("/user/{user_id}")
+@router.get("/user-info")
 async def get_user_details(
-    user_id: str,
+    current_user: dict = Depends(get_current_user),
     lang: str = "en"
 ):
-    return await get_user_details_controller(user_id, lang)
+    return await get_user_details_controller(current_user, lang)
 
