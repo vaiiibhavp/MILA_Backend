@@ -504,7 +504,7 @@ async def get_pending_verification_users_controller(
 
         return response.success_message(
             translate_message("VERIFICATION_QUEUE_FETCHED_SUCCESSFULLY", lang),
-            data=[data],
+            data=data,
             status_code=200
         )
 

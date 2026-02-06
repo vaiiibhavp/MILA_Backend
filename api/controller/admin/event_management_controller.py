@@ -24,19 +24,19 @@ async def create_contest(
             return response.error_message(
                 message=result["message"],
                 data=[],
-                status_code=result["status_code"]
+                status_code=result
             )
 
         return response.success_message(
             translate_message("CONTEST_CREATED_SUCCESSFULLY", lang),
             data=[result["data"]],
-            status_code=201
+            status_code=200
         )
 
     except Exception as e:
         return response.error_message(
             translate_message("FAILED_TO_CREATE_CONTEST", lang),
-            data=str(e),
+            data=[str(e)],
             status_code=500
         )
 
@@ -110,7 +110,7 @@ async def fetch_contests(
 
         return response.success_message(
             translate_message("CONTESTS_FETCHED_SUCCESSFULLY", lang),
-            data=[data],
+            data=data,
             status_code=200
         )
 

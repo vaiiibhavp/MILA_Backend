@@ -47,7 +47,7 @@ async def fetch_all_transactions_controller(
 
         return response.success_message(
             translate_message("TRANSACTIONS_FETCHED_SUCCESSFULLY", lang),
-            data=[paginated_response],
+            data=paginated_response,
             status_code=200
         )
 
