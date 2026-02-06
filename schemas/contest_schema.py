@@ -6,16 +6,13 @@ from typing import Optional, List
 class ContestCardResponse(BaseModel):
     contest_id: str
     title: str
-    banner_url: str
-    status: ContestStatus
+    banner_url: Optional[str] = None
     visibility: ContestVisibility
-    registration_end: datetime
-    voting_end: datetime
     total_participants: int
     total_votes: int
-    prize_pool_description: Optional[str] = None
-    voting_start: datetime
-
+    prize_distribution: Optional[int] = None
+    registration_until: Optional[datetime] = None
+    voting_starts: Optional[datetime] = None
 
 class PrizeItem(BaseModel):
     position: int        # 1, 2, 3
