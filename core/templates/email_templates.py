@@ -88,3 +88,58 @@ def onboarding_completed_template(username: str):
     """
 
     return subject, body
+
+
+def verification_approved_template(username: str):
+    subject = "Your Profile Has Been Approved ✅"
+
+    body = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; background-color: #f6f6f6; padding: 20px;">
+        <div style="max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 10px;">
+            <h2 style="color: #333;">Hi {username},</h2>
+
+            <p style="font-size: 15px; color: #555;">
+                Great news! 🎉 Your profile has been <strong>approved</strong> by our admin team.
+            </p>
+
+            <p style="font-size: 15px; color: #555;">
+                You now have full access to all features on <strong>MILA</strong>.
+            </p>
+
+            <p style="margin-top: 25px; font-size: 14px; color: #aaa;">
+                — MILA Team
+            </p>
+        </div>
+    </body>
+    </html>
+    """
+
+    return subject, body
+
+def verification_rejected_template(username: str):
+    subject = "Profile Verification Update ❌"
+
+    body = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; background-color: #f6f6f6; padding: 20px;">
+        <div style="max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 10px;">
+            <h2 style="color: #333;">Hi {username},</h2>
+
+            <p style="font-size: 15px; color: #555;">
+                Unfortunately, your profile verification was <strong>rejected</strong>.
+            </p>
+
+            <p style="font-size: 15px; color: #555;">
+                Please review your submitted details and reapply for verification.
+            </p>
+
+            <p style="margin-top: 25px; font-size: 14px; color: #aaa;">
+                — MILA Team
+            </p>
+        </div>
+    </body>
+    </html>
+    """
+
+    return subject, body

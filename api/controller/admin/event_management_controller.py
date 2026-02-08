@@ -24,7 +24,7 @@ async def create_contest(
             return response.error_message(
                 message=result["message"],
                 data=[],
-                status_code=result
+                status_code=result["status_code"]
             )
 
         return response.success_message(
