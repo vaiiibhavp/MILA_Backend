@@ -374,6 +374,17 @@ class UserManagementModel:
             "updated_at": suspended_from
         })
 
+        # ---------------- UPDATE USER LOGIN STATUS ----------------
+        await user_collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {
+                "$set": {
+                    "login_status": VerificationStatusEnum.SUSPENDED.value,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+
         # ---------------- UPDATE REPORT STATUS ----------------
         await reported_users_collection.update_many(
             {
@@ -461,6 +472,16 @@ class UserManagementModel:
             "created_at": now,
             "updated_at": now
         })
+        # ---------------- UPDATE USER LOGIN STATUS ----------------
+        await user_collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {
+                "$set": {
+                    "login_status": VerificationStatusEnum.BLOCKED.value,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
 
         # ---------------- UPDATE REPORT STATUS ----------------
         await reported_users_collection.update_many(
@@ -524,6 +545,18 @@ class UserManagementModel:
         "created_at": now,
         "updated_at": now
         })
+
+        # ---------------- UPDATE USER (FINAL STATE) ----------------
+        await user_collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {
+                "$set": {
+                    "is_deleted": True,
+                    "login_status": VerificationStatusEnum.DELETED.value,
+                    "updated_at": now
+                }
+            }
+        )
 
     # ---------------- UPDATE REPORT STATUS ----------------
         await reported_users_collection.update_many(
