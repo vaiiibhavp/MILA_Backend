@@ -2,7 +2,7 @@ from typing import Optional
 
 from bson import ObjectId
 
-from config.db_config import user_collection
+from config.db_config import user_collection, withdraw_token_transaction_collection
 from config.models.admin_withdrawal_request_model import list_withdrawal_requests, reject_withdrawal_request, \
     complete_withdrawal_request
 from core.utils.core_enums import NotificationRecipientType, NotificationType, TokenTransactionType, \
@@ -27,15 +27,9 @@ async def fetch_withdrawal_requests(
 ):
     try:
         data = await list_withdrawal_requests(search=search, pagination=pagination)
-        data = serialize_datetime_fields(data)
-        result = {
-            "result": data,
-            "page": pagination.page,
-            "page_size": pagination.page_size
-        }
         return response.success_message(
             translate_message(message="WITHDRAWAL_REQUESTS_FETCHED", lang=lang),
-            data=[result]
+            data=data
         )
     except Exception as e:
         return response.raise_exception(

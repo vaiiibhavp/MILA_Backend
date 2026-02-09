@@ -32,7 +32,7 @@ def build_paginated_response(
     page: int,
     page_size: int,
     total_records: int
-) -> list:
+) -> dict:
     """
     Build a standardized paginated response.
     """

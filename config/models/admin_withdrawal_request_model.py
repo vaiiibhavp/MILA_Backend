@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 
 from config.db_config import withdraw_token_transaction_collection
 from core.utils.core_enums import WithdrawalStatus
+from core.utils.helper import serialize_datetime_fields
+from core.utils.pagination import build_paginated_response
 from core.utils.response_mixin import CustomResponseMixin
 from core.utils.transaction_helper import get_transaction_details
 from schemas.transcation_schema import PaymentDetailsModel
@@ -106,16 +108,26 @@ async def list_withdrawal_requests(search: str, pagination):
         })
 
     # 🔹 Sort + pagination
-    pipeline.extend([
-        {"$sort": {"created_at": -1}},
-        {"$skip": pagination.skip},
-        {"$limit": pagination.limit}
-    ])
+    pipeline.append({
+        "$facet": {
+            "data": [
+                {"$sort": {"created_at": -1}},
+                {"$skip": pagination.skip},
+                {"$limit": pagination.limit}
+            ],
+            "total": [
+                {"$count": "count"}
+            ]
+        }
+    })
 
     cursor = withdraw_token_transaction_collection.aggregate(pipeline)
     docs = await cursor.to_list(length=pagination.limit)
+    data = docs[0].get("data", [])
+    total = docs[0].get("total", [])
+    total_records = total[0]["count"] if total else 0
     base_url = os.getenv("BASE_URL")
-    return [
+    items = [
         {
             "_id": str(doc["_id"]),
             "user_id": str(doc["user_id"]),
@@ -138,8 +150,15 @@ async def list_withdrawal_requests(search: str, pagination):
             "requested_at": doc["created_at"],
             "updated_at": doc["updated_at"]
         }
-        for doc in docs
+        for doc in data
     ]
+    items = serialize_datetime_fields(items)
+    return build_paginated_response(
+        records=items,
+        page=pagination.page,
+        page_size=pagination.page_size,
+        total_records=total_records
+    )
 
 async def reject_withdrawal_request(
     request_id: str,
