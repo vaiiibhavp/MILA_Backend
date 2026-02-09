@@ -64,6 +64,7 @@ class Settings(BaseSettings):
     PUBLIC_DIR: str
     UPLOAD_DIR: str
     DAILY_FREE_LIMIT:int
+    CONTEST_TOKEN_COST:int
     
     class ConfigDict:
         env_file = ".env"

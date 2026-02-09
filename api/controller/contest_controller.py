@@ -52,11 +52,22 @@ async def get_contest_details_controller(
 
     # Fetch active contest history
     contest_history = await fetch_active_contest_history(contest_id)
+
     if not contest_history:
-        return response.error_message(
-            translate_message("CONTEST_HISTORY_NOT_FOUND", lang),
-            status_code=404
+        contest_history = await fetch_latest_contest_history(contest_id)
+
+    if not contest_history:
+        # Contest exists but no cycle created yet
+        return response.success_message(
+            translate_message("CONTEST_NOT_STARTED_YET", lang),
+            data=[{
+                "contest_id": contest_id,
+                "title": contest["title"],
+                "visibility": "upcoming",
+                "cta": "coming_soon"
+            }]
         )
+
 
     contest_history_id = str(contest_history["_id"])
 
@@ -83,7 +94,6 @@ async def get_contest_details_controller(
         "title": contest["title"],
         "description": contest.get("description"),
 
-        "status": contest_history["status"],
         "visibility": contest_history["visibility"],
         "banner_url": banner_url,
 
@@ -95,7 +105,6 @@ async def get_contest_details_controller(
         },
 
         "prize_pool": {
-            "description": contest.get("prize_pool_description"),
             "distribution": contest.get("prize_distribution", [])
         },
 
@@ -106,7 +115,7 @@ async def get_contest_details_controller(
         },
 
         "judging_criteria": contest.get("judging_criteria", []),
-        "rules_and_conditions": contest.get("rules_and_conditions", []),
+        "rules_and_conditions": contest.get("rules", []),
 
         "current_standings": standings,
         "cta": cta
@@ -125,10 +134,17 @@ async def get_contest_participants_controller(
 ):
     contest_history = await fetch_active_contest_history(contest_id)
 
-    voting_active = (
-        contest_history
-        and contest_history["status"] == ContestStatus.voting_started
-    )
+    if not contest_history:
+        contest_history = await fetch_latest_contest_history(contest_id)
+
+    if not contest_history:
+        return response.error_message(
+            translate_message("CONTEST_HISTORY_NOT_FOUND", lang),
+            status_code=404
+        )
+
+    voting_active = is_within_voting_period(contest_history)
+
 
     viewer_id = str(current_user["_id"])
 
@@ -157,6 +173,7 @@ async def get_contest_participants_controller(
 
     participants = await fetch_contest_participants(
         contest_id=contest_id,
+        contest_history_id=str(contest_history["_id"]),
         skip=pagination.skip,
         limit=pagination.limit
     )
@@ -186,7 +203,7 @@ async def get_contest_participants_controller(
             can_vote = False
             vote_disabled_reason = "SELF_PARTICIPANT"
 
-        elif participant["_id"] in voted_participant_ids:
+        elif str(participant["_id"]) in voted_participant_ids:
             can_vote = False
             vote_disabled_reason = "ALREADY_VOTED"
 
@@ -240,12 +257,31 @@ async def participate_in_contest_controller(
 
     # Fetch active contest history
     contest_history = await fetch_active_contest_history(contest_id)
-    if not contest_history or str(contest_history["_id"]) != contest_history_id:
+    if not contest_history or contest_history["contest_id"] != contest_id:
         return response.error_message(
             translate_message("INVALID_CONTEST_HISTORY", lang),
             status_code=400
         )
 
+    if not await is_within_registration_period(contest_history):
+        now = datetime.utcnow()
+
+        if now < contest_history["registration_start"]:
+            return response.error_message(
+                translate_message("REGISTRATION_NOT_STARTED", lang),
+                data={
+                    "registration_starts_at": contest_history["registration_start"].isoformat()
+                },
+                status_code=403
+            )
+
+        return response.error_message(
+            translate_message("REGISTRATION_CLOSED", lang),
+            data={
+                "registration_ended_at": contest_history["registration_end"].isoformat()
+            },
+            status_code=403
+        )
     # Prevent duplicate participation
     if await is_user_already_participant(
         contest_id,
@@ -258,8 +294,17 @@ async def participate_in_contest_controller(
         )
 
     # Enforce image limit
+    images = clean_uploaded_images(images)
+
     images_allowed = contest.get("images_per_participant", 1)
-    if not images or len(images) != images_allowed:
+
+    if not images:
+        return response.error_message(
+            translate_message("IMAGE_REQUIRED", lang),
+            status_code=400
+        )
+
+    if len(images) != images_allowed:
         return response.error_message(
             translate_message("IMAGES_UPLOADING_LIMIT_EXCEEDED", lang),
             data={
@@ -270,7 +315,7 @@ async def participate_in_contest_controller(
         )
 
     # Token check using contest vote_cost
-    vote_cost = contest.get("vote_cost", 0)
+    vote_cost = settings.CONTEST_TOKEN_COST
     current_tokens = await get_user_token_balance(user_id)
 
     if current_tokens < vote_cost:
@@ -363,7 +408,8 @@ async def get_full_leaderboard_controller(
     pagination: StandardResultsSetPagination,
     lang: str
 ):
-    contest_history = await fetch_active_contest_history(contest_id)
+    contest_history = await fetch_latest_contest_history(contest_id)
+
     if not contest_history:
         return response.error_message(
             translate_message("CONTEST_HISTORY_NOT_FOUND", lang),
@@ -381,13 +427,8 @@ async def get_full_leaderboard_controller(
         .sort("total_votes", -1)
     )
 
-    # Apply pagination ONLY if provided
     if pagination.page and pagination.page_size:
-        cursor = (
-            cursor
-            .skip(pagination.skip)
-            .limit(pagination.page_size)
-        )
+        cursor = cursor.skip(pagination.skip).limit(pagination.page_size)
 
     total = await contest_participant_collection.count_documents(query)
 
@@ -420,6 +461,7 @@ async def get_full_leaderboard_controller(
         translate_message("LEADERBOARD_FETCHED_SUCCESSFULLY", lang),
         data=[{
             "contest_id": contest_id,
+            "contest_history_id": str(contest_history["_id"]),
             "pagination": (
                 {
                     "page": pagination.page,
@@ -448,10 +490,30 @@ async def cast_vote_controller(
     user_id = str(current_user["_id"])
 
     contest_history = await fetch_active_contest_history(contest_id)
-    if not contest_history or contest_history["status"] != ContestStatus.voting_started:
+    if not contest_history:
         return response.error_message(
             translate_message("CONTEST_NOT_ACTIVE", lang),
             status_code=400
+        )
+
+    now = datetime.utcnow()
+
+    if not await is_within_voting_period(contest_history):
+        if now < contest_history["voting_start"]:
+            return response.error_message(
+                translate_message("VOTING_NOT_STARTED", lang),
+                data={
+                    "voting_starts_at": contest_history["voting_start"].isoformat()
+                },
+                status_code=403
+            )
+
+        return response.error_message(
+            translate_message("VOTING_ENDED", lang),
+            data={
+                "voting_ended_at": contest_history["voting_end"].isoformat()
+            },
+            status_code=403
         )
 
     contest_history_id = str(contest_history["_id"])
