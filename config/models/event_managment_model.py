@@ -747,6 +747,15 @@ class ContestModel:
 
             update_data["launch_time"] = payload.launch_time.strip()
 
+        # ---------------- FINAL LAUNCH TIME ----------------
+        final_launch_time = (
+            payload.launch_time.strip()
+            if payload.launch_time is not None
+            else contest["launch_time"]
+        )
+
+        launch_hour, launch_minute = map(int, final_launch_time.split(":"))
+
         # ---------------- FREQUENCY ----------------
         if payload.frequency is not None:
             update_data["frequency"] = payload.frequency.value
@@ -812,6 +821,49 @@ class ContestModel:
                 "message": translate_message("INVALID_CONTEST_DATES", lang),
                 "status_code": 400
             }
+    
+        if new_start_date:
+            update_data["start_date"] = new_start_date
+
+        if new_end_date:
+            update_data["end_date"] = new_end_date
+
+        # ---------------- RECALCULATE DERIVED DATES ----------------
+        if payload.start_date or payload.end_date or payload.launch_time:
+            registration_until_dt = (
+                final_start_date + timedelta(days=3)
+            ).replace(
+                hour=launch_hour,
+                minute=launch_minute,
+                second=0,
+                microsecond=0
+            )
+
+            voting_date_dt = registration_until_dt
+
+            voting_until_dt = final_end_date.replace(
+                hour=launch_hour,
+                minute=launch_minute,
+                second=0,
+                microsecond=0
+            )
+
+            if registration_until_dt >= voting_until_dt:
+                return {
+                    "error": True,
+                    "message": translate_message(
+                        "REGISTRATION_ENDS_AFTER_CONTEST_END",
+                        lang
+                    ),
+                    "status_code": 400
+                }
+
+            update_data.update({
+                "registration_until": registration_until_dt,
+                "voting_date": voting_date_dt,
+                "voting_until": voting_until_dt
+            })
+
         existing_min = contest.get("min_participant")
         existing_max = contest.get("max_participant")
 
@@ -844,12 +896,6 @@ class ContestModel:
 
         if payload.max_participant is not None:
             update_data["max_participant"] = payload.max_participant
-        # Apply updates
-        if new_start_date:
-            update_data["start_date"] = new_start_date
-
-        if new_end_date:
-            update_data["end_date"] = new_end_date
 
         # ---------------- PRIZE VALIDATION ----------------
         if payload.prize_distribution:
