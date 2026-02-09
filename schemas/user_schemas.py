@@ -53,7 +53,7 @@ class ResendOTP(BaseModel):
 
 class LoginRequest(BaseModel):
     email: EmailField
-    password: PasswordField
+    password: str
     remember_me: bool = False
     
 class VerifyLoginOtpRequest(BaseModel):
