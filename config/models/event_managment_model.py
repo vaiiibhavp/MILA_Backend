@@ -163,10 +163,10 @@ class ContestModel:
 
         # ---------- PAST DATE VALIDATION ----------
         if start_date_dt < today:
-            return {"error": True, "message": translate_message("FEATURE_START_DATE_REQUIRED", lang), "status_code": 400}
+            return {"error": True, "message": translate_message("FUTURE_START_DATE_REQUIRED", lang), "status_code": 400}
 
         if end_date_dt < today:
-            return {"error": True, "message": translate_message("FEATURE_END_DATE_REQUIRED", lang), "status_code": 400}
+            return {"error": True, "message": translate_message("FUTURE_END_DATE_REQUIRED", lang), "status_code": 400}
 
         if registration_until_dt >= start_date_dt:
             return {
@@ -327,6 +327,7 @@ class ContestModel:
                 "end_date": contest_doc["end_date"]
             })
         }
+
     # ============================================================
     # UPLOAD CONTEST BANNER
     # ============================================================
