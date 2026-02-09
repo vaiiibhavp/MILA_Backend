@@ -9,6 +9,7 @@ from config.db_config import contest_collection
 from core.utils.pagination import pagination_params, StandardResultsSetPagination
 from api.controller.files_controller import *
 from schemas.contest_schema import *
+from core.utils.helper import *
 
 class ContestModel(BaseModel):
 
@@ -134,17 +135,19 @@ async def get_contests_paginated(
     contest_type: ContestType,
     pagination: StandardResultsSetPagination
 ):
-    visibility_filter = CONTEST_TYPE_VISIBILITY_MAP[contest_type]
+    now = datetime.utcnow()
 
-    if isinstance(visibility_filter, list):
+    if contest_type == ContestType.active:
         query = {
             "is_active": True,
-            "visibility": {"$in": visibility_filter}
+            "is_deleted": {"$ne": True},
+            "end_date": {"$gte": now}
         }
     else:
         query = {
             "is_active": True,
-            "visibility": visibility_filter
+            "is_deleted": {"$ne": True},
+            "end_date": {"$lt": now}
         }
 
     total = await contest_collection.count_documents(query)
@@ -163,18 +166,25 @@ async def get_contests_paginated(
     async for contest in cursor:
         banner_url = await resolve_banner_url(contest.get("banner_file_id"))
 
+        prize_distribution = contest.get("prize_distribution", {})
+        prize_pool_total = (
+            prize_distribution.get("first_place", 0)
+            + prize_distribution.get("second_place", 0)
+            + prize_distribution.get("third_place", 0)
+        )
         card = ContestCardResponse(
             contest_id=str(contest["_id"]),
             title=contest["title"],
             banner_url=banner_url,
-            status=contest["status"],
-            visibility=contest["visibility"],
-            registration_end=contest["registration_end"],
-            voting_end=contest["voting_end"],
+            visibility = calculate_visibility(
+                contest["start_date"],
+                contest["end_date"]
+            ),
             total_participants=contest.get("total_participants", 0),
             total_votes=contest.get("total_votes", 0),
-            prize_pool_description=contest.get("prize_pool_description"),
-            voting_start=contest.get("voting_start")
+            prize_distribution=prize_pool_total,
+            registration_until=contest.get("registration_until"),
+            voting_starts=contest.get("voting_starts")
         )
 
         results.append(card.dict())

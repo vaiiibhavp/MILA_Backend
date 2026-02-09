@@ -171,7 +171,9 @@ async def finalize_login_response(user: dict, lang: str):
             "access_token": access_token,
             "refresh_token": refresh_token,
             "onboarding_completed": onboarding_completed,
-            "two_factor_enabled": user.get("two_factor_enabled", False)
+            "two_factor_enabled": user.get("two_factor_enabled", False),
+            "user_id": str(user.get("_id")),
+            "username": user.get("username")
         }],
         status_code=200
     )
