@@ -53,9 +53,23 @@ class ResendOTP(BaseModel):
 
 class LoginRequest(BaseModel):
     email: EmailField
-    password: PasswordField
+    password: str
     remember_me: bool = False
-    
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def trim_email(cls, v: str):
+        if not v or not v.strip():
+            raise ValueError("Email is required.")
+        return v.strip().lower()
+
+    @field_validator("password", mode="before")
+    @classmethod
+    def validate_password(cls, v: str):
+        if not v or not v.strip():
+            raise ValueError("Password is required.")
+        return v.strip()
+        
 class VerifyLoginOtpRequest(BaseModel):
     email: EmailField
     otp: Otp4Field
