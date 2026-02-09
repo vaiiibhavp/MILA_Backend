@@ -276,8 +276,8 @@ class ContestModel:
             "launch_time": payload.launch_time.strip(),
 
             "registration_until": registration_until_dt,
-            "voting_date": voting_date_dt,
-            "voting_until": voting_until_dt,
+            "voting_start": voting_date_dt,
+            "voting_end": voting_until_dt,
 
             "frequency": payload.frequency.value if payload.frequency else None,
 
@@ -456,8 +456,8 @@ class ContestModel:
                 "total_votes": 1,
                 "min_participant":1,
                 "registration_until":1,
-                "voting_date":1,
-                "voting_until":1
+                "voting_start":1,
+                "voting_end":1
             }
         })
 
@@ -564,8 +564,8 @@ class ContestModel:
             "launch_time": contest.get("launch_time"),
             "frequency": contest.get("frequency"),
             "registration_until":contest.get("registration_until"),
-            "voting_date":contest.get("voting_date"),
-            "voting_until":contest.get("voting_until"),
+            "voting_start":contest.get("voting_start"),
+            "voting_end":contest.get("voting_end"),
 
             # Rewards
             "prize_distribution": contest.get("prize_distribution"),
