@@ -236,6 +236,31 @@ class ContestModel:
                 "message": translate_message("MIN_PARTICIPANT_GREATER_THAN_MAX", lang),
                 "status_code": 400
             }
+
+        # ---------------- DERIVED CONTEST TIMELINES ----------------
+        launch_hour, launch_minute = map(int, payload.launch_time.split(":"))
+
+        # Registration ends at (start_date + 3 days) AT launch time
+        registration_until_dt = (
+            start_date_dt + timedelta(days=3)
+        ).replace(
+            hour=launch_hour,
+            minute=launch_minute,
+            second=0,
+            microsecond=0
+        )
+
+        # Voting starts exactly when registration ends
+        voting_date_dt = registration_until_dt
+
+        # Voting ends on contest end date at launch time
+        voting_until_dt = end_date_dt.replace(
+            hour=launch_hour,
+            minute=launch_minute,
+            second=0,
+            microsecond=0
+        )
+    
         # ---------------- CREATE CONTEST ----------------
         now = datetime.utcnow()
 
@@ -249,6 +274,10 @@ class ContestModel:
             "start_date": payload.start_date,
             "end_date": payload.end_date,
             "launch_time": payload.launch_time.strip(),
+
+            "registration_until": registration_until_dt,
+            "voting_date": voting_date_dt,
+            "voting_until": voting_until_dt,
 
             "frequency": payload.frequency.value if payload.frequency else None,
 
@@ -425,7 +454,10 @@ class ContestModel:
                 "frequency": 1,
                 "total_participants": 1,
                 "total_votes": 1,
-                "min_participant":1
+                "min_participant":1,
+                "registration_until":1,
+                "voting_date":1,
+                "voting_until":1
             }
         })
 
@@ -439,12 +471,6 @@ class ContestModel:
                 contest["end_date"]
             )
 
-            # -------- NEW DERIVED DATES (FIXED) --------
-            registration_until = contest["start_date"] + timedelta(days=3)
-
-            contest["registration_until"] = registration_until
-            contest["voting_date"] = registration_until
-            contest["voting_until"] = contest["end_date"]
 
         # ---------------- TOTAL COUNT ----------------
         total_count = len(contests)
@@ -513,13 +539,6 @@ class ContestModel:
             contest["end_date"]
         )
 
-        # -------- NEW DERIVED DATES (FIXED) --------
-        registration_until = contest["start_date"] + timedelta(days=3)
-
-        contest["registration_until"] = registration_until
-        voting_date = registration_until
-        voting_until = contest["end_date"]
-
         # ---------------- RESPONSE STRUCTURE ----------------
         result = {
             "contest_id": str(contest["_id"]),
@@ -544,9 +563,9 @@ class ContestModel:
             "end_date": contest.get("end_date"),
             "launch_time": contest.get("launch_time"),
             "frequency": contest.get("frequency"),
-            "registration_until":registration_until,
-            "voting_date":voting_date,
-            "voting_until":voting_until,
+            "registration_until":contest.get("registration_until"),
+            "voting_date":contest.get("voting_date"),
+            "voting_until":contest.get("voting_until"),
 
             # Rewards
             "prize_distribution": contest.get("prize_distribution"),
