@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime,timedelta
 from bson import ObjectId
 import re
 from bson.errors import InvalidId
@@ -141,9 +141,6 @@ class ContestModel:
 
         start_date_dt = parse_date_format(payload.start_date)
         end_date_dt = parse_date_format(payload.end_date)
-        registration_until_dt = parse_date_format(payload.registration_until)
-        voting_starts_dt = parse_date_format(payload.voting_starts)
-        voting_ends_dt = parse_date_format(payload.voting_ends)
 
         # ---------- FORMAT VALIDATION ----------
         if not start_date_dt:
@@ -152,15 +149,6 @@ class ContestModel:
         if not end_date_dt:
             return {"error": True, "message": translate_message("INVALID_END_DATE_FORMAT", lang), "status_code": 400}
 
-        if not registration_until_dt:
-            return {"error": True, "message": translate_message("INVALID_REGISTRATION_UNTIL_DATE_FORMAT", lang), "status_code": 400}
-
-        if not voting_starts_dt:
-            return {"error": True, "message": translate_message("INVALID_VOTING_START_DATE_FORMAT", lang), "status_code": 400}
-
-        if not voting_ends_dt:
-            return {"error": True, "message": translate_message("INVALID_VOTING_END_DATE_FORMAT", lang), "status_code": 400}
-
         # ---------- PAST DATE VALIDATION ----------
         if start_date_dt < today:
             return {"error": True, "message": translate_message("FUTURE_START_DATE_REQUIRED", lang), "status_code": 400}
@@ -168,28 +156,6 @@ class ContestModel:
         if end_date_dt < today:
             return {"error": True, "message": translate_message("FUTURE_END_DATE_REQUIRED", lang), "status_code": 400}
 
-        if registration_until_dt >= start_date_dt:
-            return {
-                "error": True,
-                "message": translate_message("INVALID_REGISTRATION_UNTIL_DATE", lang),
-                "status_code": 400
-            }
-
-        # Voting must start exactly when contest starts
-        if voting_starts_dt != start_date_dt:
-            return {
-                "error": True,
-                "message": translate_message("INVALID_VOTING_START_DATE", lang),
-                "status_code": 400
-            }
-
-        # Voting must end exactly when contest ends
-        if voting_ends_dt != end_date_dt:
-            return {
-                "error": True,
-                "message": translate_message("INVALID_VOTING_END_DATE", lang),
-                "status_code": 400
-            }
 
         # Contest must have a valid duration
         if start_date_dt >= end_date_dt:
@@ -275,6 +241,7 @@ class ContestModel:
 
         contest_doc = {
             "title": payload.title.strip(),
+            "badge": badge,
             "banner_image_id": payload.banner_image_id.strip(),
             "description": payload.description.strip(),
             "rules": [r.strip() for r in payload.rules],
@@ -291,6 +258,7 @@ class ContestModel:
                 "third_place": prizes.third_place
             },
 
+            "max_votes_per_user":payload.max_votes_per_user,
             "cost_per_vote": payload.cost_per_vote,
             "min_participant": payload.min_participant,
             "max_participant": payload.max_participant,
@@ -302,9 +270,6 @@ class ContestModel:
             "total_participants": 0,
             "total_votes": 0,
 
-            "registration_until": registration_until_dt,
-            "voting_starts": voting_starts_dt,
-            "voting_ends": voting_ends_dt,
             "start_date": start_date_dt,
             "end_date": end_date_dt,
             "judging_criteria": payload.judging_criteria or [],
@@ -453,12 +418,14 @@ class ContestModel:
                 "_id": 0,
                 "contest_id": {"$toString": "$_id"},
                 "title": 1,
+                "badge":1,
                 "start_date": 1,
                 "end_date": 1,
                 "launch_time": 1,
                 "frequency": 1,
                 "total_participants": 1,
-                "total_votes": 1
+                "total_votes": 1,
+                "min_participant":1
             }
         })
 
@@ -466,17 +433,18 @@ class ContestModel:
 
         # ---------------- ADD DYNAMIC VISIBILITY ----------------
         for contest in contests:
+            # existing visibility logic
             contest["visibility"] = calculate_visibility(
                 contest["start_date"],
                 contest["end_date"]
             )
 
-        # ---------------- STATUS FILTER (POST COMPUTE) ----------------
-        if visibility:
-            contests = [
-                c for c in contests
-                if c["visibility"] == visibility.value
-            ]
+            # -------- NEW DERIVED DATES (FIXED) --------
+            registration_until = contest["start_date"] + timedelta(days=3)
+
+            contest["registration_until"] = registration_until
+            contest["voting_date"] = registration_until
+            contest["voting_until"] = contest["end_date"]
 
         # ---------------- TOTAL COUNT ----------------
         total_count = len(contests)
@@ -545,10 +513,18 @@ class ContestModel:
             contest["end_date"]
         )
 
+        # -------- NEW DERIVED DATES (FIXED) --------
+        registration_until = contest["start_date"] + timedelta(days=3)
+
+        contest["registration_until"] = registration_until
+        voting_date = registration_until
+        voting_until = contest["end_date"]
+
         # ---------------- RESPONSE STRUCTURE ----------------
         result = {
             "contest_id": str(contest["_id"]),
             "title": contest.get("title"),
+            "badge":contest.get("badge"),
             "visibility": visibility,
 
             "banner_image": banner,
@@ -568,13 +544,18 @@ class ContestModel:
             "end_date": contest.get("end_date"),
             "launch_time": contest.get("launch_time"),
             "frequency": contest.get("frequency"),
+            "registration_until":registration_until,
+            "voting_date":voting_date,
+            "voting_until":voting_until,
 
             # Rewards
             "prize_distribution": contest.get("prize_distribution"),
 
             # Settings
-            "participant_limit": contest.get("participant_limit"),
-            "max_votes_per_user": contest.get("max_votes_per_user")
+            "max_participants": contest.get("max_participant"),
+            "cost_per_vote": contest.get("cost_per_vote"),
+            "max_votes_per_user":contest.get("max_votes_per_user"),
+            "min_participant":contest.get("min_participant")
         }
 
         return {
@@ -795,79 +776,6 @@ class ContestModel:
                 "message": translate_message("FEATURE_END_DATE_REQUIRED", lang),
                 "status_code": 400
             }
-
-        existing_registration_until = contest.get("registration_until")
-        existing_voting_starts = contest.get("voting_starts")
-        existing_voting_ends = contest.get("voting_ends")
-
-        new_registration_until = (
-            parse_date_format(payload.registration_until)
-            if payload.registration_until else existing_registration_until
-        )
-
-        new_voting_starts = (
-            parse_date_format(payload.voting_starts)
-            if payload.voting_starts else existing_voting_starts
-        )
-
-        new_voting_ends = (
-            parse_date_format(payload.voting_ends)
-            if payload.voting_ends else existing_voting_ends
-        )
-
-        # -------- FORMAT VALIDATION --------
-        if payload.registration_until and not new_registration_until:
-            return {
-                "error": True,
-                "message": translate_message("INVALID_REGISTRATION_UNTIL_DATE_FORMAT", lang),
-                "status_code": 400
-            }
-
-        if payload.voting_starts and not new_voting_starts:
-            return {
-                "error": True,
-                "message": translate_message("INVALID_VOTING_START_DATE_FORMAT", lang),
-                "status_code": 400
-            }
-
-        if payload.voting_ends and not new_voting_ends:
-            return {
-                "error": True,
-                "message": translate_message("INVALID_VOTING_END_DATE_FORMAT", lang),
-                "status_code": 400
-            }
-
-        # -------- FLOW VALIDATION --------
-        if new_registration_until >= final_start_date:
-            return {
-                "error": True,
-                "message": translate_message("INVALID_REGISTRATION_UNTIL_DATE", lang),
-                "status_code": 400
-            }
-
-        if new_voting_starts != final_start_date:
-            return {
-                "error": True,
-                "message": translate_message("INVALID_VOTING_START_DATE", lang),
-                "status_code": 400
-            }
-
-        if new_voting_ends != final_end_date:
-            return {
-                "error": True,
-                "message": translate_message("INVALID_VOTING_END_DATE", lang),
-                "status_code": 400
-            }
-
-        # -------- APPLY UPDATES --------
-        if payload.registration_until:
-            update_data["registration_until"] = new_registration_until
-
-        if payload.voting_starts:
-            update_data["voting_starts"] = new_voting_starts
-
-        if payload.voting_ends:
-            update_data["voting_ends"] = new_voting_ends
 
         if payload.judging_criteria is not None:
             if not payload.judging_criteria or any(not c.strip() for c in payload.judging_criteria):

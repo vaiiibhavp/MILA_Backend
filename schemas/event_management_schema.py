@@ -26,9 +26,6 @@ class ContestCreateSchema(BaseModel):
 
     description: str
 
-    registration_until : str
-    voting_starts: str
-    voting_ends: str
     rules: List[str] = None
 
     start_date: str
@@ -57,9 +54,6 @@ class ContestUpdateSchema(BaseModel):
     description: Optional[str] = None
     rules: Optional[List[str]] = None
 
-    registration_until: Optional[str] = None
-    voting_starts: Optional[str] = None
-    voting_ends: Optional[str] = None
 
     start_date: Optional[str] = None
     end_date: Optional[str] = None
