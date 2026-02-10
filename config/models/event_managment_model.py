@@ -2,7 +2,7 @@ from datetime import datetime,timedelta
 from bson import ObjectId
 import re
 from bson.errors import InvalidId
-from config.db_config import contest_collection, file_collection , contest_participant_collection
+from config.db_config import contest_collection, file_collection , contest_participant_collection,contest_history_collection
 from core.utils.helper import serialize_datetime_fields
 from api.controller.files_controller import save_file
 from api.controller.files_controller import generate_file_url
@@ -10,7 +10,7 @@ from config.models.user_models import Files
 from config.basic_config import settings
 from services.translation import translate_message
 from core.utils.helper import calculate_visibility , parse_date_format
-
+from core.utils.core_enums import ContestVisibility
 
 class ContestModel:
 
@@ -311,6 +311,36 @@ class ContestModel:
         }
 
         result = await contest_collection.insert_one(contest_doc)
+
+        # ---------------- CREATE CONTEST HISTORY ----------------
+        contest_history_doc = {
+            "contest_id": str(result.inserted_id),
+
+            "status": "active",  # <-- plain string, no enum
+            "visibility": calculate_visibility(
+                contest_doc["start_date"],
+                contest_doc["end_date"]
+            ),
+
+            "registration_start": contest_doc["start_date"],
+            "registration_end": contest_doc["registration_until"],
+
+            "voting_start": contest_doc["voting_start"],
+            "voting_end": contest_doc["voting_end"],
+
+            "cycle_key": contest_doc["start_date"].strftime("%Y-%m"),
+            "cycle_type": "monthly",
+
+            "total_participants": 0,
+            "total_votes": 0,
+
+            "is_active": True,
+
+            "created_at": now,
+            "updated_at": now
+        }
+
+        await contest_history_collection.insert_one(contest_history_doc)
 
         return {
             "error": False,
@@ -860,7 +890,7 @@ class ContestModel:
 
             update_data.update({
                 "registration_until": registration_until_dt,
-                "voting_date": voting_date_dt,
+                "voting_start": voting_date_dt,
                 "voting_until": voting_until_dt
             })
 
