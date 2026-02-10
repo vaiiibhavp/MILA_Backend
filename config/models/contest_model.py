@@ -157,19 +157,39 @@ async def fetch_latest_contest_history(contest_id: str):
         sort=[("created_at", -1)]
     )
 
+def calculate_visibility_from_history(history: dict) -> ContestVisibility:
+    now = datetime.utcnow()
+
+    reg_start = history.get("registration_start")
+    reg_end = history.get("registration_end")
+    vote_end = history.get("voting_end")
+
+    if not reg_start or not reg_end or not vote_end:
+        return ContestVisibility.upcoming  # safe default
+
+    if now < reg_start:
+        return ContestVisibility.upcoming
+
+    if reg_start <= now <= vote_end:
+        return ContestVisibility.in_progress
+
+    return ContestVisibility.completed
+
 async def get_contests_paginated(
     contest_type: ContestType,
     pagination: StandardResultsSetPagination
 ):
+    now = datetime.utcnow()
+
     if contest_type == ContestType.active:
         history_query = {
             "is_active": True,
-            "visibility": {"$in": ["upcoming", "in_progress"]}
+            "voting_end": {"$gte": now}
         }
     else:
         history_query = {
             "is_active": True,
-            "visibility": "completed"
+            "voting_end": {"$lt": now}
         }
 
     total = await contest_history_collection.count_documents(history_query)
@@ -182,18 +202,16 @@ async def get_contests_paginated(
 
     if pagination.limit:
         cursor = cursor.skip(pagination.skip).limit(pagination.limit)
-        
+
     results = []
 
     async for history in cursor:
-        # Fetch contest (template)
         contest = await contest_collection.find_one({
             "_id": ObjectId(history["contest_id"]),
             "is_deleted": {"$ne": True}
         })
-
         if not contest:
-            continue  # safety
+            continue
 
         banner_url = await resolve_banner_url(contest.get("banner_image_id"))
 
@@ -203,11 +221,14 @@ async def get_contests_paginated(
             + prize_distribution.get("second_place", 0)
             + prize_distribution.get("third_place", 0)
         )
+
+        visibility = calculate_visibility_from_history(history)
+
         card = ContestCardResponse(
             contest_id=history["contest_id"],
             title=contest["title"],
             banner_url=banner_url,
-            visibility=history["visibility"],
+            visibility=visibility,
             total_participants=history.get("total_participants", 0),
             total_votes=history.get("total_votes", 0),
             prize_distribution=prize_pool_total,
