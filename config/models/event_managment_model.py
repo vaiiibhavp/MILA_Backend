@@ -317,7 +317,10 @@ class ContestModel:
             "contest_id": str(result.inserted_id),
 
             "status": "active",  # <-- plain string, no enum
-            "visibility": ContestVisibility.upcoming.value,
+            "visibility": calculate_visibility(
+                contest_doc["start_date"],
+                contest_doc["end_date"]
+            ),
 
             "registration_start": contest_doc["start_date"],
             "registration_end": contest_doc["registration_until"],
