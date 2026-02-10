@@ -88,6 +88,9 @@ async def get_contest_details_controller(
         )
     )
 
+    registration_started = await is_within_registration_period(contest_history)
+    voting_started = await is_within_voting_period(contest_history)
+
     # Build response payload
     raw_data = {
         "contest_id": contest_id,
@@ -104,6 +107,9 @@ async def get_contest_details_controller(
             "voting_end": contest_history["voting_end"]
         },
 
+        "registration_started": registration_started,
+        "voting_started": voting_started,
+        
         "prize_pool": {
             "distribution": contest.get("prize_distribution", [])
         },
@@ -116,7 +122,7 @@ async def get_contest_details_controller(
 
         "judging_criteria": contest.get("judging_criteria", []),
         "rules_and_conditions": contest.get("rules", []),
-
+        "allowed_photos_per_participant": contest.get("photos_per_participant"),
         "current_standings": standings,
         "cta": cta
     }
