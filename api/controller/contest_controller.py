@@ -97,7 +97,6 @@ async def get_contest_details_controller(
         "title": contest["title"],
         "description": contest.get("description"),
 
-        "visibility": contest_history["visibility"],
         "banner_url": banner_url,
 
         "important_dates": {
@@ -577,7 +576,7 @@ async def cast_vote_controller(
         return response.error_message(
             translate_message("INSUFFICIENT_TOKENS", lang),
             data={
-                "required": contest["vote_cost"],
+                "required": contest["cost_per_vote"],
                 "available": balance_before
             },
             status_code=400
