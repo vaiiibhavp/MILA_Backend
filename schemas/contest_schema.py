@@ -12,7 +12,7 @@ class ContestCardResponse(BaseModel):
     total_votes: int
     prize_distribution: Optional[int] = None
     registration_until: Optional[datetime] = None
-    voting_starts: Optional[datetime] = None
+    voting_ends: Optional[datetime] = None
 
 class PrizeItem(BaseModel):
     position: int        # 1, 2, 3

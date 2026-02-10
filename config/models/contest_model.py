@@ -58,7 +58,7 @@ class ContestHistoryModel(BaseModel):
     voting_start: datetime
     voting_end: datetime
 
-    cycle_key: str  # "2026-W06", "2026-02", "2026-Q1"
+    cycle_key: Optional[str] = None  # "2026-W06", "2026-02", "2026-Q1"
     cycle_type: Optional[str] = None  # weekly / monthly / yearly
 
     total_participants: int = 0
@@ -130,41 +130,72 @@ async def fetch_past_contests():
         }
     ).sort("created_at", -1)
 
+async def is_within_registration_period(contest: dict) -> bool:
+    now = datetime.utcnow()
+
+    start_date = contest.get("registration_start")
+    registration_until = contest.get("registration_end")
+
+    if not start_date or not registration_until:
+        return False
+
+    return start_date <= now <= registration_until
+
+async def is_within_voting_period(contest_history) -> bool:
+    now = datetime.utcnow()
+    voting_starts = contest_history.get("voting_start")
+    voting_ends = contest_history.get("voting_end")
+
+    if not voting_starts or not voting_ends:
+        return False
+
+    return voting_starts <= now <= voting_ends
+
+async def fetch_latest_contest_history(contest_id: str):
+    return await contest_history_collection.find_one(
+        {"contest_id": contest_id},
+        sort=[("created_at", -1)]
+    )
 
 async def get_contests_paginated(
     contest_type: ContestType,
     pagination: StandardResultsSetPagination
 ):
-    now = datetime.utcnow()
-
     if contest_type == ContestType.active:
-        query = {
+        history_query = {
             "is_active": True,
-            "is_deleted": {"$ne": True},
-            "end_date": {"$gte": now}
+            "visibility": {"$in": ["upcoming", "in_progress"]}
         }
     else:
-        query = {
+        history_query = {
             "is_active": True,
-            "is_deleted": {"$ne": True},
-            "end_date": {"$lt": now}
+            "visibility": "completed"
         }
 
-    total = await contest_collection.count_documents(query)
+    total = await contest_history_collection.count_documents(history_query)
 
     cursor = (
-        contest_collection
-        .find(query)
+        contest_history_collection
+        .find(history_query)
         .sort("created_at", -1)
     )
 
-    if pagination.limit is not None:
+    if pagination.limit:
         cursor = cursor.skip(pagination.skip).limit(pagination.limit)
         
     results = []
 
-    async for contest in cursor:
-        banner_url = await resolve_banner_url(contest.get("banner_file_id"))
+    async for history in cursor:
+        # Fetch contest (template)
+        contest = await contest_collection.find_one({
+            "_id": ObjectId(history["contest_id"]),
+            "is_deleted": {"$ne": True}
+        })
+
+        if not contest:
+            continue  # safety
+
+        banner_url = await resolve_banner_url(contest.get("banner_image_id"))
 
         prize_distribution = contest.get("prize_distribution", {})
         prize_pool_total = (
@@ -173,18 +204,15 @@ async def get_contests_paginated(
             + prize_distribution.get("third_place", 0)
         )
         card = ContestCardResponse(
-            contest_id=str(contest["_id"]),
+            contest_id=history["contest_id"],
             title=contest["title"],
             banner_url=banner_url,
-            visibility = calculate_visibility(
-                contest["start_date"],
-                contest["end_date"]
-            ),
-            total_participants=contest.get("total_participants", 0),
-            total_votes=contest.get("total_votes", 0),
+            visibility=history["visibility"],
+            total_participants=history.get("total_participants", 0),
+            total_votes=history.get("total_votes", 0),
             prize_distribution=prize_pool_total,
-            registration_until=contest.get("registration_until"),
-            voting_starts=contest.get("voting_starts")
+            registration_until=history.get("registration_end"),
+            voting_ends=history.get("voting_end")
         )
 
         results.append(card.dict())
@@ -347,12 +375,14 @@ async def get_leaderboard(
 
 async def fetch_contest_participants(
     contest_id: str,
+    contest_history_id: str,
     skip: int = 0,
     limit: Optional[int] = None
 ):
     cursor = contest_participant_collection.find(
         {
             "contest_id": contest_id,
+            "contest_history_id": contest_history_id,
             "is_deleted": {"$ne": True}
         }
     )
@@ -396,6 +426,14 @@ def resolve_badge(rank: int | None):
     if rank == 3:
         return {"type": "bronze", "label": "Top 3"}
     return None
+
+def clean_uploaded_images(images: List[UploadFile]) -> List[UploadFile]:
+    return [
+        img for img in images
+        if img
+        and img.filename
+        and "." in img.filename
+    ]
 
 async def get_participant_by_user(
     contest_id: str,
