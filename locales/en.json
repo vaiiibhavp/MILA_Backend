@@ -368,7 +368,7 @@
   "USER_SUSPENDED_SUCCESSFULLY":"User suspended successfully",
   "USER_ALREADY_SUSPENDED":"User already suspended",
   "FAILED_TO_SUSPEND_USER":"Failed to suspend user",
-  "EMAIL_CANNOT_BE_REUSED":"This email is linked to a deleted account. Please contact support.",
+  "EMAIL_CANNOT_BE_REUSED":"This account has been deleted and can no longer be accessed.",
   "ACCOUNT_ALREADY_DELETED":"Account already deleted",
   "ACCOUNT_DELETED_SUCCESSFULLY":"Account deleted successfully",
   "FAILED_TO_DELETE_ACCOUNT":"Failed to delete account",

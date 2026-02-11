@@ -376,7 +376,7 @@
   "USER_SUSPENDED_SUCCESSFULLY": "Utilisateur suspendu avec succès",
   "USER_ALREADY_SUSPENDED": "Utilisateur déjà suspendu",
   "FAILED_TO_SUSPEND_USER": "Échec de la suspension de l’utilisateur",
-  "EMAIL_CANNOT_BE_REUSED": "Cette adresse e-mail est liée à un compte supprimé. Veuillez contacter le support.",
+  "EMAIL_CANNOT_BE_REUSED": "Ce compte a été supprimé et n’est plus accessible.",
   "ACCOUNT_ALREADY_DELETED": "Compte déjà supprimé",
   "FAILED_TO_DELETE_ACCOUNT": "Échec de la suppression du compte",
   "FAILED_TO_BLOCK_USER": "Échec du blocage de l’utilisateur",

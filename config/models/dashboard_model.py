@@ -1,4 +1,5 @@
 from pymongo.errors import PyMongoError
+from bson import ObjectId
 from datetime import datetime
 from config.db_config import (
     user_collection,
@@ -6,7 +7,8 @@ from config.db_config import (
     transaction_collection,
     onboarding_collection,
     contest_collection,
-    withdraw_token_transaction_collection
+    withdraw_token_transaction_collection,
+    deleted_account_collection
 )
 from core.utils.filer_date import get_date_filter
 
@@ -20,23 +22,32 @@ class DashboardModel:
             date_range = {"$gte": start_date, "$lte": end_date}
             now = datetime.utcnow()
 
+            # ---------------- EXCLUDE DELETED USERS ----------------
+            deleted_users = await deleted_account_collection.distinct("user_id")
+
+            deleted_users = [ObjectId(uid) for uid in deleted_users]
+
             # ---------------- USERS ----------------
             total_users = await user_collection.count_documents({
-                "created_at": date_range
+                "created_at": date_range,
+                "_id": {"$nin": deleted_users}
             })
 
             verified_users = await user_collection.count_documents({
                 "is_verified": True,
-                "updated_at": date_range
+                "updated_at": date_range,
+                "_id": {"$nin": deleted_users}
             })
 
             active_users = await user_collection.count_documents({
                 "login_status": "active",
-                "last_login_at": date_range
+                "last_login_at": date_range,
+                "_id": {"$nin": deleted_users}
             })
 
             new_users = await user_collection.count_documents({
-                "created_at": date_range
+                "created_at": date_range,
+                "_id": {"$nin": deleted_users}
             })
 
             # ---------------- ACTIVE SUBSCRIPTIONS----------------
@@ -93,6 +104,34 @@ class DashboardModel:
             ).to_list(1)
 
             total_revenue = round(revenue_result[0]["total"], 2) if revenue_result else 0
+
+            # ---------------- TOTAL WITHDRAWAL AMOUNT (SUCCESS ONLY) ----------------
+            withdraw_pipeline = [
+                {
+                    "$match": {
+                        "status": "completed",   # only success
+                        "updated_at": date_range
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": None,
+                        "total_withdraw": {"$sum": "$paid_amount"}
+                    }
+                }
+            ]
+
+            withdraw_result = await withdraw_token_transaction_collection.aggregate(
+                withdraw_pipeline
+            ).to_list(1)
+
+            total_withdraw_amount = (
+                round(withdraw_result[0]["total_withdraw"], 2)
+                if withdraw_result else 0
+            )
+
+            # Deduct withdrawal from revenue
+            total_revenue = round(total_revenue - total_withdraw_amount, 2)
 
             # ---------------- MONTHLY REVENUE SUMMARY ----------------
             monthly_revenue_pipeline = [

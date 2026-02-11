@@ -1,4 +1,5 @@
 from datetime import datetime, date
+import asyncio
 from enum import Enum
 from typing import Dict, Any, List, Optional
 
@@ -807,10 +808,14 @@ async def upload_onboarding_images(
     try:
         lang = current_user.get("language", "en")
         user_id = str(current_user["_id"])
-
+        file_type = "profile_photo"
         uploaded_files = []
 
-        for file in images:
+        for index, file in enumerate(images):
+            await file.seek(0)
+            if index != 0:
+                await asyncio.sleep(1)
+
             public_url, storage_key, backend = await save_file(
                 file_obj=file,
                 file_name=file.filename,
@@ -839,8 +844,8 @@ async def upload_onboarding_images(
             )
 
         return response.success_message(
-            translate_message("FILE_UPLOADED_SUCCESS", lang),
-            data=[uploaded_files],
+            translate_message("FILE_UPLOADED_SUCCESS", lang).format(file_type=file_type),
+            data=uploaded_files,
             status_code=200
         )
 
