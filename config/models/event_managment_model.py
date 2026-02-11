@@ -324,7 +324,7 @@ class ContestModel:
             "voting_end": contest_doc["voting_end"],
 
             "cycle_key": contest_doc["start_date"].strftime("%Y-%m"),
-            "cycle_type": "monthly",
+            "cycle_type": contest_doc["frequency"],
 
             "total_participants": 0,
             "total_votes": 0,
