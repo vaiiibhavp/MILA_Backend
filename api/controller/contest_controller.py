@@ -94,6 +94,7 @@ async def get_contest_details_controller(
     # Build response payload
     raw_data = {
         "contest_id": contest_id,
+        "contest_history_id": contest_history_id,
         "title": contest["title"],
         "description": contest.get("description"),
 
@@ -301,7 +302,7 @@ async def participate_in_contest_controller(
     # Enforce image limit
     images = clean_uploaded_images(images)
 
-    images_allowed = contest.get("images_per_participant", 1)
+    images_allowed = contest.get("photos_per_participant", 1)
 
     if not images:
         return response.error_message(

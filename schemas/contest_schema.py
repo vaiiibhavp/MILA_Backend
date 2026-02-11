@@ -5,6 +5,7 @@ from typing import Optional, List
 
 class ContestCardResponse(BaseModel):
     contest_id: str
+    contest_history_id: str
     title: str
     banner_url: Optional[str] = None
     visibility: ContestVisibility
