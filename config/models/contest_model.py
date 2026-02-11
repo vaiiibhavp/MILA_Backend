@@ -229,6 +229,7 @@ async def get_contests_paginated(
 
         card = ContestCardResponse(
             contest_id=history["contest_id"],
+            contest_history_id=str(history["_id"]),
             title=contest["title"],
             banner_url=banner_url,
             visibility=visibility,
@@ -303,10 +304,17 @@ async def is_user_participant(user_id: str, contest_history_id: str):
 
 async def resolve_cta_state(contest, contest_history, current_user):
     user_id = str(current_user["_id"])
+    contest_id = str(contest["_id"])
+    contest_history_id = str(contest_history["_id"])
 
-    if contest_history["status"] == ContestStatus.registration_open:
+    registration_open = await is_within_registration_period(contest_history)
+    voting_open = await is_within_voting_period(contest_history)
+
+    if registration_open:
+
         already_participated = await contest_participant_collection.find_one({
-            "contest_id": str(contest["_id"]),
+            "contest_id": contest_id,
+            "contest_history_id": contest_history_id,
             "user_id": user_id
         })
 
@@ -317,19 +325,45 @@ async def resolve_cta_state(contest, contest_history, current_user):
                 "reason": "ALREADY_PARTICIPATED"
             }
 
-        return {"can_participate": True, "can_vote": False}
+        return {
+            "can_participate": True,
+            "can_vote": False
+        }
 
-    if contest_history["status"] == ContestStatus.voting_started:
-        if await is_user_participant(user_id, str(contest_history["_id"])):
+    if voting_open:
+
+        # Participant cannot vote
+        is_participant = await is_user_participant(
+            user_id,
+            contest_history_id
+        )
+
+        if is_participant:
             return {
                 "can_participate": False,
                 "can_vote": False,
                 "reason": "PARTICIPANT_CANNOT_VOTE"
             }
 
-        return {"can_participate": False, "can_vote": True}
+        return {
+            "can_participate": False,
+            "can_vote": True
+        }
 
-    return {"can_participate": False, "can_vote": False}
+    visibility = calculate_visibility_from_history(contest_history)
+
+    if visibility == ContestVisibility.upcoming:
+        return {
+            "can_participate": False,
+            "can_vote": False,
+            "reason": "CONTEST_NOT_STARTED"
+        }
+
+    return {
+        "can_participate": False,
+        "can_vote": False,
+        "reason": "CONTEST_ENDED"
+    }
 
 async def resolve_user_avatar(user_id: str) -> dict | None:
     onboarding = await onboarding_collection.find_one(
