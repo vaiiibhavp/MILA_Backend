@@ -414,6 +414,7 @@
   "IMAGE_REQUIRED": "Image required",
   "VOTING_NOT_STARTED": "Voting not started",
   "VOTING_ENDED": "Voting ended",
+  "PARTICIPANT_DETAILS_FETCHED": "Participant details fetched",
   
   "PLEASE_ENTER_A_VALID_PRICE": "Please enter a valid price",
   "ONLY_NUMERIC_VALUES_ALLOWED": "Only numeric values allowed",

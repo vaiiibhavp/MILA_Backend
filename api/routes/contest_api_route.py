@@ -115,3 +115,16 @@ async def cast_vote(
         lang=lang
     )
 
+@router.get("/{contest_id}/participants/{participant_id}")
+async def get_participant_details(
+    contest_id: str,
+    participant_id: str,
+    current_user: dict = Depends(UserPermission(["user"])),
+    lang: str = Query("en")
+):
+    return await get_participant_details_controller(
+        contest_id,
+        participant_id,
+        current_user,
+        lang
+    )
