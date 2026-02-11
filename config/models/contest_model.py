@@ -224,6 +224,9 @@ async def get_contests_paginated(
 
         visibility = calculate_visibility_from_history(history)
 
+        registration_started = await is_within_registration_period(history)
+        voting_started = await is_within_voting_period(history)
+
         card = ContestCardResponse(
             contest_id=history["contest_id"],
             title=contest["title"],
@@ -233,7 +236,9 @@ async def get_contests_paginated(
             total_votes=history.get("total_votes", 0),
             prize_distribution=prize_pool_total,
             registration_until=history.get("registration_end"),
-            voting_ends=history.get("voting_end")
+            voting_ends=history.get("voting_end"),
+            registration_started=registration_started,
+            voting_started=voting_started
         )
 
         results.append(card.dict())
