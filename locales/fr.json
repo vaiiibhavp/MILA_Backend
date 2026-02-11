@@ -467,7 +467,8 @@
   "IMAGE_REQUIRED": "Image requise",
   "VOTING_NOT_STARTED": "Le vote n'a pas commencé",
   "VOTING_ENDED": "Le vote est terminé",
-  
+  "PARTICIPANT_DETAILS_FETCHED": "Participant details fetched",
+
   "WITHDRAWAL_REQUESTS_FETCHED": "Demandes de retrait récupérées avec succès.",
   "WITHDRAWAL_REQUESTS_FETCH_FAILED": "Impossible de récupérer les demandes de retrait. Veuillez réessayer plus tard.",
   "WITHDRAWAL_REQUEST_NOT_FOUND": "Demande de retrait introuvable.",

@@ -604,3 +604,68 @@ async def cast_vote_controller(
             "tokens_left": balance_after
         }
     )
+
+async def get_participant_details_controller(
+    contest_id: str,
+    participant_id: str,
+    current_user: dict,
+    lang: str
+):
+    contest_history = await fetch_active_contest_history(contest_id)
+    if not contest_history:
+        return response.error_message(
+            translate_message("CONTEST_NOT_ACTIVE", lang),
+            status_code=404
+        )
+
+    participant = await contest_participant_collection.find_one({
+        "_id": ObjectId(participant_id),
+        "contest_id": contest_id,
+        "contest_history_id": str(contest_history["_id"])
+    })
+
+    if not participant:
+        return response.error_message(
+            translate_message("PARTICIPANT_NOT_FOUND", lang),
+            status_code=404
+        )
+
+    # Fetch user
+    user = await get_user_details(
+        {"_id": ObjectId(participant["user_id"])},
+        fields=["username", "is_verified"]
+    )
+
+    avatar = await resolve_user_avatar(participant["user_id"])
+
+    # Resolve uploaded images
+    images = []
+    for file_id in participant.get("uploaded_file_ids", []):
+        file_doc = await file_collection.find_one({
+            "_id": ObjectId(file_id),
+            "is_deleted": {"$ne": True}
+        })
+        if not file_doc:
+            continue
+
+        url = await generate_file_url(
+            storage_key=file_doc["storage_key"],
+            backend=file_doc["storage_backend"]
+        )
+
+        images.append({
+            "file_id": file_id,
+            "url": url
+        })
+
+    return response.success_message(
+        translate_message("PARTICIPANT_DETAILS_FETCHED", lang),
+        data=[{
+            "participant_id": participant_id,
+            "user_id": participant["user_id"],
+            "username": user.get("username") if user else None,
+            "profile_photo": avatar["avatar_url"] if avatar else None,
+            "uploaded_images": images,
+            "total_votes": participant.get("total_votes", 0)
+        }]
+    )
