@@ -285,10 +285,8 @@ async def fetch_current_standings(
     contest_id: str,
     contest_history
 ):
-    if contest_history["status"] not in [
-        ContestStatus.voting_started,
-        ContestStatus.winner_announced
-    ]:
+    voting_period = is_within_voting_period(contest_history)
+    if not voting_period:
         return []
 
     return await get_leaderboard(
@@ -371,14 +369,20 @@ async def get_leaderboard(
     contest_history_id: str,
     limit: int = 3
 ):
+    query = {
+        "contest_id": contest_id,
+        "contest_history_id": str(contest_history_id)
+    }
+
+    total_participants = await contest_participant_collection.count_documents(query)
+
+    # If less than 3 participants → no standings
+    if total_participants < 3:
+        return []
+
     cursor = (
         contest_participant_collection
-        .find(
-            {
-                "contest_id": contest_id,
-                "contest_history_id": str(contest_history_id)
-            }
-        )
+        .find(query)
         .sort("total_votes", -1)
         .limit(limit)
     )
