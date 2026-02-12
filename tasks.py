@@ -13,6 +13,8 @@ from celery.exceptions import MaxRetriesExceededError
 from services.job_services.subscription_job_service import notify_expiring_subscriptions, \
     expire_and_activate_subscriptions_job
 
+from services.job_services.contest_tasks import generate_contest_cycles_job , get_loop
+
 ADMIN_EMAIL = os.getenv("EMAIL_FROM")
 
 # Celery task for run_async_in_celery
@@ -95,3 +97,25 @@ def mark_expired_subscriptions():
     except Exception as e:
         print(f"Error marking mark_expired_subscriptions: {e}")
         return {"status": "error", "message": str(e)}
+
+@celery_app.task(name="tasks.generate_contest_cycles")
+def generate_contest_cycles():
+    """
+    Scheduled task to generate recurring contest cycles.
+    Runs periodically (cron) and creates next contest version if due.
+    """
+    try:
+        loop = get_loop()
+        loop.run_until_complete(generate_contest_cycles_job())
+
+        return {
+            "status": "success",
+            "message": "contest cycles generated successfully"
+        }
+
+    except Exception as e:
+        print(f"Error in generate_contest_cycles: {e}")
+        return {
+            "status": "error",
+            "message": str(e)
+        }
