@@ -427,9 +427,15 @@ async def get_leaderboard(
     async for participant in cursor:
         avatar = await resolve_user_avatar(participant["user_id"])
 
+        user = await get_user_details(
+            {"_id": ObjectId(participant["user_id"]), "is_deleted": {"$ne": True}},
+            fields=["username"]
+        )
+
         leaderboard.append({
             "rank": rank,
             "user_id": participant["user_id"],
+            "username": user.get("username") if user else None,
             "total_votes": participant.get("total_votes", 0),
             "avatar": avatar
         })
