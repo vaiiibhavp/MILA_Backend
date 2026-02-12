@@ -23,16 +23,16 @@ def increment_version(version: str) -> str:
 def resolve_next_cycle_from_end(last_end_date: datetime, frequency: str):
 
     #use enums
-    if frequency == "weekly":
+    if frequency == ContestFrequency.weekly:
         return last_end_date + timedelta(days=7)
 
-    elif frequency == "bi_weekly":
+    elif frequency == ContestFrequency.bi_weekly:
         return last_end_date + timedelta(days=14)
 
-    elif frequency == "monthly":
+    elif frequency == ContestFrequency.monthly:
         return last_end_date + relativedelta(months=1)
 
-    elif frequency == "three_months":
+    elif frequency == ContestFrequency.three_months:
         return last_end_date + relativedelta(months=3)
 
     return None  # non_recurring

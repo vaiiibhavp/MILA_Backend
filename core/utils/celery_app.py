@@ -62,6 +62,6 @@ celery_app.conf.beat_schedule = {
 
     "generate_contest_cycles_daily": {
         "task": "tasks.generate_contest_cycles",
-        "schedule": crontab(hour=0, minute=10),
+        "schedule": crontab(hour=0, minute=15),
     }
 }
