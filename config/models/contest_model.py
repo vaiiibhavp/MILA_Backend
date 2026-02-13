@@ -14,6 +14,8 @@ from core.utils.helper import *
 
 leaderboard_redis_helper = LeaderboardRedisHelper()
 
+leaderboard_redis_helper = LeaderboardRedisHelper()
+
 class ContestModel(BaseModel):
 
     title: str
