@@ -436,7 +436,28 @@ async def get_pending_verification_users_controller(
                     "as": "user"
                 }
             },
-            {"$unwind": "$user"}
+            {"$unwind": "$user"},
+            {
+                "$lookup": {
+                    "from": "deleted_accounts",
+                    "let": {"uid": {"$toString": "$user._id"}},
+                    "pipeline": [
+                        {
+                            "$match": {
+                                "$expr": {
+                                    "$eq": ["$user_id", "$$uid"]
+                                }
+                            }
+                        }
+                    ],
+                    "as": "deleted_user"
+                }
+            },
+            {
+                "$match": {
+                    "deleted_user": {"$size": 0}
+                }
+            }
         ]
 
         # ---------------- SEARCH ----------------
@@ -482,7 +503,7 @@ async def get_pending_verification_users_controller(
         })
 
         # ---------------- COUNT ----------------
-        count_pipeline = pipeline.copy()
+        count_pipeline = list(pipeline)
         count_pipeline.append({"$count": "total"})
 
         # ---------------- SORT + PAGINATION ----------------

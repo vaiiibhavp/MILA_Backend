@@ -72,7 +72,18 @@ class UserManagementModel:
                         "as": "onboarding"
                     }
                 },
-                {"$unwind": "$onboarding"}
+
+                # Ensure onboarding exists
+                {
+                    "$match": {
+                        "onboarding": {"$ne": []}
+                    }
+                },
+
+                # Now safely unwind
+                {
+                    "$unwind": "$onboarding"
+                }
             ])
 
             if search:

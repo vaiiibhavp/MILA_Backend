@@ -109,14 +109,21 @@ class DashboardModel:
             withdraw_pipeline = [
                 {
                     "$match": {
-                        "status": "completed",   # only success
+                        "status": "completed",
                         "updated_at": date_range
                     }
                 },
                 {
                     "$group": {
                         "_id": None,
-                        "total_withdraw": {"$sum": "$paid_amount"}
+                        "total_withdraw": {
+                            "$sum": {
+                                "$add": [
+                                    {"$ifNull": ["$paid_amount", 0]},
+                                    {"$ifNull": ["$tron_fee", 0]}
+                                ]
+                            }
+                        }
                     }
                 }
             ]
@@ -190,7 +197,52 @@ class DashboardModel:
 
             # ---------------- GENDER DISTRIBUTION ----------------
             gender_pipeline = [
-                {"$match": {"created_at": date_range}},
+                # Filter by date
+                {
+                    "$match": {
+                        "created_at": date_range
+                    }
+                },
+
+                # Convert user_id to string (important)
+                {
+                    "$addFields": {
+                        "userIdStr": {
+                            "$cond": [
+                                {"$eq": [{"$type": "$user_id"}, "objectId"]},
+                                {"$toString": "$user_id"},
+                                "$user_id"
+                            ]
+                        }
+                    }
+                },
+
+                # Lookup deleted accounts
+                {
+                    "$lookup": {
+                        "from": "deleted_accounts",
+                        "let": {"uid": "$userIdStr"},
+                        "pipeline": [
+                            {
+                                "$match": {
+                                    "$expr": {
+                                        "$eq": ["$user_id", "$$uid"]
+                                    }
+                                }
+                            }
+                        ],
+                        "as": "deleted_user"
+                    }
+                },
+
+                # Remove deleted users
+                {
+                    "$match": {
+                        "deleted_user": {"$size": 0}
+                    }
+                },
+
+                # Group by gender
                 {
                     "$group": {
                         "_id": "$gender",

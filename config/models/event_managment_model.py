@@ -164,6 +164,17 @@ class ContestModel:
                 "message": translate_message("INVALID_CONTEST_DATES", lang),
                 "status_code": 400
             }
+
+        # ---------------- MINIMUM 4 DAYS VALIDATION ----------------
+        contest_duration_days = (end_date_dt - start_date_dt).days
+
+        if contest_duration_days < 4:
+            return {
+                "error": True,
+                "message": translate_message("CONTEST_MINIMUM_4_DAYS_REQUIRED", lang),
+                "status_code": 400
+            }
+
         if payload.judging_criteria is not None:
             if not payload.judging_criteria or any(not c.strip() for c in payload.judging_criteria):
                 return {
