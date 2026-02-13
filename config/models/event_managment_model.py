@@ -317,6 +317,7 @@ class ContestModel:
             "contest_id": str(result.inserted_id),
 
             "status": "active",  # <-- plain string, no enum
+            "contest_version": "1.0.0",
             "registration_start": contest_doc["start_date"],
             "registration_end": contest_doc["registration_until"],
 

@@ -59,4 +59,9 @@ celery_app.conf.beat_schedule = {
         "task": "tasks.subscription_expiry_notifier",
         "schedule": crontab(hour=0, minute=10),  # ⏰ 0:10 UTC daily
     },
+
+    "generate_contest_cycles_daily": {
+        "task": "tasks.generate_contest_cycles",
+        "schedule": crontab(hour=0, minute=15),
+    }
 }
