@@ -169,3 +169,6 @@ uploads
 ecosystem.config.js
 
 credentials/
+
+celerybeat-schedule-shm
+celerybeat-schedule-wal
