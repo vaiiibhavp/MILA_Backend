@@ -94,6 +94,52 @@ class ModerationModel:
                 }
             ])
 
+# ---------------- REMOVE DELETED USERS ----------------
+
+            # Check if reporter is deleted
+            pipeline.append({
+                "$lookup": {
+                    "from": "deleted_accounts",
+                    "let": {"uid": {"$toString": "$reporter._id"}},
+                    "pipeline": [
+                        {
+                            "$match": {
+                                "$expr": {
+                                    "$eq": ["$user_id", "$$uid"]
+                                }
+                            }
+                        }
+                    ],
+                    "as": "reporter_deleted"
+                }
+            })
+
+            # Check if reported user is deleted
+            pipeline.append({
+                "$lookup": {
+                    "from": "deleted_accounts",
+                    "let": {"uid": {"$toString": "$reported_user._id"}},
+                    "pipeline": [
+                        {
+                            "$match": {
+                                "$expr": {
+                                    "$eq": ["$user_id", "$$uid"]
+                                }
+                            }
+                        }
+                    ],
+                    "as": "reported_deleted"
+                }
+            })
+
+            # Remove reports where either user is deleted
+            pipeline.append({
+                "$match": {
+                    "reporter_deleted": {"$size": 0},
+                    "reported_deleted": {"$size": 0}
+                }
+            })
+
             # ---------------- SEARCH ----------------
             if search:
                 pipeline.append({
