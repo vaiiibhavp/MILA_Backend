@@ -9,7 +9,7 @@ from api.routes import (
     profile_api, token_history_route, profile_api_route ,
     userPass_route, like_route_api, block_report_route, user_profile_view_api_route,
     fcm_route,
-    verification_routes, contest_api_route, user_management , moderation_route
+    verification_routes, contest_api_route, user_management , moderation_route, leader_board_route
 )
 
 from api.routes.admin import (
@@ -22,6 +22,8 @@ from api.routes.admin import (
 from core.utils.exceptions import CustomValidationError, custom_validation_error_handler, validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+
+from core.utils.permissions import websocket_authenticate
 from tasks import send_email_task
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -40,8 +42,10 @@ from config.db_seeder.SubscriptionPlanSeeder import seed_subscription_plan
 from core.firebase import init_firebase
 from config.basic_config import *
 
-init_firebase()
+from core.utils.leaderboard.listener import leaderboard_listener
 
+init_firebase()
+leaderboard_task = None
 from starlette.middleware.base import BaseHTTPMiddleware
 app = FastAPI()
 
@@ -255,6 +259,7 @@ app.include_router(event_management_route.admin_router)
 app.include_router(withdrawal_request_routes.admin_router)
 app.include_router(dashboard_route.adminrouter)
 app.include_router(transctions_route.admin_router)
+app.include_router(leader_board_route.api_router)
 # Scheduler Instance
 scheduler = BackgroundScheduler()
 
@@ -295,7 +300,6 @@ async def init_scheduler():
             except Exception as index_error:
                 print(f"[ERROR] Index creation failed: {index_error}")
             try:
-                await create_indexes()
                 await seed_admin()
                 print("[SUCCESS] Admin seeding completed")
                 await seed_subscription_plan()
@@ -304,7 +308,10 @@ async def init_scheduler():
                 print(f"[ERROR] Admin seeding failed: {seeder_error}")
     except Exception as e:
         print(f"[ERROR] Database initialization error: {e}")
-    
+
+    global leaderboard_task
+    leaderboard_task = asyncio.create_task(leaderboard_listener())
+    print("🔥 Leaderboard listener started")
 
     scheduler.start()
     print("✅ Scheduler initialized successfully")
@@ -317,8 +324,13 @@ async def init_scheduler():
 
 @app.on_event("shutdown")
 async def shutdown_event():
+    global leaderboard_task
     print("🛑 Starting application shutdown...")
-    
+
+    # ---- STOP LEADERBOARD LISTENER ----
+    if leaderboard_task:
+        leaderboard_task.cancel()
+        print("🛑 Leaderboard listener stopped")
     # Shutdown scheduler
     try:
         logger.info("Shutting down scheduler...")
@@ -339,6 +351,8 @@ async def shutdown_event():
     try:
         from core.utils.redis_helper import close_redis_connections
         await close_redis_connections()
+        from core.utils.baseRedisHelper import BaseRedisHelper
+        await BaseRedisHelper.get_client(1).close()  # Leaderboard DB
         print("✅ Redis connections closed")
     except Exception as e:
         print(f"❌ Error closing Redis connections: {e}")

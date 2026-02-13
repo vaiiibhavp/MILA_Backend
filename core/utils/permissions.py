@@ -1,4 +1,4 @@
-from fastapi import HTTPException, Security,Depends
+from fastapi import HTTPException, Security,Depends, WebSocket
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt,JWTError
 from config.db_config import user_collection , admin_collection
@@ -6,6 +6,8 @@ import os
 from fastapi.responses import JSONResponse
 from .response_mixin import CustomResponseMixin
 from services.translation import translate_message
+from fastapi.exceptions import WebSocketException
+from starlette.status import WS_1008_POLICY_VIOLATION
 
 response = CustomResponseMixin()
 
@@ -123,4 +125,49 @@ class UserPermission:
                     data=None,
                     status_code=403
                 )
+
+async def websocket_authenticate(
+    websocket: WebSocket,
+    allowed_roles: list[str],
+    require_verified: bool = False,
+):
+    """
+    Authenticate WebSocket connection using existing UserPermission logic
+    Authenticate WebSocket using Authorization header
+    """
+
+    auth_header = websocket.headers.get("authorization")
+
+    if not auth_header:
+        raise WebSocketException(
+            code=WS_1008_POLICY_VIOLATION,
+            reason="Authorization header missing",
+        )
+
+    if not auth_header.lower().startswith("bearer "):
+        raise WebSocketException(
+            code=WS_1008_POLICY_VIOLATION,
+            reason="Invalid authorization scheme",
+        )
+
+    token = auth_header.split(" ", 1)[1]
+
+    credentials = HTTPAuthorizationCredentials(
+        scheme="Bearer",
+        credentials=token
+    )
+
+    permission = UserPermission(
+        allowed_roles=allowed_roles,
+        require_verified=require_verified
+    )
+
+    try:
+        user = await permission(credentials)
+        return user
+    except Exception:
+        raise WebSocketException(
+            code=WS_1008_POLICY_VIOLATION,
+            reason="Invalid or expired token",
+        )
  
