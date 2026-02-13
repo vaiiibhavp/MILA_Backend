@@ -1,6 +1,6 @@
 import asyncio
 import os
-from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Request
 
 from api.routes import (
     user_profile_api, files_api,
@@ -9,7 +9,7 @@ from api.routes import (
     profile_api, token_history_route, profile_api_route ,
     userPass_route, like_route_api, block_report_route, user_profile_view_api_route,
     fcm_route,
-    verification_routes, contest_api_route, user_management , moderation_route
+    verification_routes, contest_api_route, user_management , moderation_route, leader_board_route
 )
 
 from api.routes.admin import (
@@ -43,7 +43,6 @@ from core.firebase import init_firebase
 from config.basic_config import *
 
 from core.utils.leaderboard.listener import leaderboard_listener
-from core.utils.leaderboard.websocket import manager
 
 init_firebase()
 leaderboard_task = None
@@ -260,6 +259,7 @@ app.include_router(event_management_route.admin_router)
 app.include_router(withdrawal_request_routes.admin_router)
 app.include_router(dashboard_route.adminrouter)
 app.include_router(transctions_route.admin_router)
+app.include_router(leader_board_route.api_router)
 # Scheduler Instance
 scheduler = BackgroundScheduler()
 
@@ -379,26 +379,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         },
         status_code=422  # Use 422 for validation errors
     )
-
-@app.websocket("/ws/leaderboard")
-async def leaderboard_ws(ws: WebSocket):
-    try:
-        current_user = await websocket_authenticate(
-            websocket=ws,
-            allowed_roles=["user"],
-        )
-
-        # ws.state.user = current_user
-        await manager.connect(ws)
-
-        while True:
-            await ws.receive_text()
-
-    except WebSocketDisconnect:
-        manager.disconnect(ws)
-
-    except Exception:
-        await ws.close(code=1008)
 
 
 # Configure comprehensive logging
