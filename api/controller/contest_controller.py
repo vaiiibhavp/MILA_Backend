@@ -310,7 +310,7 @@ async def participate_in_contest_controller(
             status_code=400
         )
 
-    if len(images) != images_allowed:
+    if len(images) > images_allowed:
         return response.error_message(
             translate_message("IMAGES_UPLOADING_LIMIT_EXCEEDED", lang),
             data={

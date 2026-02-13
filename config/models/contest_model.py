@@ -52,6 +52,8 @@ class ContestHistoryModel(BaseModel):
     status: ContestStatus  # registration_open / voting_started / winner_announced
     visibility: ContestVisibility  # upcoming / in_progress / completed
 
+    contest_version:str # 1.0.0
+
     registration_start: datetime
     registration_end: datetime
 
