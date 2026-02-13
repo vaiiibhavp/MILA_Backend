@@ -537,5 +537,5 @@
   "PUSH_MESSAGE_SUBSCRIPTION_EXPIRING_SOON": "Votre abonnement expire dans 3 jours. Renouvelez-le dès maintenant pour continuer à bénéficier d'un accès ininterrompu.",
   "VERIFICATION_USER_DETAILS_FETCHED_SUCCESSFULLY": "Détails de l’utilisateur pour la vérification récupérés avec succès",
   "FAILED_TO_FETCH_VERIFICATION_USER_DETAILS": "Échec de la récupération des détails de l’utilisateur pour la vérification",
-  "NOT_PREMIUM_USER": "You are not a premium user. Please purchase a premium plan to access this feature."
+  "NOT_PREMIUM_USER": "Vous n'êtes pas un utilisateur premium. Veuillez souscrire un abonnement premium pour accéder à cette fonctionnalité."
 }
