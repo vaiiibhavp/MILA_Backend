@@ -332,7 +332,7 @@ async def get_notifications_controller(current_user,lang: str = "en"):
     notifications = await notification_collection.find(
         {
             "recipient_id": user_id,
-            "recipient_type": "user"
+            "recipient_type": NotificationRecipientType.USER.value,
         }
     ).sort("created_at", -1).to_list(length=100)
 
@@ -342,15 +342,29 @@ async def get_notifications_controller(current_user,lang: str = "en"):
     today_date = datetime.now(timezone.utc).date()
 
     for n in notifications:
-        created_at = n["created_at"]
+        created_at = n.get("created_at")
 
+        # Handle string datetime
         if isinstance(created_at, str):
             created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
 
+        # Handle Mongo datetime
+        if isinstance(created_at, datetime):
+            created_at = created_at.astimezone(timezone.utc)
+
+        # Translate title & message dynamically
+        title_key = n.get("title")
+        message_key = n.get("message")
+
+        n["title"] = translate_message(title_key, lang)
+        n["message"] = translate_message(message_key, lang)
+
+        formatted_notification = format_notification(n)
+
         if created_at.date() == today_date:
-            today.append(format_notification(n))
+            today.append(formatted_notification)
         else:
-            earlier.append(format_notification(n))
+            earlier.append(formatted_notification)
 
     return response.success_message(
         translate_message("NOTIFICATION_FETCHED", lang),
