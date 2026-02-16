@@ -42,7 +42,7 @@ async def send_notification(
         )
         if admin:
             lang = admin.get("lang", "en")
-
+    # ------------------ TRANSLATE ------------------
     translated_title = translate_message(title, lang)
     translated_message = translate_message(message, lang)
 
