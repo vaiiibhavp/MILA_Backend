@@ -43,6 +43,8 @@ async def send_notification(
         if admin:
             lang = admin.get("lang", "en")
 
+    translated_title = translate_message(title, lang)
+    translated_message = translate_message(message, lang)
 
     notification_doc = {
         "recipient_id": recipient_id,
@@ -65,8 +67,8 @@ async def send_notification(
         try:
             await send_push_notification(
                 user_id=recipient_id,
-                title=title,
-                body=message,
+                title=translated_title,
+                body=translated_message,
                 data=push_data or {}
             )
         except Exception as e:
