@@ -44,16 +44,17 @@ async def get_users_who_liked_me_for_premium(
             {"_id": {"$in": [ObjectId(uid) for uid in liked_by_user_ids]}},
             {"username": 1, "is_verified": 1, "login_status": 1}
         )
-        .skip(pagination.skip)
-        .limit(pagination.limit)
     )
+
+    if pagination.limit is not None:
+        cursor = cursor.skip(pagination.skip).limit(pagination.limit)
 
     results = []
 
     async for user in cursor:
         onboarding = await get_onboarding_details(
             {"user_id": str(user["_id"])},
-            fields=["birthdate", "country"]
+            fields=["birthdate", "country", "images"]
         )
 
         birthdate = onboarding.get("birthdate") if onboarding else None
@@ -112,6 +113,23 @@ async def get_users_who_visited_my_profile(
 
     views = history.get("viewed_by_user_ids", []) if history else []
 
+    # ---------------- REMOVE DUPLICATES (KEEP LATEST VISIT) ----------------
+    unique_views = {}
+
+    for view in views:
+        user_id = view.get("user_id")
+        viewed_at = view.get("viewed_at", datetime.min)
+
+        # If user not added OR this visit is newer → update
+        if (
+            user_id not in unique_views or
+            viewed_at > unique_views[user_id].get("viewed_at", datetime.min)
+        ):
+            unique_views[user_id] = view
+
+    # Convert back to list
+    views = list(unique_views.values())
+
     if not views:
         return response.success_message(
             translate_message("NO_PROFILE_VIEWS_FOUND", lang),
@@ -132,9 +150,14 @@ async def get_users_who_visited_my_profile(
 
     # PAGINATION
     total = len(views)
-    start = pagination.skip
-    end = start + pagination.limit
-    paginated_views = views[start:end]
+
+    # If page_size is None → return all records
+    if pagination.limit is None:
+        paginated_views = views
+    else:
+        start = pagination.skip
+        end = start + pagination.limit
+        paginated_views = views[start:end]
 
     results = []
 
