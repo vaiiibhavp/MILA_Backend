@@ -535,6 +535,13 @@
   "VERIFICATION_USER_DETAILS_FETCHED_SUCCESSFULLY":"Verification user details fetched successfully",
   "FAILED_TO_FETCH_VERIFICATION_USER_DETAILS":"Failed to fetch verification user details",
   "CONTEST_MINIMUM_4_DAYS_REQUIRED": "Contest duration must be at least 4 days between the start date and end date.",
-  "MATCHED_USERS_FETCHED": "Matched users' details have been fetched successfully."
+  "MATCHED_USERS_FETCHED": "Matched users' details have been fetched successfully.",
 
+  "INVALID_RECEIVER_ID": "Invalid receiver ID",
+  "RECEIVER_NOT_FOUND": "Receiver not found",
+  "CANNOT_SEND_AUDIO_TO_SELF": "You cannot send audio to yourself",
+  "AUDIO_FILE_REQUIRED": "Audio file is required",
+  "AUDIO_FILE_TOO_LARGE": "Audio file exceeds the maximum allowed size",
+  "INVALID_AUDIO_TYPE": "Invalid audio file type. Only MP3, WAV, and M4A are allowed",
+  "AUDIO_UPLOAD_SUCCESSFULLY": "Audio uploaded successfully"  
 }

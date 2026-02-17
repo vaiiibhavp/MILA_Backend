@@ -10,6 +10,7 @@ from core.utils.permissions import UserPermission, AdminPermission
 from core.utils.pagination import StandardResultsSetPagination, pagination_params
 import time
 from fastapi import Body
+from fastapi import Form
 
 
 supported_langs = ["en", "fr"]
@@ -123,3 +124,17 @@ async def get_all_users(
     Get all users (Admin only) with standard pagination
     """
     return await get_all_users_controller(pagination, lang)
+
+@router.post("/upload-audio")
+async def upload_audio(
+    receiver_id: str = Form(...),
+    audio: UploadFile = File(...),
+    current_user: dict = Depends(UserPermission(allowed_roles=["user"])),
+    lang: str = Query("en")
+):
+    return await upload_audio_controller(
+        audio,
+        current_user,
+        receiver_id,
+        lang=lang
+    )

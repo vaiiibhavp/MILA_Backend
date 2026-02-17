@@ -21,6 +21,7 @@ from bson import ObjectId
 from config.models.user_models import *
 from config.models.onboarding_model import *
 from core.utils.helper import *
+from bson.errors import InvalidId
 
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 REFRESH_TOKEN_EXPIRE_MINUTES =int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
@@ -640,3 +641,109 @@ async def get_all_users_controller(
         }],
         status_code=200
     )
+
+async def upload_audio_controller(
+    audio: UploadFile,
+    current_user: dict,
+    receiver_id: str,
+    lang: str = "en"
+):
+    user_id = str(current_user["_id"])
+
+    if not audio:
+        return response.error_message(
+            translate_message("AUDIO_FILE_REQUIRED", lang=lang),
+            status_code=400
+        )
+
+    try:
+        # ---------------- RECEIVER VALIDATION ----------------
+
+        # Validate ObjectId format
+        try:
+            receiver_object_id = ObjectId(receiver_id)
+        except InvalidId:
+            return response.error_message(
+                translate_message("INVALID_RECEIVER_ID", lang=lang),
+                status_code=400
+            )
+
+        # Prevent sending audio to self
+        if receiver_id == user_id:
+            return response.error_message(
+                translate_message("CANNOT_SEND_AUDIO_TO_SELF", lang=lang),
+                status_code=400
+            )
+
+        # Check receiver exists and not deleted
+        receiver = await user_collection.find_one(
+            {"_id": receiver_object_id, "is_deleted": {"$ne": True}}
+        )
+
+        if not receiver:
+            return response.error_message(
+                translate_message("RECEIVER_NOT_FOUND", lang=lang),
+                status_code=404
+            )
+
+        # ---------------- FILE READ ----------------
+
+        content = await audio.read()
+
+        if len(content) > settings.CHAT_AUDIO_MAX_LIMIT:
+            return response.error_message(
+                translate_message("AUDIO_FILE_TOO_LARGE", lang=lang),
+                status_code=400
+            )
+
+        if not audio.content_type.startswith("audio/"):
+            return response.error_message(
+                translate_message("INVALID_AUDIO_TYPE", lang=lang),
+                status_code=400
+            )
+
+        # Save file
+        _, storage_key, backend = await save_file(
+            file_obj=audio,
+            file_name=audio.filename,
+            user_id=user_id,
+            file_type="audio"
+        )
+
+        file_doc = Files(
+            storage_key=storage_key,
+            storage_backend=backend,
+            file_type=FileType.AUDIO,
+            uploaded_by=user_id
+        )
+
+        file_result = await file_collection.insert_one(
+            file_doc.dict(by_alias=True)
+        )
+
+        audio_doc = {
+            "sender_id": user_id,
+            "receiver_id": receiver_id,
+            "file_id": str(file_result.inserted_id),
+            "storage_key": storage_key,
+            "file_size": len(content),
+            "is_deleted": False,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+
+        audio_result = await chat_audio_collection.insert_one(audio_doc)
+
+        audio_url = await generate_file_url(storage_key, backend)
+
+        return response.success_message(
+            translate_message("AUDIO_UPLOAD_SUCCESSFULLY", lang=lang),
+            data=[{
+                "chat_audio_id": str(audio_result.inserted_id),
+                "audio_url": audio_url
+            }],
+            status_code=200
+        )
+
+    except Exception as e:
+        return response.error_message(str(e), status_code=500)

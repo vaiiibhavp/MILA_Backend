@@ -64,6 +64,7 @@ GIFTS_DIR = os.path.join(PUBLIC_DIR, "gift")
 BANNER_DIR = os.path.join(UPLOAD_DIR, "contest_banner")
 VERIFICATION_SELFIE_DIR = os.path.join(UPLOAD_DIR, "verification_selfie")
 CONTEST_PARTICIPATE_DIR = os.path.join(UPLOAD_DIR, "contest")
+AUDIO_DIR = os.path.join(UPLOAD_DIR, "audio")
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(PUBLIC_GALLERY_DIR, exist_ok=True)
@@ -74,6 +75,7 @@ os.makedirs(SELFIE_DIR, exist_ok=True)
 os.makedirs(BANNER_DIR, exist_ok=True)
 os.makedirs(VERIFICATION_SELFIE_DIR, exist_ok=True)
 os.makedirs(CONTEST_PARTICIPATE_DIR, exist_ok=True)
+os.makedirs(AUDIO_DIR, exist_ok=True)
 
 app.mount("/public_gallery", StaticFiles(directory=PUBLIC_GALLERY_DIR))
 app.mount("/private_gallery", StaticFiles(directory=PRIVATE_GALLERY_DIR))
@@ -83,6 +85,7 @@ app.mount("/selfie", StaticFiles(directory=SELFIE_DIR), name="selfie")
 app.mount("/contest_banner", StaticFiles(directory=BANNER_DIR))
 app.mount("/verification_selfie",StaticFiles(directory=VERIFICATION_SELFIE_DIR))
 app.mount("/contest",StaticFiles(directory=CONTEST_PARTICIPATE_DIR))
+app.mount("/audio", StaticFiles(directory=AUDIO_DIR))
 
 # Health check endpoints
 @app.get("/health")

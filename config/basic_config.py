@@ -66,7 +66,8 @@ class Settings(BaseSettings):
     DAILY_FREE_LIMIT:int
     CONTEST_TOKEN_COST:int
     LEADERBOARD_REDIS_DB:int
-
+    CHAT_AUDIO_MAX_LIMIT:int
+    
     class ConfigDict:
         env_file = ".env"
         extra = "ignore"

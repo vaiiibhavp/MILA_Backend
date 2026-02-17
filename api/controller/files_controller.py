@@ -38,8 +38,14 @@ async def save_file(file_obj: UploadFile, file_name: str, user_id: str, file_typ
     """
     try:
         ext = os.path.splitext(file_name)[-1].lower().lstrip(".")
-        if ext not in ["jpg", "jpeg", "png"]:
+
+        allowed_images = ["jpg", "jpeg", "png"]
+        allowed_audio = ["mp3", "wav", "m4a"]
+
+        if ext not in allowed_images + allowed_audio:
             raise ValueError("Invalid file type")
+
+        content = await file_obj.read()
 
         timestamp = int(time.time())
 
@@ -53,7 +59,6 @@ async def save_file(file_obj: UploadFile, file_name: str, user_id: str, file_typ
             file_path = os.path.join(dir_path, f"{timestamp}.{ext}")
 
             async with aiofiles.open(file_path, "wb") as out_file:
-                content = await file_obj.read()
                 await out_file.write(content)
             public_url = f"{BASE_URL}/{file_type}/{user_id}/{timestamp}.{ext}"
             return public_url, storage_key, "LOCAL"
@@ -68,14 +73,23 @@ async def save_file(file_obj: UploadFile, file_name: str, user_id: str, file_typ
                 aws_access_key_id=AWS_ACCESS_KEY_ID,
                 aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
             )
-            
-            # Upload to S3 (storage_key is already in correct format)
-            content = await file_obj.read()
+
+            if ext in allowed_images:
+                content_type = "image/jpeg" if ext in ["jpg", "jpeg"] else f"image/{ext}"
+            elif ext == "mp3":
+                content_type = "audio/mpeg"
+            elif ext == "wav":
+                content_type = "audio/wav"
+            elif ext == "m4a":
+                content_type = "audio/mp4"
+            else:
+                content_type = "application/octet-stream"
+
             s3_client.put_object(
                 Bucket=AWS_S3_BUCKET_NAME,
                 Key=storage_key,
                 Body=content,
-                ContentType=f"image/{ext}" if ext != "jpg" else "image/jpeg"
+                ContentType=content_type
             )
 
             public_url = s3_client.generate_presigned_url(
