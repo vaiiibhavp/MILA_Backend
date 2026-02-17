@@ -80,6 +80,7 @@ class FileType(str, Enum):
     VERIFICATION_SELFIE = "verification_selfie"
     CONTEST = "contest"
     CONTEST_BANNER = "contest_banner"
+    AUDIO = "audio"
 
 # ---- Files model ----
 class Files(BaseModel):
