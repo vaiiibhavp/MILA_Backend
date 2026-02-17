@@ -534,6 +534,7 @@
   "PUSH_MESSAGE_SUBSCRIPTION_EXPIRING_SOON": "Your subscription will expire in 3 days. Renew now to continue enjoying uninterrupted access.",
   "VERIFICATION_USER_DETAILS_FETCHED_SUCCESSFULLY":"Verification user details fetched successfully",
   "FAILED_TO_FETCH_VERIFICATION_USER_DETAILS":"Failed to fetch verification user details",
-  "CONTEST_MINIMUM_4_DAYS_REQUIRED": "Contest duration must be at least 4 days between the start date and end date."
+  "CONTEST_MINIMUM_4_DAYS_REQUIRED": "Contest duration must be at least 4 days between the start date and end date.",
+  "MATCHED_USERS_FETCHED": "Matched users' details have been fetched successfully."
 
 }

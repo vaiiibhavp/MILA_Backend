@@ -13,7 +13,8 @@ from config.db_config import (
     user_collection,
     countries_collection,
     interest_categories_collection,
-    user_collection
+    user_collection,
+    user_match_history
 )
 from core.utils.response_mixin import CustomResponseMixin
 from core.utils.core_enums import MembershipType
@@ -1043,3 +1044,41 @@ async def update_profile_image_onboarding(
             data=str(e),
             status_code=500
         )
+
+async def get_matched_users_model(user_id: str, lang: str):
+    try:
+        # Step 1: Find matches where user_id is inside user_ids array
+        matches = await user_match_history.find(
+            {"user_ids": user_id}
+        ).to_list(None)
+
+        if not matches:
+            return []
+
+        matched_user_ids = []
+
+        # Step 2: Extract the other user ID
+        for match in matches:
+            user_ids = match.get("user_ids", [])
+
+            for uid in user_ids:
+                if uid != user_id:
+                    matched_user_ids.append(uid)
+
+        # Remove duplicates (safety)
+        matched_user_ids = list(set(matched_user_ids))
+
+        # Step 3: Fetch user details using existing function
+        users_data = []
+
+        for matched_id in matched_user_ids:
+            user_details = await fetch_user_by_id(matched_id, lang)
+
+            # If fetch_user_by_id returns error response, skip
+            if isinstance(user_details, dict):
+                users_data.append(user_details)
+
+        return users_data
+
+    except Exception as e:
+        raise RuntimeError(str(e))
