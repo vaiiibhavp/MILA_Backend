@@ -508,6 +508,12 @@ class ContestModel:
                 contest["end_date"]
             )
 
+        # ---------------- APPLY VISIBILITY FILTER ----------------
+        if visibility:
+            contests = [
+                contest for contest in contests
+                if contest["visibility"] == visibility.value
+            ]
 
         # ---------------- TOTAL COUNT ----------------
         total_count = len(contests)

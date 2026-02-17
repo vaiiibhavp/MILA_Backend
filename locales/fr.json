@@ -491,7 +491,7 @@
   "SUBSCRIPTION_BONUS_TOKEN_UPDATED_SUCCESSFULLY": "Jeton bonus d’abonnement mis à jour avec succès",
   "FAILED_TO_UPDATE_SUBSCRIPTION_BONUS_TOKEN": "Échec de la mise à jour du jeton bonus d’abonnement",
 
-  "ACCOUNT_NOT_FOUND": "Compte introuvable",
+  "ACCOUNT_NOT_FOUND": "Ce compte a été supprimé et n’est plus accessible",
   "VERIFICATION_ALREADY_PENDING": "La vérification est déjà en cours",
   "VERIFICATION_NOT_ALLOWED": "La vérification n’est pas autorisée",
   "DAILY_LIMIT_REACHED": "Vous avez atteint la limite quotidienne de 10 actions. Passez à Premium pour continuer.",

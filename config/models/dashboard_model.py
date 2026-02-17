@@ -23,9 +23,9 @@ class DashboardModel:
             now = datetime.utcnow()
 
             # ---------------- EXCLUDE DELETED USERS ----------------
-            deleted_users = await deleted_account_collection.distinct("user_id")
+            # deleted_users = await deleted_account_collection.distinct("user_id")
 
-            deleted_users = [ObjectId(uid) for uid in deleted_users]
+            deleted_users = await deleted_account_collection.distinct("user_id")
 
             # ---------------- USERS ----------------
             total_users = await user_collection.count_documents({
@@ -80,11 +80,14 @@ class DashboardModel:
 
             # ---------------- BLOCKED USERS ----------------
             blocked_users = await admin_blocked_users_collection.count_documents({
-                "created_at": date_range
+                "created_at": date_range,
+                "user_id": {"$nin": deleted_users}
             })
 
+            print("blocked_users",blocked_users)
+
             # ---------------- TOTAL REVENUE ----------------
-            revenue_pipeline = [
+            monthly_revenue_pipeline = [
                 {
                     "$match": {
                         "status": {"$in": ["success", "partial payment"]},
@@ -93,20 +96,24 @@ class DashboardModel:
                 },
                 {
                     "$group": {
-                        "_id": None,
-                        "total": {"$sum": "$paid_amount"}
+                        "_id": {
+                            "year": {"$year": "$updated_at"},
+                            "month": {"$month": "$updated_at"}
+                        },
+                        "revenue": {"$sum": "$paid_amount"}
                     }
+                },
+                {
+                    "$sort": {"_id.year": 1, "_id.month": 1}
                 }
             ]
 
-            revenue_result = await transaction_collection.aggregate(
-                revenue_pipeline
-            ).to_list(1)
-
-            total_revenue = round(revenue_result[0]["total"], 2) if revenue_result else 0
+            monthly_data = await transaction_collection.aggregate(
+                monthly_revenue_pipeline
+            ).to_list(None)
 
             # ---------------- TOTAL WITHDRAWAL AMOUNT (SUCCESS ONLY) ----------------
-            withdraw_pipeline = [
+            withdraw_monthly_pipeline = [
                 {
                     "$match": {
                         "status": "completed",
@@ -115,8 +122,11 @@ class DashboardModel:
                 },
                 {
                     "$group": {
-                        "_id": None,
-                        "total_withdraw": {
+                        "_id": {
+                            "year": {"$year": "$updated_at"},
+                            "month": {"$month": "$updated_at"}
+                        },
+                        "withdraw": {
                             "$sum": {
                                 "$add": [
                                     {"$ifNull": ["$paid_amount", 0]},
@@ -128,47 +138,14 @@ class DashboardModel:
                 }
             ]
 
-            withdraw_result = await withdraw_token_transaction_collection.aggregate(
-                withdraw_pipeline
-            ).to_list(1)
-
-            total_withdraw_amount = (
-                round(withdraw_result[0]["total_withdraw"], 2)
-                if withdraw_result else 0
-            )
-
-            # Deduct withdrawal from revenue
-            total_revenue = round(total_revenue - total_withdraw_amount, 2)
-
-            # ---------------- MONTHLY REVENUE SUMMARY ----------------
-            monthly_revenue_pipeline = [
-                {
-                    "$match": {
-                        "status": {"$in": ["success", "partial payment"]},
-                        "trans_type": "subscription_transaction",
-                        "start_date": date_range
-                    }
-                },
-                {
-                    "$group": {
-                        "_id": {
-                            "year": {"$year": "$start_date"},
-                            "month": {"$month": "$start_date"}
-                        },
-                        "revenue": {"$sum": "$paid_amount"}
-                    }
-                },
-                {
-                    "$sort": {
-                        "_id.year": 1,
-                        "_id.month": 1
-                    }
-                }
-            ]
-
-            monthly_data = await transaction_collection.aggregate(
-                monthly_revenue_pipeline
+            withdraw_monthly_data = await withdraw_token_transaction_collection.aggregate(
+                withdraw_monthly_pipeline
             ).to_list(None)
+
+            withdraw_map = {
+                (item["_id"]["year"], item["_id"]["month"]): item["withdraw"]
+                for item in withdraw_monthly_data
+            }
 
             month_map = {
                 1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr",
@@ -176,13 +153,25 @@ class DashboardModel:
                 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec"
             }
 
-            revenue_summary = [
-                {
-                    "month": month_map[item["_id"]["month"]],
-                    "revenue": round(item["revenue"], 2)
-                }
-                for item in monthly_data
-            ]
+            revenue_summary = []
+            total_revenue = 0
+
+            for item in monthly_data:
+                year = item["_id"]["year"]
+                month = item["_id"]["month"]
+                revenue = item["revenue"]
+
+                withdraw_amount = withdraw_map.get((year, month), 0)
+                net_revenue = round(revenue - withdraw_amount, 2)
+
+                total_revenue += net_revenue
+
+                revenue_summary.append({
+                    "month": month_map[month],
+                    "revenue": net_revenue
+                })
+
+            total_revenue = round(total_revenue, 2)
 
             # ---------------- TOTAL WITHDRAWALS APPROVED ----------------
             total_withdrawals_approved = await withdraw_token_transaction_collection.count_documents({
