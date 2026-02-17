@@ -600,7 +600,7 @@ class ContestModel:
             # Description
             "description": contest.get("description"),
             "rules": contest.get("rules", []),
-
+            "judging_criteria":contest.get("judging_criteria",[]),
             # Contest Details
             "start_date": contest.get("start_date"),
             "end_date": contest.get("end_date"),

@@ -21,6 +21,7 @@ from api.controller.files_controller import generate_file_url
 from core.utils.action_limit import check_daily_action_limit , increment_daily_counter
 from core.utils.core_enums import NotificationType, NotificationRecipientType
 from services.notification_service import send_notification
+from api.controller.onboardingController import get_matched_users_model
 
 response = CustomResponseMixin()
 
@@ -505,3 +506,23 @@ async def get_user_login_status_internal(user_id: str, lang: str = "en"):
             "login_status": user.get("login_status")
         }]
     )
+
+
+async def get_matched_users_controller(current_user, lang: str = "en"):
+    try:
+        user_id = str(current_user["_id"])
+
+        matched_users = await get_matched_users_model(user_id, lang)
+
+        return response.success_message(
+            translate_message("MATCHED_USERS_FETCHED", lang),
+            data=matched_users,
+            status_code=200
+        )
+
+    except Exception as e:
+        return response.error_message(
+            translate_message("SOMETHING_WENT_WRONG", lang),
+            data=[str(e)],
+            status_code=500
+        )

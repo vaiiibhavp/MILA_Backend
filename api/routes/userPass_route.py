@@ -1,4 +1,4 @@
-from fastapi import APIRouter ,Depends
+from fastapi import APIRouter ,Depends ,Query
 from core.auth import get_current_user
 from api.controller.home_controller import get_home_suggestions
 from config.models.userPass_model import(
@@ -7,7 +7,9 @@ from config.models.userPass_model import(
      pass_user , 
      get_my_favorites , 
      get_users_who_liked_me, 
-     get_user_login_status_internal)
+     get_user_login_status_internal,
+     get_matched_users_controller
+)
 from core.utils.response_mixin import CustomResponseMixin
 from services.translation import translate_message
 from schemas.userpass_schema import( 
@@ -101,3 +103,10 @@ async def get_user_login_status_api(
     Internal API: Get user login status
     """
     return await get_user_login_status_internal(user_id, lang)
+
+@router.get("/users/matches")
+async def get_matched_users(
+    current_user: dict = Depends(get_current_user),
+    lang: str = Query("en")
+):
+    return await get_matched_users_controller(current_user, lang)
