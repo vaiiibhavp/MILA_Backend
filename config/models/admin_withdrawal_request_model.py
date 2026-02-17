@@ -40,10 +40,10 @@ async def list_withdrawal_requests(search: str, pagination):
         }
     })
 
-    # 2️⃣ Join ONBOARDING (profile image id stored here)
+    # 2️⃣ Join USER_ONBOARDING  (profile image id stored here)
     pipeline.append({
         "$lookup": {
-            "from": "onboarding",
+            "from": "user_onboarding",
             "let": {"userId": {"$toString": "$user._id"}},
             "pipeline": [
                 {
@@ -70,11 +70,24 @@ async def list_withdrawal_requests(search: str, pagination):
         }
     })
 
-    # 3️⃣ Join FILES (actual profile image)
+    # 3️⃣ Convert image string → ObjectId
+    pipeline.append({
+        "$addFields": {
+            "profile_image_object_id": {
+                "$cond": [
+                    {"$ne": ["$onboarding.profile_image_id", None]},
+                    {"$toObjectId": "$onboarding.profile_image_id"},
+                    None
+                ]
+            }
+        }
+    })
+
+    # 4️⃣ Join FILES (NOW IT WILL MATCH)
     pipeline.append({
         "$lookup": {
             "from": "files",
-            "localField": "onboarding.profile_image_id",
+            "localField": "profile_image_object_id",
             "foreignField": "_id",
             "as": "profile_image"
         }
