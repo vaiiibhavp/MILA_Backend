@@ -2,22 +2,34 @@
 from core.utils.response_mixin import CustomResponseMixin
 from services.translation import translate_message
 from config.models.admin_notification_model import NotificationModel
-
+from core.utils.pagination import StandardResultsSetPagination ,build_paginated_response
 
 response = CustomResponseMixin()
 
-async def get_admin_notifications_controller(current_admin, lang: str = "en"):
+async def get_admin_notifications_controller(
+    current_admin,
+    lang: str,
+    pagination: StandardResultsSetPagination
+):
     try:
         admin_id = str(current_admin["_id"])
 
-        data = await NotificationModel.get_admin_notifications(
+        records, total_records = await NotificationModel.get_admin_notifications(
             admin_id,
-            lang
+            lang,
+            pagination
+        )
+
+        paginated_response = build_paginated_response(
+            records=records,
+            page=pagination.page or 1,
+            page_size=pagination.limit or len(records),
+            total_records=total_records
         )
 
         return response.success_message(
             translate_message("NOTIFICATION_FETCHED", lang),
-            data=data,
+            data=paginated_response,
             status_code=200
         )
 

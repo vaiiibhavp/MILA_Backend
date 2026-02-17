@@ -9,19 +9,34 @@ from services.profile_fetch_service import format_notification
 from services.translation import translate_message
 from bson import ObjectId
 from core.utils.core_enums import NotificationRecipientType
-
+from core.utils.pagination import StandardResultsSetPagination
 
 class NotificationModel:
 
     @staticmethod
-    async def get_admin_notifications(admin_id: str, lang: str):
+    async def get_admin_notifications(
+        admin_id: str,
+        lang: str,
+        pagination: StandardResultsSetPagination
+    ):
         try:
-            notifications = await notification_collection.find(
-                {
-                    "recipient_id": admin_id,
-                    "recipient_type": NotificationRecipientType.ADMIN.value,
-                }
-            ).sort("created_at", -1).to_list(length=100)
+            base_query = {
+                "recipient_id": admin_id,
+                "recipient_type": NotificationRecipientType.ADMIN.value,
+            }
+
+            # ---------------- COUNT TOTAL RECORDS ----------------
+            total_records = await notification_collection.count_documents(base_query)
+
+            # ---------------- PAGINATION ----------------
+            skip = pagination.skip if pagination.skip >= 0 else 0
+            limit = pagination.limit if pagination.limit else 10
+
+            notifications = await notification_collection.find(base_query) \
+                .sort("created_at", -1) \
+                .skip(skip) \
+                .limit(limit) \
+                .to_list(length=limit)
 
             today = []
             earlier = []
@@ -75,10 +90,13 @@ class NotificationModel:
                 else:
                     earlier.append(formatted)
 
-            return {
+            # Combine both lists into single records list
+            records = {
                 "today": today,
                 "earlier": earlier
             }
+
+            return records, total_records
 
         except Exception as e:
             raise RuntimeError(str(e))
