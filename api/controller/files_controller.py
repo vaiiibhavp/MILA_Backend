@@ -31,7 +31,7 @@ response = CustomResponseMixin()
 
 
 #helper function to save the profile picture
-async def save_file(file_obj: UploadFile, file_name: str, user_id: str, file_type="profile_photo"):
+async def save_file(file_obj: UploadFile, file_name: str, user_id: str, file_type="profile_photo", content: bytes = None):
     """
     Save uploaded file to LOCAL or S3 based on STORAGE_BACKEND.
     Returns: (public_url, storage_key, backend)
@@ -45,7 +45,8 @@ async def save_file(file_obj: UploadFile, file_name: str, user_id: str, file_typ
         if ext not in allowed_images + allowed_audio:
             raise ValueError("Invalid file type")
 
-        content = await file_obj.read()
+        if content is None:
+            content = await file_obj.read()
 
         timestamp = int(time.time())
 
