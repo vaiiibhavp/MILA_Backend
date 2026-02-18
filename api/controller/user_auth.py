@@ -707,7 +707,8 @@ async def upload_audio_controller(
             file_obj=audio,
             file_name=audio.filename,
             user_id=user_id,
-            file_type="audio"
+            file_type="audio",
+            content=content
         )
 
         file_doc = Files(
