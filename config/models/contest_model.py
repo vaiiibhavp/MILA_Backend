@@ -236,6 +236,7 @@ async def get_contests_paginated(
             contest_id=history["contest_id"],
             contest_history_id=str(history["_id"]),
             title=contest["title"],
+            badge=contest.get("badge"),
             banner_url=banner_url,
             visibility=visibility,
             total_participants=history.get("total_participants", 0),

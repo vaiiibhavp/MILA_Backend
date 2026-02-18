@@ -16,11 +16,11 @@ async def get_contests_controller(
     lang: str = "en"
 ):
     # Verification gate
-    if current_user.get("is_verified") is not True:
-        return response.success_message(
-            translate_message("VERIFICATION_PENDING", lang),
-            data=[{"verification_required": True}]
-        )
+    # if current_user.get("is_verified") is not True:
+    #     return response.success_message(
+    #         translate_message("VERIFICATION_PENDING", lang),
+    #         data=[{"verification_required": True}]
+    #     )
 
     contests, total = await get_contests_paginated(
         contest_type=contest_type,
@@ -96,6 +96,7 @@ async def get_contest_details_controller(
         "contest_id": contest_id,
         "contest_history_id": contest_history_id,
         "title": contest["title"],
+        "badge": contest["badge"],
         "description": contest.get("description"),
 
         "banner_url": banner_url,
@@ -390,6 +391,16 @@ async def participate_in_contest_controller(
     # Increment participant count
     await increment_participant_count(contest_history_id)
 
+    await contest_collection.update_one(
+        {
+            "_id": ObjectId(contest_id),
+            "is_deleted": {"$ne": True}
+        },
+        {
+            "$inc": {"total_participants": 1},
+            "$set": {"updated_at": datetime.utcnow()}
+        }
+    )
     # Response
     response_payload = {
         "contest_id": contest_id,
@@ -596,7 +607,16 @@ async def cast_vote_controller(
         participant["_id"],
         contest_history_id
     )
-
+    await contest_collection.update_one(
+        {
+            "_id": ObjectId(contest_id),
+            "is_deleted": {"$ne": True}
+        },
+        {
+            "$inc": {"total_votes": 1},
+            "$set": {"updated_at": datetime.utcnow()}
+        }
+    )
     return response.success_message(
         translate_message("VOTE_CAST_SUCCESSFULLY", lang),
         data={

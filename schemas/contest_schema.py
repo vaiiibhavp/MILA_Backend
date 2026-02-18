@@ -7,6 +7,7 @@ class ContestCardResponse(BaseModel):
     contest_id: str
     contest_history_id: str
     title: str
+    badge: Optional[str] = None
     banner_url: Optional[str] = None
     visibility: ContestVisibility
     total_participants: int
