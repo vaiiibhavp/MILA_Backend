@@ -433,6 +433,11 @@ async def get_full_leaderboard_controller(
             status_code=404
         )
 
+    await auto_declare_winners(contest_id)
+
+    # Re-fetch contest history
+    contest_history = await fetch_latest_contest_history(contest_id)
+
     query = {
         "contest_id": contest_id,
         "contest_history_id": str(contest_history["_id"])
