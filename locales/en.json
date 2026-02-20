@@ -553,5 +553,6 @@
   "CALL_ALREADY_ENDED":"Call already ended",
   "CALL_NOT_ACTIVE":"Call not active",
   "INSUFFICIENT_TOKENS_CALL_ENDED":"Insufficient tokens call ended",
-  "CALL_CAN_CONTINUE":"Call can continue"  
+  "CALL_CAN_CONTINUE":"Call can continue",
+  "VIDEO_CALL_ENDED":"Video call ended"  
 }
