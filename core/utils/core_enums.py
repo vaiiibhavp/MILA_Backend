@@ -28,6 +28,7 @@ class TokenTransactionReason(str, Enum):
     GIFT_SENT= "GIFT_SENT"
     GIFT_RECEIVED = "GIFT_RECEIVED"
     PRIVATE_IMAGE_UNLOCK = "PRIVATE_IMAGE_UNLOCK"
+    VIDEO_CALL = "VIDEO_CALL"
 
 class LoginStatus(str, Enum):
     ACTIVE = "active"
