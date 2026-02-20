@@ -22,19 +22,19 @@ async def start_video_call(user_id: str, receiver_user_id: str, lang: str = "en"
     caller = await user_collection.find_one({"_id": ObjectId(user_id)})
     if not caller:
         return response.error_message(
-            translate_message("USER_NOT_FOUND", lang), 
+            translate_message("USER_NOT_FOUND", lang),
             status_code=404
         )
 
     if not caller.get("is_verified"):
         return response.error_message(
-            translate_message("USER_NOT_VERIFIED", lang), 
+            translate_message("USER_NOT_VERIFIED", lang),
             status_code=400
         )
 
     if caller.get("login_status") != "active":
         return response.error_message(
-            translate_message("USER_BLOCKED_OR_INACTIVE", lang), 
+            translate_message("USER_BLOCKED_OR_INACTIVE", lang),
             status_code=403
         )
 
@@ -42,20 +42,36 @@ async def start_video_call(user_id: str, receiver_user_id: str, lang: str = "en"
     receiver = await user_collection.find_one({"_id": ObjectId(receiver_user_id)})
     if not receiver:
         return response.error_message(
-            translate_message("RECEIVER_NOT_FOUND", lang), 
+            translate_message("RECEIVER_NOT_FOUND", lang),
             status_code=404
         )
 
     if not receiver.get("is_verified"):
         return response.error_message(
-            translate_message("RECEIVER_NOT_VERIFIED", lang), 
+            translate_message("RECEIVER_NOT_VERIFIED", lang),
             status_code=400
         )
 
     if receiver.get("login_status") != "active":
         return response.error_message(
-            translate_message("RECEIVER_BLOCKED_OR_INACTIVE", lang), 
+            translate_message("RECEIVER_BLOCKED_OR_INACTIVE", lang),
             status_code=403
+        )
+
+    # Token validation for both users
+    caller_tokens = int(caller.get("tokens", 0))
+    receiver_tokens = int(receiver.get("tokens", 0))
+
+    if caller_tokens <= 0:
+        return response.error_message(
+            translate_message("CALLER_INSUFFICIENT_TOKENS", lang),
+            status_code=400
+        )
+
+    if receiver_tokens <= 0:
+        return response.error_message(
+            translate_message("RECEIVER_INSUFFICIENT_TOKENS", lang),
+            status_code=400
         )
 
     # Calculate today's free usage (caller side)
@@ -72,7 +88,7 @@ async def start_video_call(user_id: str, receiver_user_id: str, lang: str = "en"
     async for call in cursor:
         total_free_used_seconds += call.get("free_seconds_used", 0)
 
-    remaining_free_seconds =ui= max(0, FREE_VIDEO_LIMIT_SECONDS - total_free_used_seconds)
+    remaining_free_seconds = max(0, FREE_VIDEO_LIMIT_SECONDS - total_free_used_seconds)
 
     # Rates
     caller_rate = 1 if caller.get("membership_type") == MembershipType.PREMIUM.value else 2
@@ -98,8 +114,8 @@ async def start_video_call(user_id: str, receiver_user_id: str, lang: str = "en"
             "free_seconds_remaining": remaining_free_seconds,
             "caller_rate": caller_rate,
             "receiver_rate": receiver_rate,
-            "caller_tokens": caller.get("tokens", 0),
-            "receiver_tokens": receiver.get("tokens", 0)
+            "caller_tokens": caller_tokens,
+            "receiver_tokens": receiver_tokens
         }]
     )
 
