@@ -1,8 +1,9 @@
 import asyncio
 from datetime import datetime, timedelta, timezone
-from config.db_config import contest_collection, contest_history_collection
+from config.db_config import contest_collection, contest_history_collection, contest_winner_collection
 from dateutil.relativedelta import relativedelta
 from core.utils.core_enums import ContestFrequency
+from config.models.contest_model import auto_declare_winners
 
 _loop = None
 
@@ -148,3 +149,34 @@ async def generate_contest_cycles_job():
 
     for contest in contests:
         await process_contest(contest, now)
+
+async def declare_contest_winners_job():
+    """
+    Cron job to declare winners for contests
+    whose voting period has ended.
+    """
+
+    now = datetime.now(timezone.utc)
+
+    # Find contest histories where voting ended
+    ended_contests = await contest_history_collection.find({
+        "voting_end": {"$lt": now},
+        "is_active": True
+    }).to_list(None)
+
+    for history in ended_contests:
+
+        contest_id = history["contest_id"]
+        contest_history_id = str(history["_id"])
+
+        # Check if winners already declared
+        existing_winner = await contest_winner_collection.find_one({
+            "contest_id": contest_id,
+            "contest_history_id": contest_history_id
+        })
+
+        if existing_winner:
+            continue
+
+        # Call your existing function
+        await auto_declare_winners(contest_id)

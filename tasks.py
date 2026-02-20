@@ -13,7 +13,7 @@ from celery.exceptions import MaxRetriesExceededError
 from services.job_services.subscription_job_service import notify_expiring_subscriptions, \
     expire_and_activate_subscriptions_job
 
-from services.job_services.contest_tasks import generate_contest_cycles_job , get_loop
+from services.job_services.contest_tasks import generate_contest_cycles_job , get_loop, declare_contest_winners_job
 
 ADMIN_EMAIL = os.getenv("EMAIL_FROM")
 
@@ -115,6 +115,28 @@ def generate_contest_cycles():
 
     except Exception as e:
         print(f"Error in generate_contest_cycles: {e}")
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+
+@celery_app.task(name="tasks.declare_contest_winners")
+def declare_contest_winners():
+    """
+    Scheduled task to declare contest winners daily.
+    """
+    try:
+        loop = get_loop()
+        loop.run_until_complete(declare_contest_winners_job())
+
+        return {
+            "status": "success",
+            "message": "contest winners declared successfully"
+        }
+
+    except Exception as e:
+        print(f"Error in declare_contest_winners: {e}")
         return {
             "status": "error",
             "message": str(e)
