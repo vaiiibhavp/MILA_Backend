@@ -79,6 +79,16 @@ async def login_controller(request: AdminLogin, lang: str = "en"):
         # profile_url = await get_profile_photo_url(current_user=admin)
         # user_data["profile_url"] = profile_url if profile_url else None
 
+        # 🔹 Get admin FCM token from fcm_device_tokens_collection
+        fcm_token_doc = await fcm_device_tokens_collection.find_one(
+            {"user_id": str(admin["_id"])}
+        )
+
+        fcm_token = None
+        if fcm_token_doc:
+            fcm_token = fcm_token_doc.get("device_token")
+
+        user_data["fcm_token"] = fcm_token
 
         # Step 8: Prepare response
         response_data = {

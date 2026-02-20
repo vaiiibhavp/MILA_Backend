@@ -556,5 +556,7 @@
   "CALL_ALREADY_ENDED": "L'appel est déjà terminé",
   "CALL_NOT_ACTIVE": "L'appel n'est pas actif",
   "INSUFFICIENT_TOKENS_CALL_ENDED": "Jetons insuffisants, l'appel a été terminé",
-  "CALL_CAN_CONTINUE": "L'appel peut continuer"
+  "CALL_CAN_CONTINUE": "L'appel peut continuer",
+  "CALLER_INSUFFICIENT_TOKENS": "Vous n'avez pas assez de jetons pour démarrer un appel vidéo.",
+  "RECEIVER_INSUFFICIENT_TOKENS": "Le destinataire n'a pas assez de jetons pour démarrer un appel vidéo."
 }
