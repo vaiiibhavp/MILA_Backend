@@ -4,8 +4,10 @@ from config.db_config import contest_collection, contest_history_collection, con
 from dateutil.relativedelta import relativedelta
 from core.utils.core_enums import ContestFrequency
 from config.models.contest_model import auto_declare_winners
+from core.utils.leaderboard.leaderboard_helper import LeaderboardRedisHelper
 
 _loop = None
+leaderboard_helper = LeaderboardRedisHelper()
 
 def get_loop():
     global _loop
@@ -180,3 +182,10 @@ async def declare_contest_winners_job():
 
         # Call your existing function
         await auto_declare_winners(contest_id)
+
+        await leaderboard_helper.reset_contest()
+
+    return {
+        "status": "success",
+        "message": "contest winners declared successfully"
+    }
