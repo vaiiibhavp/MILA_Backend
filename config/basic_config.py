@@ -67,6 +67,7 @@ class Settings(BaseSettings):
     CONTEST_TOKEN_COST:int
     LEADERBOARD_REDIS_DB:int
     CHAT_AUDIO_MAX_LIMIT:int
+    FREE_VIDEO_LIMIT_SECONDS :int
     
     class ConfigDict:
         env_file = ".env"
