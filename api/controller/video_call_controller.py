@@ -21,24 +21,42 @@ async def start_video_call(user_id: str, receiver_user_id: str, lang: str = "en"
     # Fetch caller
     caller = await user_collection.find_one({"_id": ObjectId(user_id)})
     if not caller:
-        return response.error_message(translate_message("USER_NOT_FOUND", lang), 404)
+        return response.error_message(
+            translate_message("USER_NOT_FOUND", lang), 
+            status_code=404
+        )
 
     if not caller.get("is_verified"):
-        return response.error_message(translate_message("USER_NOT_VERIFIED", lang), 400)
+        return response.error_message(
+            translate_message("USER_NOT_VERIFIED", lang), 
+            status_code=400
+        )
 
     if caller.get("login_status") != "active":
-        return response.error_message(translate_message("USER_BLOCKED_OR_INACTIVE", lang), 403)
+        return response.error_message(
+            translate_message("USER_BLOCKED_OR_INACTIVE", lang), 
+            status_code=403
+        )
 
     # Fetch receiver
     receiver = await user_collection.find_one({"_id": ObjectId(receiver_user_id)})
     if not receiver:
-        return response.error_message(translate_message("RECEIVER_NOT_FOUND", lang), 404)
+        return response.error_message(
+            translate_message("RECEIVER_NOT_FOUND", lang), 
+            status_code=404
+        )
 
     if not receiver.get("is_verified"):
-        return response.error_message(translate_message("RECEIVER_NOT_VERIFIED", lang), 400)
+        return response.error_message(
+            translate_message("RECEIVER_NOT_VERIFIED", lang), 
+            status_code=400
+        )
 
     if receiver.get("login_status") != "active":
-        return response.error_message(translate_message("RECEIVER_BLOCKED_OR_INACTIVE", lang), 403)
+        return response.error_message(
+            translate_message("RECEIVER_BLOCKED_OR_INACTIVE", lang), 
+            status_code=403
+        )
 
     # Calculate today's free usage (caller side)
     today_start = datetime.combine(date.today(), time.min)
@@ -89,16 +107,25 @@ async def end_video_call(user_id: str, call_id: str, total_call_seconds: int, la
 
     call = await video_call_sessions.find_one({"_id": ObjectId(call_id)})
     if not call:
-        return response.error_message(translate_message("CALL_NOT_FOUND", lang), 404)
+        return response.error_message(
+            translate_message("CALL_NOT_FOUND", lang), 
+            status_code=404
+        )
 
     if call.get("status") == "ended":
-        return response.error_message(translate_message("CALL_ALREADY_ENDED", lang), 400)
+        return response.error_message(
+            translate_message("CALL_ALREADY_ENDED", lang), 
+            status_code=400
+        )
 
     caller = await user_collection.find_one({"_id": ObjectId(call["caller_id"])})
     receiver = await user_collection.find_one({"_id": ObjectId(call["receiver_id"])})
 
     if not caller or not receiver:
-        return response.error_message(translate_message("USER_NOT_FOUND", lang), 404)
+        return response.error_message(
+            translate_message("USER_NOT_FOUND", lang), 
+            status_code=404
+        )
 
     free_seconds_remaining = call.get("free_seconds_remaining", 0)
 
@@ -179,13 +206,19 @@ async def video_call_tick(user_id: str, call_id: str, elapsed_seconds: int, lang
 
     call = await video_call_sessions.find_one({"_id": ObjectId(call_id)})
     if not call or call.get("status") != "ongoing":
-        return response.error_message(translate_message("CALL_NOT_ACTIVE", lang), 400)
+        return response.error_message(
+            translate_message("CALL_NOT_ACTIVE", lang), 
+            status_code=400
+        )
 
     caller = await user_collection.find_one({"_id": ObjectId(call["caller_id"])})
     receiver = await user_collection.find_one({"_id": ObjectId(call["receiver_id"])})
 
     if not caller or not receiver:
-        return response.error_message(translate_message("USER_NOT_FOUND", lang), 404)
+        return response.error_message(
+            translate_message("USER_NOT_FOUND", lang), 
+            status_code=404
+        )
 
     free_seconds_remaining = call.get("free_seconds_remaining", 0)
 
