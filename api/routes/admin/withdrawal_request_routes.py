@@ -16,6 +16,16 @@ async def list_withdrawals(
         None,
         description="Global search by user name, email, wallet, status, or request ID"
     ),
+    status: Optional[str] = Query(
+        None,
+        description="Filter by withdrawal status"
+    ),
+    date_from: Optional[str] = Query(
+        default=None
+    ),
+    date_to: Optional[str] = Query(
+        default=None
+    ),
     current_user: dict = Depends(AdminPermission(["admin"])),
     lang: str = Query(None)
 ):
@@ -25,6 +35,9 @@ async def list_withdrawals(
         user_id=user_id,
         pagination=pagination,
         search=search,
+        status=status,
+        date_from=date_from,
+        date_to=date_to,
         lang=lang
     )
 
