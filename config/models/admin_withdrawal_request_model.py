@@ -1,8 +1,9 @@
 import os
 from decimal import Decimal
+from typing import Optional
 
 from bson import ObjectId
-from datetime import datetime, timezone
+from datetime import datetime, timezone, time
 
 from config.db_config import withdraw_token_transaction_collection
 from core.utils.core_enums import WithdrawalStatus
@@ -16,7 +17,7 @@ from services.translation import translate_message
 
 response = CustomResponseMixin()
 
-async def list_withdrawal_requests(search: str, pagination):
+async def list_withdrawal_requests(search: str, pagination, status: Optional[str], date_from: Optional[str], date_to: Optional[str]):
     """
         Fetch withdrawal requests with global search and user details.
         """
@@ -117,6 +118,30 @@ async def list_withdrawal_requests(search: str, pagination):
         pipeline.append({
             "$match": {
                 "$or": or_conditions
+            }
+        })
+
+    if status:
+        pipeline.append({
+            "$match": {
+                "status": status.lower()
+            }
+        })
+    date_filter = {}
+    if date_from:
+        start_date = datetime.strptime(date_from, "%Y-%m-%d")
+        start_date = datetime.combine(start_date.date(), time.min, tzinfo=timezone.utc)
+        date_filter["$gte"] = start_date
+
+    if date_to:
+        end_date = datetime.strptime(date_to, "%Y-%m-%d")
+        end_date = datetime.combine(end_date.date(), time.max, tzinfo=timezone.utc)
+        date_filter["$lte"] = end_date
+
+    if date_filter:
+        pipeline.append({
+            "$match": {
+                "created_at": date_filter
             }
         })
 
