@@ -10,7 +10,7 @@ from core.utils.leaderboard.leaderboard_helper import LeaderboardRedisHelper
 from core.utils.pagination import pagination_params, StandardResultsSetPagination
 from api.controller.files_controller import *
 from schemas.contest_schema import *
-from core.utils.helper import *
+from core.utils.helper import get_user_details
 
 leaderboard_redis_helper = LeaderboardRedisHelper()
 
@@ -104,6 +104,28 @@ class ContestVoteModel(BaseModel):
     voter_user_id: str
     vote_cost: int
     voted_at: datetime = Field(default_factory=datetime.utcnow)
+
+class ContestWinnerModel(BaseModel):
+    contest_id: str
+    contest_history_id: str
+
+    participant_id: str
+    user_id: str
+
+    rank: int
+    total_votes: int
+
+    username: Optional[str] = None
+    avatar_url: Optional[str] = None
+
+    declared_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {
+            ObjectId: str,
+            datetime: lambda v: v.isoformat()
+        }
 
 CONTEST_TYPE_VISIBILITY_MAP = {
     ContestType.active: [
@@ -563,3 +585,124 @@ async def increment_vote_counts(
         {"$inc": {"total_votes": 1}}
     )
     await leaderboard_redis_helper.add_vote(str(participant_id))
+
+async def auto_declare_winners(contest_id: str):
+
+    contest_history = await fetch_latest_contest_history(contest_id)
+
+    if not contest_history:
+        return
+
+    voting_end = contest_history.get("voting_end")
+    if not voting_end:
+        return
+
+    now = datetime.utcnow()
+
+    if now <= voting_end:
+        return
+
+    contest_history_id = str(contest_history["_id"])
+
+    # Prevent duplicate declaration
+    existing_winner = await contest_winner_collection.find_one({
+        "contest_id": contest_id,
+        "contest_history_id": contest_history_id
+    })
+
+    if existing_winner:
+        return
+
+    # Fetch contest to get prize distribution
+    contest = await contest_collection.find_one({
+        "_id": ObjectId(contest_id)
+    })
+
+    if not contest:
+        return
+
+    prize_distribution = contest.get("prize_distribution", {})
+
+    total_participants = await contest_participant_collection.count_documents({
+        "contest_id": contest_id,
+        "contest_history_id": contest_history_id
+    })
+
+    if total_participants < 3:
+        return
+
+    cursor = (
+        contest_participant_collection
+        .find({
+            "contest_id": contest_id,
+            "contest_history_id": contest_history_id
+        })
+        .sort("total_votes", -1)
+        .limit(3)
+    )
+
+    rank = 1
+
+    rank = 1
+
+    async for participant in cursor:
+
+        if rank == 1:
+            prize_amount = prize_distribution.get("first_place", 0)
+        elif rank == 2:
+            prize_amount = prize_distribution.get("second_place", 0)
+        elif rank == 3:
+            prize_amount = prize_distribution.get("third_place", 0)
+        else:
+            prize_amount = 0
+
+        winner_doc = {
+            "contest_id": contest_id,
+            "contest_history_id": contest_history_id,
+            "participant_id": str(participant["_id"]),
+            "user_id": participant["user_id"],
+            "rank": rank,
+            "total_votes": participant.get("total_votes", 0),
+            "prize_amount": prize_amount,
+            "declared_at": datetime.utcnow()
+        }
+
+        await contest_winner_collection.insert_one(winner_doc)
+
+        # Update participant record
+        await contest_participant_collection.update_one(
+            {"_id": participant["_id"]},
+            {
+                "$set": {
+                    "rank": rank,
+                    "is_winner": True,
+                    "winner_position": rank
+                }
+            }
+        )
+
+        # Credit prize tokens to user
+        await user_collection.update_one(
+            {"_id": ObjectId(participant["user_id"])},
+            [
+                {
+                    "$set": {
+                        "tokens": {
+                            "$add": [
+                                {
+                                    "$cond": {
+                                        "if": {"$isNumber": "$tokens"},
+                                        "then": "$tokens",
+                                        "else": 0
+                                    }
+                                },
+                                prize_amount
+                            ]
+                        },
+                        "updated_at": datetime.utcnow()
+                    }
+                }
+            ]
+        )
+
+        rank += 1
