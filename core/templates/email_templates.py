@@ -107,11 +107,11 @@ def subscription_expiry_template(username: str, lang:str = "en"):
             "title": "Votre abonnement MILA expire bientôt",
             "body": f"""Salut {username},
             Petit rappel : votre abonnement MILA Premium expire dans 3 jours.
-            Nous espérons que vous avez profité des avantages supplémentaires, comme une meilleure visibilité, des fonctionnalités exclusives et des rencontres plus enrichissantes. 💖
-            Pour continuer à bénéficier d'un accès illimité à tous les avantages Premium, veuillez renouveler votre abonnement avant son expiration.
-            Renouvelez dès maintenant et poursuivez vos conversations, vos rencontres et vos moments inoubliables. ✨
-            Si vous avez des questions ou besoin d'aide, nous sommes toujours là pour vous.
-            — L'équipe MILA
+    Nous espérons que vous avez profité des avantages supplémentaires, comme une meilleure visibilité, des fonctionnalités exclusives et des rencontres plus enrichissantes. 💖
+    Pour continuer à bénéficier d'un accès illimité à tous les avantages Premium, veuillez renouveler votre abonnement avant son expiration.
+    Renouvelez dès maintenant et poursuivez vos conversations, vos rencontres et vos moments inoubliables. ✨
+    Si vous avez des questions ou besoin d'aide, nous sommes toujours là pour vous.
+— L'équipe MILA
         """
         }
     }
