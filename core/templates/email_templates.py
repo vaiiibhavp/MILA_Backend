@@ -204,3 +204,32 @@ def verification_rejected_template(username: str):
     """
 
     return subject, body
+
+def subscription_expiry_template(username: str, lang:str = "en"):
+    subscription_expiry_template_translation = {
+        "en": {
+            "title": "Your MILA Subscription Expires Soon",
+            "body": f"""Hi {username},
+            Just a quick reminder — your MILA Premium subscription is set to expire in 3 days.
+    We hope you’ve been enjoying the extra perks, including enhanced visibility, exclusive features, and better connections. 💖
+    To continue enjoying uninterrupted access to all premium benefits, please renew your subscription before it expires.
+    Renew now and keep the conversations, matches, and moments going. ✨
+    If you have any questions or need assistance, we’re always here to help.
+            
+— Team MILA
+            """
+        },
+        "fr": {
+            "title": "Votre abonnement MILA expire bientôt",
+            "body": f"""Salut {username},
+            Petit rappel : votre abonnement MILA Premium expire dans 3 jours.
+    Nous espérons que vous avez profité des avantages supplémentaires, comme une meilleure visibilité, des fonctionnalités exclusives et des rencontres plus enrichissantes. 💖
+    Pour continuer à bénéficier d'un accès illimité à tous les avantages Premium, veuillez renouveler votre abonnement avant son expiration.
+    Renouvelez dès maintenant et poursuivez vos conversations, vos rencontres et vos moments inoubliables. ✨
+    Si vous avez des questions ou besoin d'aide, nous sommes toujours là pour vous.
+— L'équipe MILA
+        """
+        }
+    }
+
+    return subscription_expiry_template_translation[lang]
