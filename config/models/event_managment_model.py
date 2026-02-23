@@ -506,12 +506,11 @@ class ContestModel:
 
         # ---------------- ADD DYNAMIC VISIBILITY ----------------
         for contest in contests:
-            # existing visibility logic
             contest["visibility"] = calculate_visibility(
-                contest["start_date"],
-                contest["end_date"],
-                contest["total_participants"],
-                contest["min_participant"],
+                contest.get("start_date"),
+                contest.get("end_date"),
+                contest.get("total_participants", 0),
+                contest.get("min_participant", 0),
             )
 
         # ---------------- APPLY VISIBILITY FILTER ----------------

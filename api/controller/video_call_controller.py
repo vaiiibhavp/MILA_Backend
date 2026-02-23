@@ -87,7 +87,7 @@ async def start_video_call(user_id: str, receiver_user_id: str, lang: str = "en"
 
     caller_free_used_seconds = 0
     async for call in caller_cursor:
-        caller_free_used_seconds += call.get("free_seconds_used", 0)
+        caller_free_used_seconds += call.get("caller_free_seconds_used", 0)
 
     caller_free_seconds_remaining = max(
         0, FREE_VIDEO_LIMIT_SECONDS - caller_free_used_seconds
@@ -102,13 +102,11 @@ async def start_video_call(user_id: str, receiver_user_id: str, lang: str = "en"
 
     receiver_free_used_seconds = 0
     async for call in receiver_cursor:
-        receiver_free_used_seconds += call.get("free_seconds_used", 0)
+        receiver_free_used_seconds += call.get("receiver_free_seconds_used", 0)
 
     receiver_free_seconds_remaining = max(
         0, FREE_VIDEO_LIMIT_SECONDS - receiver_free_used_seconds
     )
-
-    receiver_has_used_free_time = receiver_free_used_seconds > 0
 
     # Rates
     caller_rate = 1 if caller.get("membership_type") == MembershipType.PREMIUM.value else 2
@@ -132,7 +130,7 @@ async def start_video_call(user_id: str, receiver_user_id: str, lang: str = "en"
         translate_message("VIDEO_CALL_STARTED", lang),
         data=[{
             "call_id": str(result.inserted_id),
-            "free_seconds_remaining": caller_free_seconds_remaining,
+            "caller_free_seconds_remaining": caller_free_seconds_remaining,
             "receiver_free_seconds_remaining": receiver_free_seconds_remaining,
             "caller_rate": caller_rate,
             "receiver_rate": receiver_rate,
@@ -146,13 +144,13 @@ async def end_video_call(user_id: str, call_id: str, total_call_seconds: int, la
     call = await video_call_sessions.find_one({"_id": ObjectId(call_id)})
     if not call:
         return response.error_message(
-            translate_message("CALL_NOT_FOUND", lang), 
+            translate_message("CALL_NOT_FOUND", lang),
             status_code=404
         )
 
     if call.get("status") == "ended":
         return response.error_message(
-            translate_message("CALL_ALREADY_ENDED", lang), 
+            translate_message("CALL_ALREADY_ENDED", lang),
             status_code=400
         )
 
@@ -161,14 +159,18 @@ async def end_video_call(user_id: str, call_id: str, total_call_seconds: int, la
 
     if not caller or not receiver:
         return response.error_message(
-            translate_message("USER_NOT_FOUND", lang), 
+            translate_message("USER_NOT_FOUND", lang),
             status_code=404
         )
 
-    free_seconds_remaining = call.get("free_seconds_remaining", 0)
+    caller_free_remaining = call.get("caller_free_seconds_remaining", 0)
+    receiver_free_remaining = call.get("receiver_free_seconds_remaining", 0)
 
-    free_used = min(total_call_seconds, free_seconds_remaining)
-    paid_seconds = max(0, total_call_seconds - free_used)
+
+    caller_free_used = min(total_call_seconds, caller_free_remaining)
+    receiver_free_used = min(total_call_seconds, receiver_free_remaining)
+
+    paid_seconds = max(0, total_call_seconds - min(caller_free_used, receiver_free_used))
 
     paid_minutes = math.ceil(paid_seconds / 60)
 
@@ -186,12 +188,12 @@ async def end_video_call(user_id: str, call_id: str, total_call_seconds: int, la
 
     # Deduct tokens
     await user_collection.update_one(
-        {"_id": ObjectId(caller["_id"])},
+        {"_id": caller["_id"]},
         {"$inc": {"tokens": -caller_tokens_to_deduct}}
     )
 
     await user_collection.update_one(
-        {"_id": ObjectId(receiver["_id"])},
+        {"_id": receiver["_id"]},
         {"$inc": {"tokens": -receiver_tokens_to_deduct}}
     )
 
@@ -222,7 +224,8 @@ async def end_video_call(user_id: str, call_id: str, total_call_seconds: int, la
                 "status": "ended",
                 "end_time": datetime.utcnow(),
                 "total_seconds": total_call_seconds,
-                "free_seconds_used": free_used,
+                "caller_free_seconds_used": caller_free_used,
+                "receiver_free_seconds_used": receiver_free_used,
                 "paid_seconds_used": paid_seconds,
                 "caller_tokens_deducted": caller_tokens_to_deduct,
                 "receiver_tokens_deducted": receiver_tokens_to_deduct
@@ -234,7 +237,10 @@ async def end_video_call(user_id: str, call_id: str, total_call_seconds: int, la
         translate_message("VIDEO_CALL_ENDED", lang),
         data=[{
             "call_id": call_id,
-            "paid_minutes": paid_minutes,
+            "total_call_seconds": total_call_seconds,
+            "caller_free_seconds_used": caller_free_used,
+            "receiver_free_seconds_used": receiver_free_used,
+            "paid_seconds_used": paid_seconds,
             "caller_tokens_deducted": caller_tokens_to_deduct,
             "receiver_tokens_deducted": receiver_tokens_to_deduct
         }]
@@ -258,9 +264,12 @@ async def video_call_tick(user_id: str, call_id: str, elapsed_seconds: int, lang
             status_code=404
         )
 
-    free_seconds_remaining = call.get("free_seconds_remaining", 0)
+    caller_free_remaining = call.get("caller_free_seconds_remaining", 0)
+    receiver_free_remaining = call.get("receiver_free_seconds_remaining", 0)
 
-    free_used = min(elapsed_seconds, free_seconds_remaining)
+    free_remaining = min(caller_free_remaining, receiver_free_remaining)
+
+    free_used = min(elapsed_seconds, free_remaining)
     paid_seconds = max(0, elapsed_seconds - free_used)
     paid_minutes = math.ceil(paid_seconds / 60)
 
