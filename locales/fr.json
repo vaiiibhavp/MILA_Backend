@@ -546,5 +546,17 @@
   "AUDIO_FILE_REQUIRED": "Le fichier audio est requis",
   "AUDIO_FILE_TOO_LARGE": "Le fichier audio dépasse la taille maximale autorisée",
   "INVALID_AUDIO_TYPE": "Type de fichier audio invalide. Seuls MP3, WAV et M4A sont autorisés",
-  "AUDIO_UPLOAD_SUCCESSFULLY": "Audio téléchargé avec succès"
+  "AUDIO_UPLOAD_SUCCESSFULLY": "Audio téléchargé avec succès",
+  "USER_NOT_VERIFIED": "Utilisateur non vérifié",
+  "USER_BLOCKED_OR_INACTIVE": "Utilisateur bloqué ou inactif",
+  "RECEIVER_NOT_VERIFIED": "Destinataire non vérifié",
+  "RECEIVER_BLOCKED_OR_INACTIVE": "Destinataire bloqué ou inactif",
+  "VIDEO_CALL_STARTED": "Appel vidéo démarré",
+  "CALL_NOT_FOUND": "Appel introuvable",
+  "CALL_ALREADY_ENDED": "L'appel est déjà terminé",
+  "CALL_NOT_ACTIVE": "L'appel n'est pas actif",
+  "INSUFFICIENT_TOKENS_CALL_ENDED": "Jetons insuffisants, l'appel a été terminé",
+  "CALL_CAN_CONTINUE": "L'appel peut continuer",
+  "CALLER_INSUFFICIENT_TOKENS": "Vous n'avez pas assez de jetons pour démarrer un appel vidéo.",
+  "RECEIVER_INSUFFICIENT_TOKENS": "Le destinataire n'a pas assez de jetons pour démarrer un appel vidéo."
 }

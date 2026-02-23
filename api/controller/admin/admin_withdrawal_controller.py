@@ -23,10 +23,13 @@ async def fetch_withdrawal_requests(
     user_id:str,
     lang:str,
     search: Optional[str],
+    status: Optional[str],
+    date_from: Optional[str],
+    date_to: Optional[str],
     pagination:StandardResultsSetPagination,
 ):
     try:
-        data = await list_withdrawal_requests(search=search, pagination=pagination)
+        data = await list_withdrawal_requests(search=search, pagination=pagination, status=status, date_from=date_from, date_to=date_to)
         return response.success_message(
             translate_message(message="WITHDRAWAL_REQUESTS_FETCHED", lang=lang),
             data=data
