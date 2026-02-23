@@ -4,6 +4,7 @@ from bson import ObjectId
 from core.firebase_push import send_push_notification
 from core.utils.core_enums import NotificationType, NotificationRecipientType
 from config.db_config import notification_collection , user_collection , admin_collection
+from core.utils.send_mail import smtp_send_email
 from services.translation import translate_message
 
 async def send_notification(
@@ -30,18 +31,18 @@ async def send_notification(
     if recipient_type == NotificationRecipientType.USER:
         user = await user_collection.find_one(
             {"_id": ObjectId(recipient_id)},
-            {"lang": 1}
+            {"language": 1}
         )
         if user:
-            lang = user.get("lang", "en")
+            lang = user.get("language", "en")
 
     elif recipient_type == NotificationRecipientType.ADMIN:
         admin = await admin_collection.find_one(
             {"_id": ObjectId(recipient_id)},
-            {"lang": 1}
+            {"language": 1}
         )
         if admin:
-            lang = admin.get("lang", "en")
+            lang = admin.get("language", "en")
 
     # ------------------ TRANSLATE ------------------
     translated_title = translate_message(title, lang)

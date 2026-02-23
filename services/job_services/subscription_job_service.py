@@ -1,7 +1,9 @@
 from datetime import timezone, datetime
 from config.db_config import user_collection, transaction_collection
 from config.models.user_models import find_expiring_subscriptions
+from core.templates.email_templates import subscription_expiry_template
 from core.utils.core_enums import NotificationRecipientType, NotificationType, MembershipStatus, MembershipType
+from core.utils.send_mail import smtp_send_email
 from services.notification_service import send_notification
 
 
@@ -9,6 +11,9 @@ async def notify_expiring_subscriptions(days_before: int):
     subs = await find_expiring_subscriptions(days_before)
 
     for sub in subs:
+        lang = sub.get("language", "en")
+        email = sub.get("email",None)
+        email_data = subscription_expiry_template(lang=lang, username=sub.get("username",None))
         await send_notification(
             recipient_id=str(sub['_id']),
             recipient_type=NotificationRecipientType.USER,
@@ -17,6 +22,7 @@ async def notify_expiring_subscriptions(days_before: int):
             message="PUSH_MESSAGE_SUBSCRIPTION_EXPIRING_SOON",
             send_push=True,
         )
+        await smtp_send_email(to_email=email, subject=email_data["title"], body=email_data["body"])
 
 async def expire_and_activate_subscriptions_job():
     """
