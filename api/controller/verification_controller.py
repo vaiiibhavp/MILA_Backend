@@ -523,7 +523,7 @@ async def get_pending_verification_users_controller(
                 "username": "$user.username",
                 "selfie": "$selfie_image",
                 "verification_status": 1,
-                "registration_date": "$created_at"
+                "registration_date": "$user.created_at"
             }
         })
 
