@@ -463,11 +463,15 @@ class ContestModel:
 
         # ---------------- DATE FILTER ----------------
         if date_from or date_to:
-            match_stage["start_date"] = {}
+            date_filter = {}
+
             if date_from:
-                match_stage["start_date"]["$gte"] = date_from
+                date_filter["start_date"] = {"$gte": date_from}
+
             if date_to:
-                match_stage["start_date"]["$lte"] = date_to
+                date_filter["end_date"] = {"$lte": date_to}
+
+            match_stage.update(date_filter)
 
         # ---------------- FREQUENCY FILTER ----------------
         if frequency:
@@ -505,7 +509,9 @@ class ContestModel:
             # existing visibility logic
             contest["visibility"] = calculate_visibility(
                 contest["start_date"],
-                contest["end_date"]
+                contest["end_date"],
+                contest["total_participants"],
+                contest["min_participant"],
             )
 
         # ---------------- APPLY VISIBILITY FILTER ----------------
@@ -728,14 +734,17 @@ class ContestModel:
                 "message": translate_message("INVALID_BADGE", lang),
                 "status_code": 400
             }
-
+        update_data["badge"] = badge
+        
         # ---------------- DESCRIPTION VALIDATION ----------------
-        if not payload.description or not payload.description.strip():
-            return {
-                "error": True,
-                "message": translate_message("EMPTY_CONTEST_DESCRIPTION", lang),
-                "status_code": 400
-            }
+        if payload.description is not None:
+            if not payload.description.strip():
+                return {
+                    "error": True,
+                    "message": translate_message("EMPTY_CONTEST_DESCRIPTION", lang),
+                    "status_code": 400
+                }
+            update_data["description"] = payload.description.strip()
         
         # ---------------- BASIC STRING & NUMBER FIELDS ----------------
         basic_fields = [

@@ -5,6 +5,7 @@ from config.db_config import (
     user_match_history,
     user_like_history,
     favorite_collection,
+    deleted_account_collection,
 )
 from core.utils.response_mixin import CustomResponseMixin
 from services.translation import translate_message
@@ -25,9 +26,32 @@ async def _get_excluded_user_ids(user_id: str) -> set:
     if passed:
         excluded.update(passed.get("passed_user_ids", []))
 
-    matches = user_match_history.find({"user_ids": user_id})
+    # ================== MATCHED USERS ==================
+    matches = user_match_history.find(
+        {"user_ids": user_id},
+        {"user_ids": 1}
+    )
     async for m in matches:
         excluded.update(m.get("user_ids", []))
+
+    # ================== DELETED USERS ==================
+    deleted = await deleted_account_collection.find_one(
+        {"user_id": user_id},
+        {"user_id": 1}
+    )
+
+    # If current user is deleted (safety case)
+    if deleted:
+        excluded.add(user_id)
+
+    # Get all deleted accounts (same pattern as passed)
+    deleted_users_cursor = deleted_account_collection.find(
+        {},
+        {"user_id": 1}
+    )
+
+    async for doc in deleted_users_cursor:
+        excluded.add(doc["user_id"])
 
     return excluded
 

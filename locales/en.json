@@ -556,5 +556,12 @@
   "CALL_CAN_CONTINUE":"Call can continue",
   "VIDEO_CALL_ENDED":"Video call ended",
   "CALLER_INSUFFICIENT_TOKENS": "You do not have enough tokens to start a video call.",
-  "RECEIVER_INSUFFICIENT_TOKENS": "The receiver does not have enough tokens to start a video call." 
+  "RECEIVER_INSUFFICIENT_TOKENS": "The receiver does not have enough tokens to start a video call." ,
+  "ADMIN_NOT_FOUND_WITH_THIS_EMAIL":"Admin not found with this email",
+  "PASSWORD_RESET_FAILED": "Failed to process password reset request. Please try again.",
+  "PASSWORD_RESET_REQUEST": "Password reset request",
+  "PASSWORD_RESET_CODE_MESSAGE": "Your password reset code is: {reset_code}. It will expire in 15 minutes.",
+  "PASSWORD_RESET_CODE_SENT": "Password reset code sent to email",
+  "ONLY_VERIFIED_USERS_CAN_BLOCK":"Only verified users can block",
+  "ONLY_VERIFIED_USERS_CAN_REPORT":"Only verified users can report"
 }

@@ -293,13 +293,31 @@ async def credit_tokens_for_verification(user_id: str, admin_id: str):
 
     await create_user_token_history(token_history)
 
-def calculate_visibility(start_date, end_date):
+def calculate_visibility(
+    start_date,
+    end_date,
+    total_participants: int = 0,
+    min_participant: int = 0
+):
     now = datetime.utcnow()
 
     if now < start_date:
         return ContestVisibility.upcoming.value
     elif start_date <= now <= end_date:
-        return ContestVisibility.in_progress.value
+
+        # VALIDATION CHECK
+        if total_participants >= min_participant:
+            return ContestVisibility.in_progress.value
+        else:
+            # Not enough participants
+            # You can decide what to return here:
+            # Option 1: Keep as upcoming
+            return ContestVisibility.upcoming.value
+
+            # Option 2 (if you later create enum):
+            # return ContestVisibility.cancelled.value
+
+    # ---------------- COMPLETED ----------------
     else:
         return ContestVisibility.completed.value
 
