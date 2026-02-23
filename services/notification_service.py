@@ -46,7 +46,16 @@ async def send_notification(
 
     # ------------------ TRANSLATE ------------------
     translated_title = translate_message(title, lang)
-    translated_message = translate_message(message, lang)
+    translated_message_template = translate_message(message, lang)
+
+    try:
+        if push_data:
+            translated_message = translated_message_template.format(**push_data)
+        else:
+            translated_message = translated_message_template
+    except KeyError:
+        # Fallback to raw template if formatting fails
+        translated_message = translated_message_template
 
     notification_doc = {
         "recipient_id": recipient_id,

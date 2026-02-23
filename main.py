@@ -45,6 +45,8 @@ from config.basic_config import *
 
 from core.utils.leaderboard.listener import leaderboard_listener
 
+from services.translation import translate_message
+
 init_firebase()
 leaderboard_task = None
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -367,15 +369,23 @@ async def shutdown_event():
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+
+    # Extract language from query param
+    lang = request.query_params.get("lang", "en")
+
     errors = exc.errors()
 
-    # Extract field -> message mapping
-    formatted_errors = {
-        err["loc"][-1]: err["msg"].replace("Value error, ", "")
-        for err in errors
-    }
+    formatted_errors = {}
 
-    # Pick the first error message for top-level message
+    for err in errors:
+        field = err["loc"][-1]
+        raw_msg = err["msg"].replace("Value error, ", "")
+
+        # Translate using key
+        translated_msg = translate_message(raw_msg, lang)
+
+        formatted_errors[field] = translated_msg
+
     first_error_message = next(iter(formatted_errors.values()))
 
     return JSONResponse(
@@ -383,7 +393,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "message": first_error_message,
             "success": False
         },
-        status_code=422  # Use 422 for validation errors
+        status_code=422
     )
 
 

@@ -293,7 +293,7 @@ async def save_onboarding_step(
 
         if user and user.get("email"):
             subject, body = onboarding_completed_template(
-                username=user.get("username", "User")
+                username=user.get("username", "User"), lang=lang
             )
             await send_email(
                 to_email=user["email"],

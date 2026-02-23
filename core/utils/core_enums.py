@@ -67,7 +67,8 @@ class NotificationType(str, Enum):
     TOKEN_WITHDRAW_STATUS = "token_withdrawn_status_updated"
     VERIFICATION_APPROVED = "verification_approved",
     VERIFICATION_REJECTED = "verification_rejected"
-
+    CONTEST_RESULT = "contest_result"
+    
 class VerificationStatusEnum(str, Enum):
     PENDING = "pending"
     APPROVED = "approved"

@@ -225,7 +225,7 @@ async def signup_controller(payload: Signup, lang):
     )
 
     # Step 4: Send verification email
-    subject, body = signup_verification_template(payload.username, otp)
+    subject, body = signup_verification_template(payload.username, otp, lang)
     is_html = True
     await send_email(payload.email, subject, body, is_html)
 
@@ -264,7 +264,8 @@ async def verify_signup_otp_controller(payload, lang):
             "is_verified": False,
             "created_at": datetime.utcnow(),
             "updated_at": None,
-            "two_factor_enabled": True
+            "two_factor_enabled": True,
+            "language": lang or "en"
         })
 
         user_id = str(result.inserted_id)
@@ -311,7 +312,7 @@ async def resend_otp_controller(payload, lang):
     # Step 3: Send email again
     subject, body = signup_verification_template(
         json.loads(temp_data)["username"],
-        otp
+        otp, lang
     )
 
     await send_email(email, subject, body, is_html=True)
@@ -410,7 +411,7 @@ async def login_controller(payload: LoginRequest, lang):
 
     await redis_client.setex(f"login:{email}:otp", 60, otp)
 
-    subject, body = login_verification_template(user["username"], otp)
+    subject, body = login_verification_template(user["username"], otp, lang)
     await send_email(email, subject, body, is_html=True)
 
     return response.success_message(
@@ -451,7 +452,7 @@ async def resend_login_otp_controller(payload, lang):
 
     await redis_client.setex(f"login:{email}:otp", 300, otp)
 
-    subject, body = login_verification_template(user["username"], otp)
+    subject, body = login_verification_template(user["username"], otp, lang)
     await send_email(email, subject, body, is_html=True)
 
     return response.success_message(
@@ -474,7 +475,7 @@ async def send_reset_password_otp_controller(payload: ForgotPasswordRequest, lan
     await redis_client.setex(f"reset:{email}:otp", 300, otp)
 
     # Email Template
-    subject, body = reset_password_otp_template(user["username"], otp)
+    subject, body = reset_password_otp_template(user["username"], otp, lang)
 
     await send_email(email, subject, body, is_html=True)
 
@@ -555,7 +556,7 @@ async def resend_forgot_password_otp_controller(payload, lang):
     await redis_client.setex(resend_key, 60, "1")
 
     # Step 6: Send email
-    subject, body = reset_password_otp_template(user["username"], otp)
+    subject, body = reset_password_otp_template(user["username"], otp, lang)
     await send_email(email, subject, body, is_html=True)
 
     return response.success_message(

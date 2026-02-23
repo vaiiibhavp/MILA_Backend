@@ -8,7 +8,7 @@ from pydantic_core import core_schema
 from bson import ObjectId
 from datetime import datetime, date, timedelta, timezone
 from config.db_config import db
-from config.db_config import user_like_history, user_passed_hostory, favorite_collection, user_collection,token_collection, file_collection, onboarding_collection
+from config.db_config import blocked_users_collection, reported_users_collection, user_like_history, user_passed_hostory, favorite_collection, user_collection,token_collection, file_collection, onboarding_collection
 from core.utils.core_enums import MembershipStatus
 from core.utils.response_mixin import CustomResponseMixin
 from enum import Enum
@@ -316,12 +316,10 @@ async def update_user_token_balance(
         }
     )
 
-from bson import ObjectId
-
 async def get_excluded_profile_user_ids(viewer_id: str):
     excluded_user_ids = set()
 
-    # Passed users
+    # ---------------- PASSED USERS ----------------
     passed = await user_passed_hostory.find_one(
         {"user_id": viewer_id},
         {"passed_user_ids": 1}
@@ -329,7 +327,7 @@ async def get_excluded_profile_user_ids(viewer_id: str):
     if passed:
         excluded_user_ids.update(passed.get("passed_user_ids", []))
 
-    # Favorited users
+    # ---------------- FAVORITES ----------------
     favorites = await favorite_collection.find_one(
         {"user_id": viewer_id},
         {"favorite_user_ids": 1}
@@ -337,7 +335,7 @@ async def get_excluded_profile_user_ids(viewer_id: str):
     if favorites:
         excluded_user_ids.update(favorites.get("favorite_user_ids", []))
 
-    # Liked users (reverse lookup)
+    # ---------------- LIKED USERS (reverse lookup) ----------------
     liked_cursor = user_like_history.find(
         {"liked_by_user_ids": viewer_id},
         {"user_id": 1}
@@ -345,10 +343,47 @@ async def get_excluded_profile_user_ids(viewer_id: str):
     async for doc in liked_cursor:
         excluded_user_ids.add(doc["user_id"])
 
-    # Exclude self
+    # ---------------- BLOCKED USERS ----------------
+
+    # Users I blocked
+    blocked_cursor = blocked_users_collection.find(
+        {"blocker_id": viewer_id},
+        {"blocked_id": 1}
+    )
+    async for doc in blocked_cursor:
+        excluded_user_ids.add(doc["blocked_id"])
+
+    # Users who blocked me
+    blocked_by_cursor = blocked_users_collection.find(
+        {"blocked_id": viewer_id},
+        {"blocker_id": 1}
+    )
+    async for doc in blocked_by_cursor:
+        excluded_user_ids.add(doc["blocker_id"])
+
+    # ---------------- REPORTED USERS ----------------
+
+    # Users I reported
+    reported_cursor = reported_users_collection.find(
+        {"reporter_id": viewer_id},
+        {"reported_id": 1}
+    )
+    async for doc in reported_cursor:
+        if doc.get("reported_id"):
+            excluded_user_ids.add(doc["reported_id"])
+
+    # Users who reported me (optional but safer)
+    reported_by_cursor = reported_users_collection.find(
+        {"reported_id": viewer_id},
+        {"reporter_id": 1}
+    )
+    async for doc in reported_by_cursor:
+        excluded_user_ids.add(doc["reporter_id"])
+
+    # ---------------- EXCLUDE SELF ----------------
     excluded_user_ids.add(viewer_id)
 
-    # Convert to ObjectIds
+    # ---------------- Convert to ObjectIds ----------------
     return [
         ObjectId(uid)
         for uid in excluded_user_ids

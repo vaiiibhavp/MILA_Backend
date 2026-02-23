@@ -568,4 +568,83 @@
   "ONLY_VERIFIED_USERS_CAN_BLOCK":"Seuls les utilisateurs vérifiés peuvent bloquer.",
   "ONLY_VERIFIED_USERS_CAN_REPORT":"Seuls les utilisateurs vérifiés peuvent signaler."
 
+  "MAX_PARTICIPANT_LIMIT_REACHED": "Le nombre maximum de participants pour ce concours a été atteint.",
+
+  "EMAIL_SIGNUP_SUBJECT": "Bienvenue sur MILA 💌 Vérifiez votre email",
+  "EMAIL_SIGNUP_GREETING": "Bonjour {username},",
+  "EMAIL_SIGNUP_LINE1": "Nous sommes ravis de vous accueillir sur MILA ! 💛",
+  "EMAIL_SIGNUP_LINE2": "Pour finaliser votre inscription et commencer à vous connecter, veuillez utiliser le code de vérification ci-dessous :",
+  "EMAIL_SIGNUP_VALIDITY": "Ce code est valide pendant 5 minutes. Pour votre sécurité, veuillez ne pas le partager.",
+  "EMAIL_SIGNUP_IGNORE": "Si vous ne vous êtes pas inscrit sur MILA, vous pouvez ignorer cet email.",
+  "EMAIL_SIGNUP_FOOTER": "À très bientôt 😉",
+  "EMAIL_TEAM": "— Équipe MILA",
+
+  "EMAIL_LOGIN_SUBJECT": "Votre code de connexion MILA 💫",
+  "EMAIL_LOGIN_GREETING": "Bonjour {username},",
+  "EMAIL_LOGIN_LINE1": "Voici votre code de vérification de connexion :",
+  "EMAIL_LOGIN_VALIDITY": "Ce code expirera dans 5 minutes.",
+  "EMAIL_LOGIN_SECURITY": "Si ce n'était pas vous, veuillez sécuriser votre compte immédiatement.",
+  "EMAIL_LOGIN_FOOTER": "Retournons à vos connexions 💕",
+
+  "EMAIL_RESET_SUBJECT": "Réinitialisez votre mot de passe MILA 🔐",
+  "EMAIL_RESET_GREETING": "Bonjour {username},",
+  "EMAIL_RESET_LINE1": "Nous avons reçu une demande de réinitialisation de votre mot de passe MILA.",
+  "EMAIL_RESET_LINE2": "Votre code de réinitialisation est :",
+  "EMAIL_RESET_VALIDITY": "Ce code est valide pendant 5 minutes.",
+  "EMAIL_RESET_IGNORE": "Si vous n'avez pas demandé cela, vous pouvez ignorer cet email — votre compte est toujours sécurisé.",
+  "EMAIL_RESET_FOOTER": "Retournons à vos connexions 💌",
+
+  "EMAIL_ONBOARDING_SUBJECT": "Vous êtes prêt(e) sur MILA 🎉",
+  "EMAIL_ONBOARDING_GREETING": "Bonjour {username},",
+  "EMAIL_ONBOARDING_LINE1": "La configuration de votre profil est terminée — vous êtes officiellement prêt(e) à explorer MILA !",
+  "EMAIL_ONBOARDING_LINE2": "Commencez à découvrir des profils, créer des connexions et voir où cela vous mène ✨",
+  "EMAIL_ONBOARDING_LINE3": "Votre prochaine belle conversation pourrait être à un swipe près 😉",
+  "EMAIL_ONBOARDING_FOOTER": "Profitez du voyage 💕",
+
+  "EMAIL_APPROVED_SUBJECT": "Vous êtes vérifié(e) sur MILA ✅✨",
+  "EMAIL_APPROVED_GREETING": "Bonjour {username},",
+  "EMAIL_APPROVED_LINE1": "Excellente nouvelle ! 🎉 Votre profil a été approuvé avec succès.",
+  "EMAIL_APPROVED_LINE2": "Vous avez maintenant accès à de nombreuses fonctionnalités sur MILA — commencez à vous connecter en toute confiance.",
+  "EMAIL_APPROVED_LINE3": "Votre histoire commence maintenant 💫",
+
+  "EMAIL_REJECTED_SUBJECT": "Mise à jour de la vérification du profil",
+  "EMAIL_REJECTED_GREETING": "Bonjour {username},",
+  "EMAIL_REJECTED_LINE1": "Merci d'avoir soumis votre profil pour vérification.",
+  "EMAIL_REJECTED_LINE2": "Malheureusement, nous n'avons pas pu l'approuver pour le moment. Veuillez vérifier vos informations et vous assurer que toutes les données et photos respectent nos directives avant de soumettre à nouveau.",
+  "EMAIL_REJECTED_LINE3": "Nous sommes là pour vous aider à être vérifié(e) et commencer à vous connecter bientôt 💛",
+
+  "EMAIL_REQUIRED": "Un e-mail est requis.",
+  "EMAIL_NO_SPACES": "Les adresses électroniques ne peuvent pas contenir d'espaces.",
+  "EMAIL_SINGLE_AT": "L'adresse électronique doit contenir un seul symbole '@'.",
+  "EMAIL_INVALID_LOCAL": "Un courriel ne peut contenir que des lettres, des chiffres, '.', '_', '-' avant '@'.",
+  "EMAIL_INVALID_DOMAIN": "Domaine de messagerie invalide. Exemple : utilisateur@domaine.com",
+
+  "USERNAME_REQUIRED": "Un nom d'utilisateur est requis.",
+  "USERNAME_MIN_LENGTH": "Le nom d'utilisateur doit comporter au moins 3 caractères.",
+  "USERNAME_START_LETTER": "Le nom d'utilisateur doit commencer par une lettre (A–Z ou a–z).",
+  "USERNAME_INVALID_CHARS": "Le nom d'utilisateur ne peut contenir que des lettres, des chiffres et des traits de soulignement (_).",
+
+  "PASSWORD_REQUIRED": "Un mot de passe est requis.",
+  "PASSWORD_MIN_LENGTH": "Le mot de passe doit comporter au moins 8 caractères.",
+  "PASSWORD_NO_SPACES": "Le mot de passe ne peut pas contenir d'espaces.",
+  "PASSWORD_UPPERCASE": "Le mot de passe doit inclure une lettre majuscule.",
+  "PASSWORD_LOWERCASE": "Le mot de passe doit contenir une lettre minuscule.",
+  "PASSWORD_NUMBER": "Le mot de passe doit inclure un chiffre.",
+  "PASSWORD_INVALID_CHARS": "Le mot de passe contient des caractères invalides.",
+
+  "OTP_REQUIRED": "Un code OTP est requis.",
+  "OTP_DIGITS_ONLY": "Le code OTP doit contenir uniquement des chiffres.",
+  "OTP_4_DIGITS": "Le code OTP doit comporter 4 chiffres.",
+
+  "ROLE_REQUIRED": "Un rôle est requis.",
+  "ROLE_INVALID": "Rôle invalide. Doit être l'un des suivants : {allowed}",
+
+  "INVALID_TRANSACTION_TYPE": "Type de transaction invalide. Valeurs autorisées : {allowed}",
+
+  "WINNER_NOTIFICATION_TITLE": "Félicitations ! Vous avez gagné le concours 🎉",
+  "WINNER_NOTIFICATION_MESSAGE": "Vous avez obtenu la position {rank} dans {contest_name} et gagné {amount} jetons ! 🏆",
+
+  "PARTICIPATION_NOTIFICATION_TITLE": "Résultats du concours disponibles – Vérifiez votre classement !",
+  "PARTICIPATION_NOTIFICATION_MESSAGE": "Les résultats du concours {contest_name} sont maintenant disponibles. Consultez votre classement dans l'application. 🚀"
+
 }
