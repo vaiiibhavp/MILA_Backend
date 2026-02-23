@@ -380,8 +380,29 @@ async def get_my_favorites(user_id: str, lang: str = "en"):
             data=[]
         )
 
+    # -------- 2. Get Passed Users --------
+    passed_doc = await user_passed_hostory.find_one(
+        {"user_id": user_id},
+        {"_id": 0, "passed_user_ids": 1}
+    )
+
+    passed_user_ids = passed_doc.get("passed_user_ids", []) if passed_doc else []
+
+    # -------- 3. Remove Passed Users from Favorites --------
+    filtered_favorite_ids = [
+        uid for uid in favorite_user_ids
+        if uid not in passed_user_ids
+    ]
+
+    if not filtered_favorite_ids:
+        return response.success_message(
+            translate_message("NO_FAVORITES_FOUND", lang),
+            data=[]
+        )
+
+    # -------- 4. Fetch Users --------
     users_cursor = user_collection.find(
-        {"_id": {"$in": [ObjectId(uid) for uid in favorite_user_ids]}},
+        {"_id": {"$in": [ObjectId(uid) for uid in filtered_favorite_ids]}},
         {"_id": 1, "username": 1, "is_verified": 1}
     )
 

@@ -78,17 +78,37 @@ async def start_video_call(user_id: str, receiver_user_id: str, lang: str = "en"
     today_start = datetime.combine(date.today(), time.min)
     today_end = datetime.combine(date.today(), time.max)
 
-    cursor = video_call_sessions.find({
+    # ---------------- Caller free usage ----------------
+    caller_cursor = video_call_sessions.find({
         "caller_id": user_id,
         "status": "ended",
         "start_time": {"$gte": today_start, "$lte": today_end}
     })
 
-    total_free_used_seconds = 0
-    async for call in cursor:
-        total_free_used_seconds += call.get("free_seconds_used", 0)
+    caller_free_used_seconds = 0
+    async for call in caller_cursor:
+        caller_free_used_seconds += call.get("free_seconds_used", 0)
 
-    remaining_free_seconds = max(0, FREE_VIDEO_LIMIT_SECONDS - total_free_used_seconds)
+    caller_free_seconds_remaining = max(
+        0, FREE_VIDEO_LIMIT_SECONDS - caller_free_used_seconds
+    )
+
+    # ---------------- Receiver free usage ----------------
+    receiver_cursor = video_call_sessions.find({
+        "receiver_id": receiver_user_id,
+        "status": "ended",
+        "start_time": {"$gte": today_start, "$lte": today_end}
+    })
+
+    receiver_free_used_seconds = 0
+    async for call in receiver_cursor:
+        receiver_free_used_seconds += call.get("free_seconds_used", 0)
+
+    receiver_free_seconds_remaining = max(
+        0, FREE_VIDEO_LIMIT_SECONDS - receiver_free_used_seconds
+    )
+
+    receiver_has_used_free_time = receiver_free_used_seconds > 0
 
     # Rates
     caller_rate = 1 if caller.get("membership_type") == MembershipType.PREMIUM.value else 2
@@ -100,7 +120,8 @@ async def start_video_call(user_id: str, receiver_user_id: str, lang: str = "en"
         "start_time": datetime.utcnow(),
         "caller_rate_per_minute": caller_rate,
         "receiver_rate_per_minute": receiver_rate,
-        "free_seconds_remaining": remaining_free_seconds,
+        "caller_free_seconds_remaining": caller_free_seconds_remaining,
+        "receiver_free_seconds_remaining": receiver_free_seconds_remaining,
         "status": "ongoing",
         "created_at": datetime.utcnow()
     }
@@ -111,7 +132,8 @@ async def start_video_call(user_id: str, receiver_user_id: str, lang: str = "en"
         translate_message("VIDEO_CALL_STARTED", lang),
         data=[{
             "call_id": str(result.inserted_id),
-            "free_seconds_remaining": remaining_free_seconds,
+            "free_seconds_remaining": caller_free_seconds_remaining,
+            "receiver_free_seconds_remaining": receiver_free_seconds_remaining,
             "caller_rate": caller_rate,
             "receiver_rate": receiver_rate,
             "caller_tokens": caller_tokens,

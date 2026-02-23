@@ -559,6 +559,13 @@
   "CALL_CAN_CONTINUE": "L'appel peut continuer",
   "CALLER_INSUFFICIENT_TOKENS": "Vous n'avez pas assez de jetons pour démarrer un appel vidéo.",
   "RECEIVER_INSUFFICIENT_TOKENS": "Le destinataire n'a pas assez de jetons pour démarrer un appel vidéo.",
+  "MAX_PARTICIPANT_LIMIT_REACHED": "Le nombre maximum de participants pour ce concours a été atteint.",
+  "ADMIN_NOT_FOUND_WITH_THIS_EMAIL": "Aucun administrateur trouvé avec cet e-mail",
+  "PASSWORD_RESET_FAILED": "Échec du traitement de la demande de réinitialisation du mot de passe. Veuillez réessayer.",
+  "PASSWORD_RESET_REQUEST": "Demande de réinitialisation du mot de passe",
+  "PASSWORD_RESET_CODE_MESSAGE": "Votre code de réinitialisation du mot de passe est : {reset_code}. Il expirera dans 15 minutes.",
+  "PASSWORD_RESET_CODE_SENT": "Le code de réinitialisation du mot de passe a été envoyé par e-mail",
+  "ONLY_VERIFIED_USERS_CAN_BLOCK":"Seuls les utilisateurs vérifiés peuvent bloquer.",
+  "ONLY_VERIFIED_USERS_CAN_REPORT":"Seuls les utilisateurs vérifiés peuvent signaler."
 
-  "MAX_PARTICIPANT_LIMIT_REACHED": "Le nombre maximum de participants pour ce concours a été atteint."
 }

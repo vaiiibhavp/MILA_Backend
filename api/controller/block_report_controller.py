@@ -40,6 +40,27 @@ async def block_user_controller(
             data=[]
         )
 
+    # ================== CHECK IF BLOCKER IS VERIFIED ==================
+    blocker = await user_collection.find_one(
+        {"_id": ObjectId(blocker_id), "is_deleted": {"$ne": True}},
+        {"is_verified": 1}
+    )
+
+    if not blocker:
+        return response.error_message(
+            translate_message("USER_NOT_FOUND", lang),
+            status_code=404,
+            data=[]
+        )
+
+    if not blocker.get("is_verified"):
+        return response.error_message(
+            translate_message("ONLY_VERIFIED_USERS_CAN_BLOCK", lang),
+            status_code=403,
+            data=[]
+        )
+
+    # ================== CHECK BLOCKED USER EXISTS ==================
     blocked_user = await user_collection.find_one(
         {"_id": ObjectId(blocked_id), "is_deleted": {"$ne": True}},
         {"_id": 1}
@@ -124,12 +145,33 @@ async def report_user_controller(
             data=[]
         )
 
-    user = await user_collection.find_one(
+    # ================== CHECK REPORTER IS VERIFIED ==================
+    reporter = await user_collection.find_one(
+        {"_id": ObjectId(reporter_id), "is_deleted": {"$ne": True}},
+        {"is_verified": 1}
+    )
+
+    if not reporter:
+        return response.error_message(
+            translate_message("USER_NOT_FOUND", lang),
+            status_code=404,
+            data=[]
+        )
+
+    if not reporter.get("is_verified"):
+        return response.error_message(
+            translate_message("ONLY_VERIFIED_USERS_CAN_REPORT", lang),
+            status_code=403,
+            data=[]
+        )
+
+    # ================== CHECK REPORTED USER EXISTS ==================
+    reported_user = await user_collection.find_one(
         {"_id": ObjectId(reported_id), "is_deleted": {"$ne": True}},
         {"_id": 1}
     )
 
-    if not user:
+    if not reported_user:
         return response.error_message(
             translate_message("USER_NOT_FOUND", lang),
             status_code=404,

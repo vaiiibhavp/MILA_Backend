@@ -272,7 +272,7 @@ async def verify_forgot_pwd_otp_admin(otp: ForgotPasswordOtpVerify, lang: str = 
 
     #  Step 4: Return reset_token to frontend
     return response.success_message(
-        translate_message("OTP verified successfully", lang),
+        translate_message("OTP_VERIFIED_SUCCESSFULLY", lang),
         data={"reset_token": temp_token}
     )
 
@@ -349,7 +349,7 @@ async def request_password_reset_admin(request: RequestResetPassword, lang: str 
 
         if not admin:
             return response.error_message(
-                translate_message("Admin not found with this email", lang),
+                translate_message("ADMIN_NOT_FOUND_WITH_THIS_EMAIL", lang),
                 data={}, 
                 status_code=404
             )
@@ -363,16 +363,16 @@ async def request_password_reset_admin(request: RequestResetPassword, lang: str 
         except Exception as e:
             print(f"Error storing reset code in Redis: {e}")
             return response.error_message(
-                translate_message("Failed to process password reset request. Please try again.", lang),
+                translate_message("PASSWORD_RESET_FAILED", lang),
                 data={}, 
                 status_code=500
             )
 
         # Step 4: Send the reset code to the user's email
         try:
-            email_subject = translate_message("Password Reset Request", lang)
+            email_subject = translate_message("PASSWORD_RESET_REQUEST", lang)
             email_body = translate_message(
-                "Your password reset code is: {reset_code}. It will expire in 15 minutes.",
+                "PASSWORD_RESET_CODE_MESSAGE",
                 lang=lang,
                 reset_code=reset_code
             )
@@ -382,7 +382,7 @@ async def request_password_reset_admin(request: RequestResetPassword, lang: str 
             
             # Step 5: Return success message
             return response.success_message(
-                translate_message("Password reset code sent to email", lang), 
+                translate_message("PASSWORD_RESET_CODE_SENT", lang), 
                 data={"email": email},
                 status_code=200
             )
@@ -392,7 +392,7 @@ async def request_password_reset_admin(request: RequestResetPassword, lang: str 
             # Even if email fails, we still return success to prevent user enumeration
             # The reset code is still stored in Redis
             return response.success_message(
-                translate_message("Password reset code sent to email", lang), 
+                translate_message("PASSWORD_RESET_CODE_SENT", lang), 
                 data={"email": email},
                 status_code=200
             )
@@ -407,21 +407,21 @@ async def logout_admin(request: LogoutRequest, lang: str = "en"):
         # Verify the token
         token_data = verify_token(request.refresh_token)
     except Exception as e:
-        raise response.raise_exception(message=translate_message("Invalid refresh token.", lang), data={}, status_code=400)
+        raise response.raise_exception(message=translate_message("INVALID_REFRESH_TOKEN", lang), data={}, status_code=400)
 
     # Find the token in the database
     existing_token = await token_collection.find_one({"refresh_token": request.refresh_token})
 
     if not existing_token:
-        raise response.raise_exception(message=translate_message("Refresh token not found.", lang), data={}, status_code=400)
+        raise response.raise_exception(message=translate_message("REFRESH_TOKEN_NOT_FOUND", lang), data={}, status_code=400)
 
     # Step 3: Check if the token is already blacklisted
     if existing_token.get("is_blacklisted", True):
-        raise response.raise_exception(message=translate_message("This token is already blacklisted.", lang), data={}, status_code=400)
+        raise response.raise_exception(message=translate_message("TOKEN_ALREADY_BLACKLISTED", lang), data={}, status_code=400)
 
     login_user = existing_token.get("user_id", "")
     if not login_user:
-        raise response.raise_exception(message=translate_message("User ID not found.", lang),  data={}, status_code=400)
+        raise response.raise_exception(message=translate_message("USER_ID_NOT_FOUND", lang),  data={}, status_code=400)
 
     # Blacklist the token
     await token_collection.update_one(
@@ -429,5 +429,5 @@ async def logout_admin(request: LogoutRequest, lang: str = "en"):
         {"$set": {"is_blacklisted": True}}
     )
 
-    return response.success_message(translate_message("Logout successful.", lang), data={})
+    return response.success_message(translate_message("LOGOUT_SUCCESSFUL", lang), data={})
 
