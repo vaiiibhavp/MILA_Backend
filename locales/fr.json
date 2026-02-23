@@ -558,5 +558,7 @@
   "INSUFFICIENT_TOKENS_CALL_ENDED": "Jetons insuffisants, l'appel a été terminé",
   "CALL_CAN_CONTINUE": "L'appel peut continuer",
   "CALLER_INSUFFICIENT_TOKENS": "Vous n'avez pas assez de jetons pour démarrer un appel vidéo.",
-  "RECEIVER_INSUFFICIENT_TOKENS": "Le destinataire n'a pas assez de jetons pour démarrer un appel vidéo."
+  "RECEIVER_INSUFFICIENT_TOKENS": "Le destinataire n'a pas assez de jetons pour démarrer un appel vidéo.",
+
+  "MAX_PARTICIPANT_LIMIT_REACHED": "Le nombre maximum de participants pour ce concours a été atteint."
 }
