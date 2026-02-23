@@ -109,6 +109,7 @@ daily_action_history = db["daily_action_history"]
 gift_transaction_collection = db["gift_transaction"]
 chat_audio_collection = db["chat_audio_files"]
 video_call_sessions = db["video_call_history"]
+contest_winner_collection = db["contest_winners"]
 
 async def create_indexes():
     """

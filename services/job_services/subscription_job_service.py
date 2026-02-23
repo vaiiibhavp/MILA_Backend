@@ -15,6 +15,7 @@ async def notify_expiring_subscriptions(days_before: int):
             notification_type=NotificationType.SUBSCRIPTION_EXPIRY,
             title="PUSH_TITLE_SUBSCRIPTION_EXPIRING_SOON",
             message="PUSH_MESSAGE_SUBSCRIPTION_EXPIRING_SOON",
+            send_push=True,
         )
 
 async def expire_and_activate_subscriptions_job():

@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 from passlib.context import CryptContext
 from typing import Optional
 from config.basic_config import settings
-from tasks import send_email_task
 from .response_mixin import CustomResponseMixin
 from schemas.tokens_schema import TokenData
 from core.utils.redis_helper import store_in_redis, get_from_redis, delete_from_redis
@@ -88,6 +87,8 @@ def generate_verification_code(length: int =4) -> str:
 
 # Function to send_email
 async def send_email(to_email: str, subject: str, body: str, is_html: bool = False):
+    from tasks import send_email_task
+
     send_email_task.delay(to_email, subject, body, is_html)
 
 

@@ -6,10 +6,10 @@ from .response_mixin import CustomResponseMixin
 import os, ssl, asyncio
 from uuid import uuid4
 from datetime import datetime, timezone, date, time, timedelta
-from tasks import send_contact_us_email_task
+# from tasks import send_contact_us_email_task
 from fastapi import Depends, Request
 from jose import jwt,JWTError
-from core.utils.auth_utils import SECRET_ACCESS_KEY,ALGORITHM
+# from core.utils.auth_utils import SECRET_ACCESS_KEY,ALGORITHM
 response = CustomResponseMixin()
 import boto3
 from botocore.exceptions import ClientError

@@ -262,6 +262,20 @@ async def participate_in_contest_controller(
             status_code=404
         )
 
+    max_participants = contest.get("max_participant")
+    print("max participants: ", max_participants)
+    if max_participants:
+        current_count = contest.get("total_participants", 0)
+
+        if current_count >= max_participants:
+            return response.error_message(
+                translate_message("MAX_PARTICIPANT_LIMIT_REACHED", lang),
+                data={
+                    "max_allowed": max_participants
+                },
+                status_code=403
+            )
+        
     # Fetch active contest history
     contest_history = await fetch_active_contest_history(contest_id)
     if not contest_history or contest_history["contest_id"] != contest_id:
@@ -432,6 +446,9 @@ async def get_full_leaderboard_controller(
             translate_message("CONTEST_HISTORY_NOT_FOUND", lang),
             status_code=404
         )
+
+    # Re-fetch contest history
+    contest_history = await fetch_latest_contest_history(contest_id)
 
     query = {
         "contest_id": contest_id,
