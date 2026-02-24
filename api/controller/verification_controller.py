@@ -274,11 +274,11 @@ async def approve_verification(
         sender_user_id=str(admin["_id"]),
         send_push=True
     )
-
+    language = user.get("language", "en")
     # ------------------ EMAIL ------------------
     if user.get("email"):
         subject, body = verification_approved_template(
-            username=user.get("username", "User"), lang=lang
+            username=user.get("username", "User"), lang=language
         )
         await send_email(
             to_email=user["email"],
@@ -368,11 +368,11 @@ async def reject_verification(user_id: str, admin: dict, lang: str = "en"):
         sender_user_id=str(admin["_id"]),
         send_push=True
     )
-
+    language = user.get("language", "en")
     # ------------------ SEND EMAIL (NEW) ------------------
     if user.get("email"):
         subject, body = verification_rejected_template(
-            username=user.get("username", "User"), lang=lang
+            username=user.get("username", "User"), lang=language
         )
         await send_email(
             to_email=user["email"],

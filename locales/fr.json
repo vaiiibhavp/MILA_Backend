@@ -566,9 +566,7 @@
   "PASSWORD_RESET_CODE_MESSAGE": "Votre code de réinitialisation du mot de passe est : {reset_code}. Il expirera dans 15 minutes.",
   "PASSWORD_RESET_CODE_SENT": "Le code de réinitialisation du mot de passe a été envoyé par e-mail",
   "ONLY_VERIFIED_USERS_CAN_BLOCK":"Seuls les utilisateurs vérifiés peuvent bloquer.",
-  "ONLY_VERIFIED_USERS_CAN_REPORT":"Seuls les utilisateurs vérifiés peuvent signaler."
-
-  "MAX_PARTICIPANT_LIMIT_REACHED": "Le nombre maximum de participants pour ce concours a été atteint.",
+  "ONLY_VERIFIED_USERS_CAN_REPORT":"Seuls les utilisateurs vérifiés peuvent signaler.",
 
   "EMAIL_SIGNUP_SUBJECT": "Bienvenue sur MILA 💌 Vérifiez votre email",
   "EMAIL_SIGNUP_GREETING": "Bonjour {username},",

@@ -566,8 +566,6 @@
   "ONLY_VERIFIED_USERS_CAN_BLOCK":"Only verified users can block",
   "ONLY_VERIFIED_USERS_CAN_REPORT":"Only verified users can report",
 
-  "MAX_PARTICIPANT_LIMIT_REACHED": "The maximum number of participants for this contest has been reached.",
-
   "EMAIL_SIGNUP_SUBJECT": "Welcome to MILA 💌 Verify Your Email",
   "EMAIL_SIGNUP_GREETING": "Hi {username},",
   "EMAIL_SIGNUP_LINE1": "We’re so excited to have you on MILA! 💛",
