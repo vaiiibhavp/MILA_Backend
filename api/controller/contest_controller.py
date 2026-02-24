@@ -6,6 +6,8 @@ import asyncio
 from core.utils.helper import *
 from services.gallery_service import *
 from config.basic_config import settings
+import firebase_admin
+from firebase_admin import messaging
 
 response = CustomResponseMixin()
 
@@ -401,6 +403,11 @@ async def participate_in_contest_controller(
         "total_votes": 0,
         "created_at": datetime.utcnow()
     })
+
+    await subscribe_user_to_topic(
+        user_id=user_id,
+        topic=f"contest_{contest_history_id}_participants"
+    )
 
     # Increment participant count
     await increment_participant_count(contest_history_id)

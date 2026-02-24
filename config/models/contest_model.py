@@ -11,7 +11,8 @@ from core.utils.pagination import pagination_params, StandardResultsSetPaginatio
 from api.controller.files_controller import *
 from schemas.contest_schema import *
 from core.utils.helper import get_user_details, get_admin_id_by_email
-from services.notification_service import send_notification
+from services.notification_service import send_notification, send_topic_notification
+from core.utils.helper import unsubscribe_user_from_topic
 
 leaderboard_redis_helper = LeaderboardRedisHelper()
 
@@ -737,31 +738,20 @@ async def auto_declare_winners(contest_id: str):
 
         rank += 1
 
-    # Send NON-WINNER notifications
-    all_participants = await contest_participant_collection.find({
-        "contest_id": contest_id,
-        "contest_history_id": contest_history_id
-    }).to_list(None)
-
-    for participant in all_participants:
-
-        user_id = participant["user_id"]
-
-        if user_id in winner_user_ids:
-            continue
-
-        await send_notification(
-            recipient_id=user_id,
-            recipient_type=NotificationRecipientType.USER,
-            notification_type=NotificationType.CONTEST_RESULT,
-            title="PARTICIPATION_NOTIFICATION_TITLE",
-            message="PARTICIPATION_NOTIFICATION_MESSAGE",
-            sender_user_id=admin_id,
-            reference={
-                "contest_id": contest_id
-            },
-            send_push=True,
-            push_data={
-                "contest_name": contest_name
-            }
+    # Unsubscribe winners from topic first
+    for winner_id in winner_user_ids:
+        await unsubscribe_user_from_topic(
+            user_id=winner_id,
+            topic=f"contest_{contest_history_id}_participants"
         )
+
+    # Send topic notification to non-winners
+    await send_topic_notification(
+        topic=f"contest_{contest_history_id}_participants",
+        title="PARTICIPATION_NOTIFICATION_TITLE",
+        body="PARTICIPATION_NOTIFICATION_MESSAGE",
+        data={
+            "contest_id": contest_id,
+            "contest_name": contest_name
+        }
+    )
