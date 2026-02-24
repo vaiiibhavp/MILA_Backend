@@ -106,7 +106,7 @@ async def block_user_controller(
             "blocked_by": blocker_id
         },
         sender_user_id=blocker_id,
-        send_push=False
+        send_push=True
     )
 
     return response.success_message(
@@ -244,7 +244,7 @@ async def report_user_controller(
             "reported_by": reporter_id
         },
         sender_user_id=reporter_id,
-        send_push=False
+        send_push=True
     )
 
     return response.success_message(
