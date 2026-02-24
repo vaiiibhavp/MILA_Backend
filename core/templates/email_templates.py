@@ -1,19 +1,31 @@
-def signup_verification_template(username: str, otp: str):
-    subject = "Welcome to MILA 💌 Verify Your Email"
+from services.translation import translate_message
+
+
+def signup_verification_template(username: str, otp: str, lang: str):
+    
+    subject = translate_message("EMAIL_SIGNUP_SUBJECT", lang=lang)
+
+    greeting = translate_message("EMAIL_SIGNUP_GREETING", lang=lang).format(username=username)
+    line1 = translate_message("EMAIL_SIGNUP_LINE1", lang=lang)
+    line2 = translate_message("EMAIL_SIGNUP_LINE2", lang=lang)
+    validity = translate_message("EMAIL_SIGNUP_VALIDITY", lang=lang)
+    ignore_text = translate_message("EMAIL_SIGNUP_IGNORE", lang=lang)
+    footer = translate_message("EMAIL_SIGNUP_FOOTER", lang=lang)
+    team = translate_message("EMAIL_TEAM", lang=lang)
 
     body = f"""
     <html>
     <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
         <div style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 12px;">
             
-            <h2 style="color: #333;">Hi {username},</h2>
+            <h2 style="color: #333;">{greeting}</h2>
 
             <p style="font-size: 15px; color: #555;">
-                We’re so excited to have you on <strong>MILA</strong>! 💛
+                {line1}
             </p>
 
             <p style="font-size: 15px; color: #555;">
-                To complete your signup and start connecting, please use the verification code below:
+                {line2}
             </p>
 
             <div style="text-align: center; margin: 25px 0;">
@@ -23,16 +35,16 @@ def signup_verification_template(username: str, otp: str):
             </div>
 
             <p style="font-size: 14px; color: #777;">
-                This code is valid for 5 minutes. For your security, please don’t share it with anyone.
+                {validity}
             </p>
 
             <p style="font-size: 14px; color: #777;">
-                If you didn’t sign up for MILA, you can safely ignore this email.
+                {ignore_text}
             </p>
 
             <p style="margin-top: 25px; font-size: 14px; color: #999;">
-                See you inside 😉<br/>
-                — Team MILA
+                {footer}<br/>
+                {team}
             </p>
 
         </div>
@@ -41,17 +53,25 @@ def signup_verification_template(username: str, otp: str):
     """
     return subject, body
 
-def login_verification_template(username: str, otp: str):
-    subject = "Your MILA Login Code 💫"
+def login_verification_template(username: str, otp: str, lang: str):
+
+    subject = translate_message("EMAIL_LOGIN_SUBJECT", lang=lang)
+
+    greeting = translate_message("EMAIL_LOGIN_GREETING", lang=lang).format(username=username)
+    line1 = translate_message("EMAIL_LOGIN_LINE1", lang=lang)
+    validity = translate_message("EMAIL_LOGIN_VALIDITY", lang=lang)
+    security = translate_message("EMAIL_LOGIN_SECURITY", lang=lang)
+    footer = translate_message("EMAIL_LOGIN_FOOTER", lang=lang)
+    team = translate_message("EMAIL_TEAM", lang=lang)
 
     body = f"""
     <html>
     <body style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;">
         <div style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 12px;">
 
-            <h2>Hi {username},</h2>
+            <h2>{greeting}</h2>
 
-            <p>Here’s your login verification code:</p>
+            <p>{line1}</p>
 
             <div style="text-align:center; margin: 20px 0;">
                 <h1 style="letter-spacing: 6px; color: #E91E63;">
@@ -59,13 +79,13 @@ def login_verification_template(username: str, otp: str):
                 </h1>
             </div>
 
-            <p>This code will expire in 5 minutes.</p>
+            <p>{validity}</p>
 
-            <p>If this wasn’t you, please secure your account right away.</p>
+            <p>{security}</p>
 
             <p style="margin-top: 25px;">
-                Let’s get you back to matching 💕<br/>
-                — Team MILA
+                {footer}<br/>
+                {team}
             </p>
 
         </div>
@@ -74,19 +94,28 @@ def login_verification_template(username: str, otp: str):
     """
     return subject, body
 
-def reset_password_otp_template(username: str, otp: str):
-    subject = "Reset Your MILA Password 🔐"
+def reset_password_otp_template(username: str, otp: str, lang: str):
+
+    subject = translate_message("EMAIL_RESET_SUBJECT", lang=lang)
+
+    greeting = translate_message("EMAIL_RESET_GREETING", lang=lang).format(username=username)
+    line1 = translate_message("EMAIL_RESET_LINE1", lang=lang)
+    line2 = translate_message("EMAIL_RESET_LINE2", lang=lang)
+    validity = translate_message("EMAIL_RESET_VALIDITY", lang=lang)
+    ignore_text = translate_message("EMAIL_RESET_IGNORE", lang=lang)
+    footer = translate_message("EMAIL_RESET_FOOTER", lang=lang)
+    team = translate_message("EMAIL_TEAM", lang=lang)
 
     body = f"""
     <html>
     <body style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;">
         <div style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 12px;">
 
-            <h2>Hi {username},</h2>
+            <h2>{greeting}</h2>
 
-            <p>We received a request to reset your MILA password.</p>
+            <p>{line1}</p>
 
-            <p>Your password reset code is:</p>
+            <p>{line2}</p>
 
             <div style="text-align:center; margin: 20px 0;">
                 <h1 style="letter-spacing: 6px; color: #E91E63;">
@@ -94,13 +123,13 @@ def reset_password_otp_template(username: str, otp: str):
                 </h1>
             </div>
 
-            <p>This code is valid for 5 minutes.</p>
+            <p>{validity}</p>
 
-            <p>If you didn’t request this, you can ignore this email — your account is still safe.</p>
+            <p>{ignore_text}</p>
 
             <p style="margin-top: 25px;">
-                Let’s get you back to connecting 💌<br/>
-                — Team MILA
+                {footer}<br/>
+                {team}
             </p>
 
         </div>
@@ -109,60 +138,33 @@ def reset_password_otp_template(username: str, otp: str):
     """
     return subject, body
 
-def onboarding_completed_template(username: str):
-    subject = "You’re All Set on MILA 🎉"
+def onboarding_completed_template(username: str, lang: str):
+
+    subject = translate_message("EMAIL_ONBOARDING_SUBJECT", lang=lang)
+
+    greeting = translate_message("EMAIL_ONBOARDING_GREETING", lang=lang).format(username=username)
+    line1 = translate_message("EMAIL_ONBOARDING_LINE1", lang=lang)
+    line2 = translate_message("EMAIL_ONBOARDING_LINE2", lang=lang)
+    line3 = translate_message("EMAIL_ONBOARDING_LINE3", lang=lang)
+    footer = translate_message("EMAIL_ONBOARDING_FOOTER", lang=lang)
+    team = translate_message("EMAIL_TEAM", lang=lang)
 
     body = f"""
     <html>
     <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
         <div style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 12px;">
 
-            <h2>Hi {username},</h2>
+            <h2>{greeting}</h2>
 
-            <p>Your profile setup is complete — and you’re officially ready to explore MILA!</p>
+            <p>{line1}</p>
 
-            <p>
-                Start discovering matches, making connections, and seeing where things go ✨
-            </p>
+            <p>{line2}</p>
 
-            <p>
-                Your next great conversation might be just a swipe away 😉
-            </p>
+            <p>{line3}</p>
 
             <p style="margin-top: 25px;">
-                Enjoy the journey 💕<br/>
-                — Team MILA
-            </p>
-
-        </div>
-    </body>
-    </html>
-    """
-
-    return subject, body
-
-def verification_approved_template(username: str):
-    subject = "You’re Verified on MILA ✅✨"
-
-    body = f"""
-    <html>
-    <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
-        <div style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 12px;">
-
-            <h2>Hi {username},</h2>
-
-            <p>Great news! 🎉 Your profile has been successfully approved.</p>
-
-            <p>
-                You now have access to many features on MILA — so go ahead and start connecting with confidence.
-            </p>
-
-            <p>
-                Your story starts now 💫
-            </p>
-
-            <p style="margin-top: 25px;">
-                — Team MILA
+                {footer}<br/>
+                {team}
             </p>
 
         </div>
@@ -172,30 +174,65 @@ def verification_approved_template(username: str):
 
     return subject, body
 
-def verification_rejected_template(username: str):
-    subject = "Profile Verification Update"
+def verification_approved_template(username: str, lang: str):
+
+    subject = translate_message("EMAIL_APPROVED_SUBJECT", lang=lang)
+
+    greeting = translate_message("EMAIL_APPROVED_GREETING", lang=lang).format(username=username)
+    line1 = translate_message("EMAIL_APPROVED_LINE1", lang=lang)
+    line2 = translate_message("EMAIL_APPROVED_LINE2", lang=lang)
+    line3 = translate_message("EMAIL_APPROVED_LINE3", lang=lang)
+    team = translate_message("EMAIL_TEAM", lang=lang)
 
     body = f"""
     <html>
     <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
         <div style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 12px;">
 
-            <h2>Hi {username},</h2>
+            <h2>{greeting}</h2>
 
-            <p>
-                Thanks for submitting your profile for verification.
-            </p>
+            <p>{line1}</p>
 
-            <p>
-                Unfortunately, we weren’t able to approve it at this time. Please review your submitted details and make sure all information and photos meet our guidelines before reapplying.
-            </p>
+            <p>{line2}</p>
 
-            <p>
-                We’re here to help you get verified and start connecting soon 💛
-            </p>
+            <p>{line3}</p>
 
             <p style="margin-top: 25px;">
-                — Team MILA
+                {team}
+            </p>
+
+        </div>
+    </body>
+    </html>
+    """
+
+    return subject, body
+
+def verification_rejected_template(username: str, lang: str):
+
+    subject = translate_message("EMAIL_REJECTED_SUBJECT", lang=lang)
+
+    greeting = translate_message("EMAIL_REJECTED_GREETING", lang=lang).format(username=username)
+    line1 = translate_message("EMAIL_REJECTED_LINE1", lang=lang)
+    line2 = translate_message("EMAIL_REJECTED_LINE2", lang=lang)
+    line3 = translate_message("EMAIL_REJECTED_LINE3", lang=lang)
+    team = translate_message("EMAIL_TEAM", lang=lang)
+
+    body = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+        <div style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 12px;">
+
+            <h2>{greeting}</h2>
+
+            <p>{line1}</p>
+
+            <p>{line2}</p>
+
+            <p>{line3}</p>
+
+            <p style="margin-top: 25px;">
+                {team}
             </p>
 
         </div>

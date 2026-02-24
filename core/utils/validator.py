@@ -2,32 +2,29 @@ import re
 from typing import Optional
 
 from fastapi import Query
-
 from core.utils.core_enums import TokenTransactionType
 
 
 # ---------- EMAIL ----------
 def validate_email_value(v: str) -> str:
     if not v or not v.strip():
-        raise ValueError("Email is required.")
+        raise ValueError("EMAIL_REQUIRED")
 
     v = v.strip()
 
     if " " in v:
-        raise ValueError("Email cannot contain spaces.")
+        raise ValueError("EMAIL_NO_SPACES")
 
     if v.count("@") != 1:
-        raise ValueError("Email must contain a single '@' symbol.")
+        raise ValueError("EMAIL_SINGLE_AT")
 
     local_part, domain_part = v.split("@")
 
     if not re.fullmatch(r"[A-Za-z0-9._-]+", local_part):
-        raise ValueError(
-            "Email can contain only letters, numbers, '.', '_', '-' before '@'."
-        )
+        raise ValueError("EMAIL_INVALID_LOCAL")
 
     if not re.fullmatch(r"[A-Za-z0-9.-]+\.[A-Za-z]{2,}", domain_part):
-        raise ValueError("Invalid email domain. Example: user@domain.com")
+        raise ValueError("EMAIL_INVALID_DOMAIN")
 
     return v.lower()
 
@@ -35,18 +32,18 @@ def validate_email_value(v: str) -> str:
 # ---------- USERNAME ----------
 def validate_username_value(v: str) -> str:
     if not v or not v.strip():
-        raise ValueError("Username is required.")
+        raise ValueError("USERNAME_REQUIRED")
 
     v = v.strip()
 
     if len(v) < 3:
-        raise ValueError("Username must be at least 3 characters long.")
+        raise ValueError("USERNAME_MIN_LENGTH")
 
     if not re.match(r"^[A-Za-z]", v):
-        raise ValueError("Username must start with a letter (A–Z or a–z).")
+        raise ValueError("USERNAME_START_LETTER")
 
     if not re.fullmatch(r"[A-Za-z0-9_]+", v):
-        raise ValueError("Username can contain only letters, numbers, and underscores (_).")
+        raise ValueError("USERNAME_INVALID_CHARS")
 
     return v
 
@@ -54,44 +51,41 @@ def validate_username_value(v: str) -> str:
 # ---------- PASSWORD ----------
 def validate_password_value(v: str) -> str:
     if not v or not v.strip():
-        raise ValueError("Password is required.")
+        raise ValueError("PASSWORD_REQUIRED")
 
     if len(v) < 8:
-        raise ValueError("Password must be at least 8 characters.")
+        raise ValueError("PASSWORD_MIN_LENGTH")
 
     if " " in v:
-        raise ValueError("Password cannot contain spaces.")
+        raise ValueError("PASSWORD_NO_SPACES")
 
     if not re.search(r"[A-Z]", v):
-        raise ValueError("Password must include an uppercase letter.")
+        raise ValueError("PASSWORD_UPPERCASE")
 
     if not re.search(r"[a-z]", v):
-        raise ValueError("Password must include a lowercase letter.")
+        raise ValueError("PASSWORD_LOWERCASE")
 
     if not re.search(r"[0-9]", v):
-        raise ValueError("Password must include a number.")
+        raise ValueError("PASSWORD_NUMBER")
 
     if not re.fullmatch(r"[.A-Za-z0-9]+", v):
-        raise ValueError("Password contains invalid characters.")
+        raise ValueError("PASSWORD_INVALID_CHARS")
 
     return v
 
 
 # ---------- OTP ----------
 def validate_otp_4(v: str) -> str:
-    # Required check
     if not v or not v.strip():
-        raise ValueError("OTP is required.")
+        raise ValueError("OTP_REQUIRED")
 
     v = v.strip()
 
-    # Digits only
     if not v.isdigit():
-        raise ValueError("OTP must contain only digits.")
+        raise ValueError("OTP_DIGITS_ONLY")
 
-    # Exact length
     if len(v) != 4:
-        raise ValueError("OTP must be 4 digits.")
+        raise ValueError("OTP_4_DIGITS")
 
     return v
 
@@ -99,16 +93,18 @@ def validate_otp_4(v: str) -> str:
 # ---------- ROLE ----------
 def validate_role_value(v: str) -> str:
     if not v or not v.strip():
-        raise ValueError("Role is required.")
+        raise ValueError("ROLE_REQUIRED")
 
     v = v.strip().lower()
     allowed = {"admin", "user"}
 
     if v not in allowed:
-        raise ValueError(f"Invalid role. Must be one of: {', '.join(allowed)}")
+        raise ValueError("ROLE_INVALID")
 
     return v
 
+
+# ---------- TRANSACTION TYPE ----------
 def normalize_transaction_type(
     transaction_type: Optional[str] = Query(
         None,
@@ -116,12 +112,11 @@ def normalize_transaction_type(
         examples=["CREDIT", "DEBIT", "WITHDRAW"]
     )
 ) -> Optional[TokenTransactionType]:
+
     if transaction_type is None:
         return None
 
     try:
         return TokenTransactionType(transaction_type.upper())
     except ValueError:
-        raise ValueError(
-            f"Invalid transaction_type. Allowed values: {[e.value for e in TokenTransactionType]}"
-        )
+        raise ValueError("INVALID_TRANSACTION_TYPE")

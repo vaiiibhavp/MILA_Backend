@@ -10,7 +10,8 @@ from core.utils.leaderboard.leaderboard_helper import LeaderboardRedisHelper
 from core.utils.pagination import pagination_params, StandardResultsSetPagination
 from api.controller.files_controller import *
 from schemas.contest_schema import *
-from core.utils.helper import get_user_details
+from core.utils.helper import get_user_details, get_admin_id_by_email
+from services.notification_service import send_notification
 
 leaderboard_redis_helper = LeaderboardRedisHelper()
 
@@ -621,6 +622,7 @@ async def auto_declare_winners(contest_id: str):
     if not contest:
         return
 
+    contest_name = contest.get("title", "Contest")
     prize_distribution = contest.get("prize_distribution", {})
 
     total_participants = await contest_participant_collection.count_documents({
@@ -641,8 +643,7 @@ async def auto_declare_winners(contest_id: str):
         .limit(3)
     )
 
-    rank = 1
-
+    winner_user_ids = []
     rank = 1
 
     async for participant in cursor:
@@ -656,6 +657,9 @@ async def auto_declare_winners(contest_id: str):
         else:
             prize_amount = 0
 
+        winner_user_ids.append(participant["user_id"])
+
+        # Insert winner record
         winner_doc = {
             "contest_id": contest_id,
             "contest_history_id": contest_history_id,
@@ -704,5 +708,60 @@ async def auto_declare_winners(contest_id: str):
                 }
             ]
         )
+        admin_id = await get_admin_id_by_email()
+        if not admin_id:
+            return response.error_message(
+                translate_message("ADMIN_CRED"),
+                data=[],
+                status_code=404
+            )
+        # Send WINNER notification
+        await send_notification(
+            recipient_id=participant["user_id"],
+            recipient_type=NotificationRecipientType.USER,
+            notification_type=NotificationType.CONTEST_RESULT,
+            title="WINNER_NOTIFICATION_TITLE",
+            message="WINNER_NOTIFICATION_MESSAGE",
+            sender_user_id=admin_id,
+            reference={
+                "contest_id": contest_id,
+                "rank": rank
+            },
+            send_push=True,
+            push_data={
+                "contest_name": contest_name,
+                "rank": rank,
+                "amount": prize_amount
+            }
+        )
 
         rank += 1
+
+    # Send NON-WINNER notifications
+    all_participants = await contest_participant_collection.find({
+        "contest_id": contest_id,
+        "contest_history_id": contest_history_id
+    }).to_list(None)
+
+    for participant in all_participants:
+
+        user_id = participant["user_id"]
+
+        if user_id in winner_user_ids:
+            continue
+
+        await send_notification(
+            recipient_id=user_id,
+            recipient_type=NotificationRecipientType.USER,
+            notification_type=NotificationType.CONTEST_RESULT,
+            title="PARTICIPATION_NOTIFICATION_TITLE",
+            message="PARTICIPATION_NOTIFICATION_MESSAGE",
+            sender_user_id=admin_id,
+            reference={
+                "contest_id": contest_id
+            },
+            send_push=True,
+            push_data={
+                "contest_name": contest_name
+            }
+        )

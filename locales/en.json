@@ -564,5 +564,83 @@
   "PASSWORD_RESET_CODE_MESSAGE": "Your password reset code is: {reset_code}. It will expire in 15 minutes.",
   "PASSWORD_RESET_CODE_SENT": "Password reset code sent to email",
   "ONLY_VERIFIED_USERS_CAN_BLOCK":"Only verified users can block",
-  "ONLY_VERIFIED_USERS_CAN_REPORT":"Only verified users can report"
+  "ONLY_VERIFIED_USERS_CAN_REPORT":"Only verified users can report",
+
+  "EMAIL_SIGNUP_SUBJECT": "Welcome to MILA 💌 Verify Your Email",
+  "EMAIL_SIGNUP_GREETING": "Hi {username},",
+  "EMAIL_SIGNUP_LINE1": "We’re so excited to have you on MILA! 💛",
+  "EMAIL_SIGNUP_LINE2": "To complete your signup and start connecting, please use the verification code below:",
+  "EMAIL_SIGNUP_VALIDITY": "This code is valid for 1 minutes. For your security, please don’t share it with anyone.",
+  "EMAIL_SIGNUP_IGNORE": "If you didn’t sign up for MILA, you can safely ignore this email.",
+  "EMAIL_SIGNUP_FOOTER": "See you inside 😉",
+  "EMAIL_TEAM": "— Team MILA",
+
+  "EMAIL_LOGIN_SUBJECT": "Your MILA Login Code 💫",
+  "EMAIL_LOGIN_GREETING": "Hi {username},",
+  "EMAIL_LOGIN_LINE1": "Here’s your login verification code:",
+  "EMAIL_LOGIN_VALIDITY": "This code will expire in 1 minutes.",
+  "EMAIL_LOGIN_SECURITY": "If this wasn’t you, please secure your account right away.",
+  "EMAIL_LOGIN_FOOTER": "Let’s get you back to matching 💕",
+
+  "EMAIL_RESET_SUBJECT": "Reset Your MILA Password 🔐",
+  "EMAIL_RESET_GREETING": "Hi {username},",
+  "EMAIL_RESET_LINE1": "We received a request to reset your MILA password.",
+  "EMAIL_RESET_LINE2": "Your password reset code is:",
+  "EMAIL_RESET_VALIDITY": "This code is valid for 1 minutes.",
+  "EMAIL_RESET_IGNORE": "If you didn’t request this, you can ignore this email — your account is still safe.",
+  "EMAIL_RESET_FOOTER": "Let’s get you back to connecting 💌",
+
+  "EMAIL_ONBOARDING_SUBJECT": "You’re All Set on MILA 🎉",
+  "EMAIL_ONBOARDING_GREETING": "Hi {username},",
+  "EMAIL_ONBOARDING_LINE1": "Your profile setup is complete — and you’re officially ready to explore MILA!",
+  "EMAIL_ONBOARDING_LINE2": "Start discovering matches, making connections, and seeing where things go ✨",
+  "EMAIL_ONBOARDING_LINE3": "Your next great conversation might be just a swipe away 😉",
+  "EMAIL_ONBOARDING_FOOTER": "Enjoy the journey 💕",
+
+  "EMAIL_APPROVED_SUBJECT": "You’re Verified on MILA ✅✨",
+  "EMAIL_APPROVED_GREETING": "Hi {username},",
+  "EMAIL_APPROVED_LINE1": "Great news! 🎉 Your profile has been successfully approved.",
+  "EMAIL_APPROVED_LINE2": "You now have access to many features on MILA — so go ahead and start connecting with confidence.",
+  "EMAIL_APPROVED_LINE3": "Your story starts now 💫",
+
+  "EMAIL_REJECTED_SUBJECT": "Profile Verification Update",
+  "EMAIL_REJECTED_GREETING": "Hi {username},",
+  "EMAIL_REJECTED_LINE1": "Thanks for submitting your profile for verification.",
+  "EMAIL_REJECTED_LINE2": "Unfortunately, we weren’t able to approve it at this time. Please review your submitted details and make sure all information and photos meet our guidelines before reapplying.",
+  "EMAIL_REJECTED_LINE3": "We’re here to help you get verified and start connecting soon 💛",
+
+  "EMAIL_REQUIRED": "Email is required.",
+  "EMAIL_NO_SPACES": "Email cannot contain spaces.",
+  "EMAIL_SINGLE_AT": "Email must contain a single '@' symbol.",
+  "EMAIL_INVALID_LOCAL": "Email can contain only letters, numbers, '.', '_', '-' before '@'.",
+  "EMAIL_INVALID_DOMAIN": "Invalid email domain. Example: user@domain.com",
+
+  "USERNAME_REQUIRED": "Username is required.",
+  "USERNAME_MIN_LENGTH": "Username must be at least 3 characters long.",
+  "USERNAME_START_LETTER": "Username must start with a letter (A–Z or a–z).",
+  "USERNAME_INVALID_CHARS": "Username can contain only letters, numbers, and underscores (_).",
+
+  "PASSWORD_REQUIRED": "Password is required.",
+  "PASSWORD_MIN_LENGTH": "Password must be at least 8 characters.",
+  "PASSWORD_NO_SPACES": "Password cannot contain spaces.",
+  "PASSWORD_UPPERCASE": "Password must include an uppercase letter.",
+  "PASSWORD_LOWERCASE": "Password must include a lowercase letter.",
+  "PASSWORD_NUMBER": "Password must include a number.",
+  "PASSWORD_INVALID_CHARS": "Password contains invalid characters.",
+
+  "OTP_REQUIRED": "OTP is required.",
+  "OTP_DIGITS_ONLY": "OTP must contain only digits.",
+  "OTP_4_DIGITS": "OTP must be 4 digits.",
+
+  "ROLE_REQUIRED": "Role is required.",
+  "ROLE_INVALID": "Invalid role. Must be one of: {allowed}",
+
+  "INVALID_TRANSACTION_TYPE": "Invalid transaction_type. Allowed values: {allowed}",
+
+  "WINNER_NOTIFICATION_TITLE": "Congratulations! You Won the Contest 🎉",
+  "WINNER_NOTIFICATION_MESSAGE": "You secured Rank {rank} in {contest_name} and won {amount} tokens! 🏆",
+
+  "PARTICIPATION_NOTIFICATION_TITLE": "Contest Results Are Out – Check Your Rank!",
+  "PARTICIPATION_NOTIFICATION_MESSAGE": "The results for {contest_name} are now live. Check your final rank in the app. 🚀"
+
 }
