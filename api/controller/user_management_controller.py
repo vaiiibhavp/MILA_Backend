@@ -91,6 +91,9 @@ async def get_admin_user_details(user_id: str, lang: str = "en"):
             onboarding.get("images") if onboarding else []
         )
 
+        is_blocked = await UserManagementModel.is_user_blocked(user_id)
+        is_reported = await UserManagementModel.is_user_reported(user_id)
+
         # ---------------- RESPONSE ----------------
         result = {
             "user_id": user_id,
@@ -116,7 +119,9 @@ async def get_admin_user_details(user_id: str, lang: str = "en"):
 
             "photos": photos,
             "match_count": match_count,
-            "matched_users": matched_users
+            "matched_users": matched_users,
+            "is_blocked": is_blocked,
+            "is_reported": is_reported
         }
 
         return response.success_message(

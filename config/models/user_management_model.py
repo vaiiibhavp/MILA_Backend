@@ -13,7 +13,8 @@ from config.db_config import (
     user_suspension_collection,
     admin_blocked_users_collection,
     deleted_account_collection,
-    reported_users_collection
+    reported_users_collection,
+    blocked_users_collection
 )
 from api.controller.files_controller import generate_file_url
 from core.utils.core_enums import VerificationStatusEnum
@@ -258,6 +259,23 @@ class UserManagementModel:
         ).sort("verified_at", -1).limit(1).to_list(1)
 
         return data[0]["status"] if data else VerificationStatusEnum.PENDING
+
+    # ---------------- BLOCKED FLAG ----------------
+    @staticmethod
+    async def is_user_blocked(user_id: str) -> bool:
+        data = await blocked_users_collection.find_one(
+            {"blocked_id": user_id}
+        )
+        return True if data else False
+
+
+    # ---------------- REPORTED FLAG ----------------
+    @staticmethod
+    async def is_user_reported(user_id: str) -> bool:
+        data = await reported_users_collection.find_one(
+            {"reported_id": user_id}
+        )
+        return True if data else False
 
     # ---------------- MATCHES ----------------
     async def get_matches(user_id: str):

@@ -5,7 +5,7 @@ from typing import List, Optional
 from api.controller.user_management_controller import * 
 from core.utils.pagination import StandardResultsSetPagination, pagination_params
 from schemas.user_management_schema import *
-from core.utils.permissions import AdminPermission
+from core.utils.permissions import AdminPermission , BothPermission
 
 
 router = APIRouter(prefix="/usermanagement", tags=["Admin Users"])
@@ -44,7 +44,7 @@ async def get_all_users(
 async def get_user_details(
     user_id: str,
     lang: str = "en",
-    admin: dict = Depends(AdminPermission(allowed_roles=["admin"]))
+    admin: dict = Depends(BothPermission(allowed_roles=["admin" , "user"]))
 ):
     return await get_admin_user_details(user_id=user_id, lang=lang)
 
