@@ -645,6 +645,8 @@
   "WINNER_NOTIFICATION_MESSAGE": "Vous avez obtenu la position {rank} dans {contest_name} et gagné {amount} jetons ! 🏆",
 
   "PARTICIPATION_NOTIFICATION_TITLE": "Résultats du concours disponibles – Vérifiez votre classement !",
-  "PARTICIPATION_NOTIFICATION_MESSAGE": "Les résultats du concours {contest_name} sont maintenant disponibles. Consultez votre classement dans l'application. 🚀"
+  "PARTICIPATION_NOTIFICATION_MESSAGE": "Les résultats du concours {contest_name} sont maintenant disponibles. Consultez votre classement dans l'application. 🚀",
+
+  "PARTICIPANTS_CANNOT_VOTE_IN_CONTEST":"Les participants ne sont pas autorisés à voter dans ce concours."
 
 }

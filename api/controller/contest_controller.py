@@ -127,7 +127,8 @@ async def get_contest_details_controller(
         "rules_and_conditions": contest.get("rules", []),
         "allowed_photos_per_participant": contest.get("photos_per_participant"),
         "current_standings": standings,
-        "cta": cta
+        "cta": cta,
+        "vote_cost": contest.get("cost_per_vote")
     }
 
     return response.success_message(
@@ -538,7 +539,20 @@ async def cast_vote_controller(
             translate_message("CONTEST_NOT_ACTIVE", lang),
             status_code=400
         )
+    
+    contest_history_id = str(contest_history["_id"])
 
+    is_participant = await contest_participant_collection.find_one({
+        "contest_id": contest_id,
+        "contest_history_id": contest_history_id,
+        "user_id": user_id
+    })
+
+    if is_participant:
+        return response.error_message(
+            translate_message("PARTICIPANTS_CANNOT_VOTE_IN_CONTEST", lang),
+            status_code=403
+        )
     now = datetime.utcnow()
 
     if not await is_within_voting_period(contest_history):
@@ -559,7 +573,6 @@ async def cast_vote_controller(
             status_code=403
         )
 
-    contest_history_id = str(contest_history["_id"])
 
     participant = await get_participant_by_user(
         contest_id,
@@ -714,6 +727,5 @@ async def get_participant_details_controller(
             "profile_photo": avatar["avatar_url"] if avatar else None,
             "uploaded_images": images,
             "total_votes": participant.get("total_votes", 0),
-            "tokens": user.get("tokens", 0)
         }]
     )
