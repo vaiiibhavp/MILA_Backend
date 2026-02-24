@@ -78,31 +78,43 @@ async def start_video_call(user_id: str, receiver_user_id: str, lang: str = "en"
     today_start = datetime.combine(date.today(), time.min)
     today_end = datetime.combine(date.today(), time.max)
 
-    # ---------------- Caller free usage ----------------
+    # ---------------- Caller TOTAL free usage ----------------
     caller_cursor = video_call_sessions.find({
-        "caller_id": user_id,
+        "$or": [
+            {"caller_id": user_id},
+            {"receiver_id": user_id}
+        ],
         "status": "ended",
         "start_time": {"$gte": today_start, "$lte": today_end}
     })
 
     caller_free_used_seconds = 0
     async for call in caller_cursor:
-        caller_free_used_seconds += call.get("caller_free_seconds_used", 0)
+        if call.get("caller_id") == user_id:
+            caller_free_used_seconds += call.get("caller_free_seconds_used", 0)
+        if call.get("receiver_id") == user_id:
+            caller_free_used_seconds += call.get("receiver_free_seconds_used", 0)
 
     caller_free_seconds_remaining = max(
         0, FREE_VIDEO_LIMIT_SECONDS - caller_free_used_seconds
     )
 
-    # ---------------- Receiver free usage ----------------
+    # ---------------- Receiver TOTAL free usage ----------------
     receiver_cursor = video_call_sessions.find({
-        "receiver_id": receiver_user_id,
+        "$or": [
+            {"caller_id": receiver_user_id},
+            {"receiver_id": receiver_user_id}
+        ],
         "status": "ended",
         "start_time": {"$gte": today_start, "$lte": today_end}
     })
 
     receiver_free_used_seconds = 0
     async for call in receiver_cursor:
-        receiver_free_used_seconds += call.get("receiver_free_seconds_used", 0)
+        if call.get("caller_id") == receiver_user_id:
+            receiver_free_used_seconds += call.get("caller_free_seconds_used", 0)
+        if call.get("receiver_id") == receiver_user_id:
+            receiver_free_used_seconds += call.get("receiver_free_seconds_used", 0)
 
     receiver_free_seconds_remaining = max(
         0, FREE_VIDEO_LIMIT_SECONDS - receiver_free_used_seconds
@@ -217,6 +229,9 @@ async def end_video_call(user_id: str, call_id: str, total_call_seconds: int, la
         balance_after=str(receiver_balance_before - receiver_tokens_to_deduct)
     ))
 
+    new_caller_free_remaining = max(0, caller_free_remaining - caller_free_used)
+    new_receiver_free_remaining = max(0, receiver_free_remaining - receiver_free_used)
+
     await video_call_sessions.update_one(
         {"_id": ObjectId(call_id)},
         {
@@ -226,6 +241,10 @@ async def end_video_call(user_id: str, call_id: str, total_call_seconds: int, la
                 "total_seconds": total_call_seconds,
                 "caller_free_seconds_used": caller_free_used,
                 "receiver_free_seconds_used": receiver_free_used,
+
+                "caller_free_seconds_remaining": new_caller_free_remaining,
+                "receiver_free_seconds_remaining": new_receiver_free_remaining,
+
                 "paid_seconds_used": paid_seconds,
                 "caller_tokens_deducted": caller_tokens_to_deduct,
                 "receiver_tokens_deducted": receiver_tokens_to_deduct

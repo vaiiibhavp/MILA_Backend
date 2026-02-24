@@ -568,6 +568,8 @@
   "ONLY_VERIFIED_USERS_CAN_BLOCK":"Seuls les utilisateurs vérifiés peuvent bloquer.",
   "ONLY_VERIFIED_USERS_CAN_REPORT":"Seuls les utilisateurs vérifiés peuvent signaler.",
 
+  "VIDEO_CALL_ENDED": "L’appel vidéo est terminé.",
+
   "EMAIL_SIGNUP_SUBJECT": "Bienvenue sur MILA 💌 Vérifiez votre email",
   "EMAIL_SIGNUP_GREETING": "Bonjour {username},",
   "EMAIL_SIGNUP_LINE1": "Nous sommes ravis de vous accueillir sur MILA ! 💛",
