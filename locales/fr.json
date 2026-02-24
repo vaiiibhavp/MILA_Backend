@@ -566,6 +566,6 @@
   "PASSWORD_RESET_CODE_MESSAGE": "Votre code de réinitialisation du mot de passe est : {reset_code}. Il expirera dans 15 minutes.",
   "PASSWORD_RESET_CODE_SENT": "Le code de réinitialisation du mot de passe a été envoyé par e-mail",
   "ONLY_VERIFIED_USERS_CAN_BLOCK":"Seuls les utilisateurs vérifiés peuvent bloquer.",
-  "ONLY_VERIFIED_USERS_CAN_REPORT":"Seuls les utilisateurs vérifiés peuvent signaler."
-
+  "ONLY_VERIFIED_USERS_CAN_REPORT":"Seuls les utilisateurs vérifiés peuvent signaler.",
+  "VIDEO_CALL_ENDED": "L’appel vidéo est terminé."
 }
