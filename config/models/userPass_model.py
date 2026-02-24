@@ -235,15 +235,15 @@ async def like_user(user_id: str, liked_user_id: str, lang: str = "en"):
                 # Fetch language preferences
                 user_1 = await user_collection.find_one(
                     {"_id": ObjectId(user_id)},
-                    {"lang": 1}
+                    {"language": 1}
                 )
                 user_2 = await user_collection.find_one(
                     {"_id": ObjectId(liked_user_id)},
-                    {"lang": 1}
+                    {"language": 1}
                 )
 
-                user_1_lang = user_1.get("lang", "en")
-                user_2_lang = user_2.get("lang", "en")
+                user_1_lang = user_1.get("language", "en")
+                user_2_lang = user_2.get("language", "en")
 
                 # Notify user who was liked
                 await send_notification(

@@ -83,7 +83,8 @@ class UserPermission:
                     "role": 1,
                     "is_deleted": 1,
                     "is_verified": 1,
-                    "membership_type": 1
+                    "membership_type": 1,
+                    "language": 1
                 }
             )
             if not user:

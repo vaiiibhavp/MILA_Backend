@@ -403,10 +403,12 @@ async def participate_in_contest_controller(
         "total_votes": 0,
         "created_at": datetime.utcnow()
     })
+    
+    user_lang = current_user.get("language", "en")
 
     await subscribe_user_to_topic(
         user_id=user_id,
-        topic=f"contest_{contest_history_id}_participants"
+        topic=f"contest_{contest_history_id}_participants_{user_lang}"
     )
 
     # Increment participant count
@@ -711,6 +713,7 @@ async def get_participant_details_controller(
             "username": user.get("username") if user else None,
             "profile_photo": avatar["avatar_url"] if avatar else None,
             "uploaded_images": images,
-            "total_votes": participant.get("total_votes", 0)
+            "total_votes": participant.get("total_votes", 0),
+            "tokens": user.get("tokens", 0)
         }]
     )

@@ -709,6 +709,7 @@ async def auto_declare_winners(contest_id: str):
                 }
             ]
         )
+        recipient_lang = participant.get("language", "en")
         admin_id = await get_admin_id_by_email()
         if not admin_id:
             return response.error_message(
@@ -746,12 +747,30 @@ async def auto_declare_winners(contest_id: str):
         )
 
     # Send topic notification to non-winners
-    await send_topic_notification(
-        topic=f"contest_{contest_history_id}_participants",
-        title="PARTICIPATION_NOTIFICATION_TITLE",
-        body="PARTICIPATION_NOTIFICATION_MESSAGE",
-        data={
-            "contest_id": contest_id,
-            "contest_name": contest_name
-        }
-    )
+    distinct_languages = await user_collection.distinct("language")  # or fetch dynamically
+
+    for lang in distinct_languages:
+
+        translated_title = translate_message(
+            "PARTICIPATION_NOTIFICATION_TITLE",
+            lang
+        )
+
+        translated_message_template = translate_message(
+            "PARTICIPATION_NOTIFICATION_MESSAGE",
+            lang
+        )
+
+        translated_message = translated_message_template.format(
+            contest_name=contest_name
+        )
+
+        await send_topic_notification(
+            topic=f"contest_{contest_history_id}_participants_{lang}",
+            title=translated_title,
+            body=translated_message,
+            data={
+                "contest_id": contest_id,
+                "contest_name": contest_name
+            }
+        )
