@@ -424,6 +424,12 @@ async def mark_all_notifications_read(current_user, lang):
     )
 
 async def delete_account_controller(current_user: dict, lang: str):
+    user_id = str(current_user["_id"])
+    email = current_user.get("email")
+
+    now = datetime.utcnow()
+
+    # Soft delete user
     await user_collection.update_one(
         {"_id": current_user["_id"]},
         {
@@ -434,6 +440,20 @@ async def delete_account_controller(current_user: dict, lang: str):
             }
         }
     )
+
+    # Insert into deleted_account_collection (avoid duplicates)
+    existing_record = await deleted_account_collection.find_one(
+        {"user_id": user_id}
+    )
+
+    if not existing_record:
+        await deleted_account_collection.insert_one({
+            "user_id": user_id,
+            "email": email,
+            "deleted_by": user_id,  # self deleted
+            "created_at": now,
+            "updated_at": now
+        })
 
     return response.success_message(
         translate_message("ACCOUNT_DELETED_SUCCESSFULLY", lang),
