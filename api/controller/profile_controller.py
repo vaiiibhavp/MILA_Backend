@@ -78,7 +78,7 @@ async def get_user_profile_controller(current_user: dict, lang: str = "en"):
 
     private_gallery_locked = membership_type == "free"
 
-    tokens = user.get("tokens", 0)
+    tokens = await get_user_token_balance(str(user["_id"]))
     profile_photo = await profile_photo_from_onboarding(onboarding)
 
     profile_data = [{
