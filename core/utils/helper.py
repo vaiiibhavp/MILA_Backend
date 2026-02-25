@@ -268,7 +268,7 @@ async def credit_tokens_for_verification(user_id: str, admin_id: str):
     # Fetch current balance
     user = await user_collection.find_one(
         {"_id": ObjectId(user_id)},
-        {"tokens": 1}
+        {"tokens": 1, "bonus_tokens": 1}
     )
 
     balance_before = int(user.get("tokens") or 0)
@@ -278,7 +278,9 @@ async def credit_tokens_for_verification(user_id: str, admin_id: str):
     await user_collection.update_one(
         {"_id": ObjectId(user_id)},
         {
-            "$inc": {"tokens": settings.VERIFICATION_REWARD_TOKENS},
+            "$inc": {
+                "bonus_tokens": settings.VERIFICATION_REWARD_TOKENS
+            },
             "$set": {"updated_at": datetime.utcnow()}
         }
     )
@@ -379,3 +381,10 @@ async def unsubscribe_user_from_topic(user_id: str, topic: str):
         messaging.unsubscribe_from_topic(tokens, topic)
     except Exception as e:
         print(f"[Topic Unsubscribe Failed] {e}")
+
+async def get_withdrawable_tokens(user_id: str) -> int:
+    user = await user_collection.find_one(
+        {"_id": ObjectId(user_id)},
+        {"tokens": 1}
+    )
+    return int(user.get("tokens", 0)) if user else 0

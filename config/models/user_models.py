@@ -250,35 +250,56 @@ async def get_users_list(
 async def get_user_token_balance(user_id: str) -> int:
     user = await user_collection.find_one(
         {"_id": ObjectId(user_id)},
-        {"tokens": 1}
+        {"tokens": 1, "bonus_tokens": 1}
+    ) or {}
+
+    return int(user.get("tokens", 0) or 0) + int(user.get("bonus_tokens", 0) or 0)
+
+async def debit_user_tokens(user_id: str, amount: int, reason: str):
+
+    user = await user_collection.find_one(
+        {"_id": ObjectId(user_id)},
+        {"tokens": 1, "bonus_tokens": 1}
     )
-    return int(user.get("tokens", 0)) if user else 0
 
-async def debit_user_tokens(
-    user_id: str,
-    amount: int,
-    reason: str
-):
-    balance_before = await get_user_token_balance(user_id)
+    if not user:
+        return None, 0
 
-    if balance_before < amount:
-        return None, balance_before
+    tokens = int(user.get("tokens", 0))
+    bonus_tokens = int(user.get("bonus_tokens", 0))
+    total_balance = tokens + bonus_tokens
 
-    balance_after = balance_before - amount
+    if total_balance < amount:
+        return None, total_balance
 
-    # Atomic update
-    await user_collection.update_one(
+    balance_before = total_balance
+
+    bonus_deduct = min(bonus_tokens, amount)
+    remaining = amount - bonus_deduct
+    token_deduct = remaining
+
+    # Conditional update (protect against race)
+    result = await user_collection.update_one(
         {
             "_id": ObjectId(user_id),
-            "tokens": {"$gte": amount}
+            "bonus_tokens": {"$gte": bonus_deduct},
+            "tokens": {"$gte": token_deduct}
         },
         {
-            "$inc": {"tokens": -amount},
+            "$inc": {
+                "bonus_tokens": -bonus_deduct,
+                "tokens": -token_deduct
+            },
             "$set": {"updated_at": datetime.utcnow()}
         }
     )
 
-    # Token history entry
+    if result.modified_count == 0:
+        # Balance changed in between → retry or fail
+        return None, balance_before
+
+    balance_after = balance_before - amount
+
     await create_user_token_history(
         CreateTokenHistory(
             user_id=user_id,
@@ -291,7 +312,6 @@ async def debit_user_tokens(
     )
 
     return balance_after, balance_before
-
 
 async def update_user_token_balance(
     user_id: str,
@@ -311,7 +331,7 @@ async def update_user_token_balance(
         {"_id": ObjectId(user_id)},
         {
             "$set": {
-                "tokens": str(new_balance)
+                "tokens": new_balance
             }
         }
     )
