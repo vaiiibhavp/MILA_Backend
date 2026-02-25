@@ -645,6 +645,10 @@
   "WINNER_NOTIFICATION_MESSAGE": "Vous avez obtenu la position {rank} dans {contest_name} et gagné {amount} jetons ! 🏆",
 
   "PARTICIPATION_NOTIFICATION_TITLE": "Résultats du concours disponibles – Vérifiez votre classement !",
-  "PARTICIPATION_NOTIFICATION_MESSAGE": "Les résultats du concours {contest_name} sont maintenant disponibles. Consultez votre classement dans l'application. 🚀"
+  "PARTICIPATION_NOTIFICATION_MESSAGE": "Les résultats du concours {contest_name} sont maintenant disponibles. Consultez votre classement dans l'application. 🚀",
+  "PUSH_TITLE_VIDEO_CALL": "Appel vidéo entrant",
+  "PUSH_MESSAGE_VIDEO_CALL": "{caller_name} vous appelle",
+  "CALL_ACCEPTED": "Appel accepté par le destinataire",
+  "CALL_ALREADY_EXISTS": "Un appel est déjà en cours"
 
 }

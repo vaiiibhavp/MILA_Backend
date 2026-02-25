@@ -641,6 +641,10 @@
   "WINNER_NOTIFICATION_MESSAGE": "You secured Rank {rank} in {contest_name} and won {amount} tokens! 🏆",
 
   "PARTICIPATION_NOTIFICATION_TITLE": "Contest Results Are Out – Check Your Rank!",
-  "PARTICIPATION_NOTIFICATION_MESSAGE": "The results for {contest_name} are now live. Check your final rank in the app. 🚀"
+  "PARTICIPATION_NOTIFICATION_MESSAGE": "The results for {contest_name} are now live. Check your final rank in the app. 🚀",
+  "PUSH_TITLE_VIDEO_CALL": "Incoming Video Call",
+  "PUSH_MESSAGE_VIDEO_CALL": "{caller_name} is calling you",
+  "CALL_ACCEPTED":"Call accepted by receiver",
+  "CALL_ALREADY_EXISTS":"Call already ongoing"
 
 }
