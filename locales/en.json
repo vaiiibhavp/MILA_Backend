@@ -642,9 +642,10 @@
 
   "PARTICIPATION_NOTIFICATION_TITLE": "Contest Results Are Out – Check Your Rank!",
   "PARTICIPATION_NOTIFICATION_MESSAGE": "The results for {contest_name} are now live. Check your final rank in the app. 🚀",
+
+  "PARTICIPANTS_CANNOT_VOTE_IN_CONTEST": "Participants are not allowed to vote in this contest.",
   "PUSH_TITLE_VIDEO_CALL": "Incoming Video Call",
   "PUSH_MESSAGE_VIDEO_CALL": "{caller_name} is calling you",
   "CALL_ACCEPTED":"Call accepted by receiver",
   "CALL_ALREADY_EXISTS":"Call already ongoing"
-
 }

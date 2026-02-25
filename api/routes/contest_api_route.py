@@ -128,3 +128,8 @@ async def get_participant_details(
         current_user,
         lang
     )
+
+@router.post("/test-topic/{contest_id}")
+async def test_topic(contest_id: str):
+    await auto_declare_winners(contest_id)
+    return {"status": "triggered"}

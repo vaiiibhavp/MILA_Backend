@@ -14,7 +14,7 @@ response = CustomResponseMixin()
 import boto3
 from botocore.exceptions import ClientError
 from datetime import datetime
-from config.db_config import user_collection, file_collection
+from config.db_config import user_collection, file_collection, fcm_device_tokens_collection
 import base64
 import aiohttp
 import uuid
@@ -35,6 +35,8 @@ from decimal import Decimal, ROUND_HALF_UP
 from config.basic_config import settings
 from schemas.user_token_history_schema import CreateTokenHistory
 from config.models.user_token_history_model import create_user_token_history
+import firebase_admin
+from firebase_admin import messaging
 
 TOKEN_TO_USDT_RATE = Decimal("0.05")
 
@@ -339,3 +341,41 @@ def parse_date_format(value: str | None):
         return datetime.strptime(value, "%d-%m-%Y")
     except ValueError:
         return None
+
+async def subscribe_user_to_topic(user_id: str, topic: str):
+
+    devices = await fcm_device_tokens_collection.find(
+        {
+            "user_id": user_id,
+            "status": "active"
+        }
+    ).to_list(length=100)
+
+    if not devices:
+        return
+
+    tokens = [d["device_token"] for d in devices]
+
+    try:
+        messaging.subscribe_to_topic(tokens, topic)
+    except Exception as e:
+        print(f"[Topic Subscribe Failed] {e}")
+
+async def unsubscribe_user_from_topic(user_id: str, topic: str):
+
+    devices = await fcm_device_tokens_collection.find(
+        {
+            "user_id": user_id,
+            "status": "active"
+        }
+    ).to_list(length=100)
+
+    if not devices:
+        return
+
+    tokens = [d["device_token"] for d in devices]
+
+    try:
+        messaging.unsubscribe_from_topic(tokens, topic)
+    except Exception as e:
+        print(f"[Topic Unsubscribe Failed] {e}")

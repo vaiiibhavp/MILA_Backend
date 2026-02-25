@@ -65,7 +65,7 @@ async def reject_withdrawal_request_controller(
             lang=lang
         )
 
-        recipient_lang = user.get("lang", "en")
+        recipient_lang = user.get("language", "en")
         await send_notification(
             recipient_id=str(user["_id"]),
             recipient_type=NotificationRecipientType.USER,
@@ -120,7 +120,7 @@ async def complete_withdrawal_request_controller(
         if not user:
             return response.error_message(translate_message("USER_NOT_FOUND", lang=lang), data=[], status_code=404)
 
-        recipient_lang = user.get("lang", "en")
+        recipient_lang = user.get("language", "en")
         await send_notification(
             recipient_id=str(user["_id"]),
             recipient_type=NotificationRecipientType.USER,

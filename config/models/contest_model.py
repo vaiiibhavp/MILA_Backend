@@ -11,7 +11,8 @@ from core.utils.pagination import pagination_params, StandardResultsSetPaginatio
 from api.controller.files_controller import *
 from schemas.contest_schema import *
 from core.utils.helper import get_user_details, get_admin_id_by_email
-from services.notification_service import send_notification
+from services.notification_service import send_notification, send_topic_notification
+from core.utils.helper import unsubscribe_user_from_topic
 
 leaderboard_redis_helper = LeaderboardRedisHelper()
 
@@ -708,6 +709,7 @@ async def auto_declare_winners(contest_id: str):
                 }
             ]
         )
+        recipient_lang = participant.get("language", "en")
         admin_id = await get_admin_id_by_email()
         if not admin_id:
             return response.error_message(
@@ -737,31 +739,38 @@ async def auto_declare_winners(contest_id: str):
 
         rank += 1
 
-    # Send NON-WINNER notifications
-    all_participants = await contest_participant_collection.find({
-        "contest_id": contest_id,
-        "contest_history_id": contest_history_id
-    }).to_list(None)
+    # Unsubscribe winners from topic first
+    for winner_id in winner_user_ids:
+        await unsubscribe_user_from_topic(
+            user_id=winner_id,
+            topic=f"contest_{contest_history_id}_participants"
+        )
 
-    for participant in all_participants:
+    # Send topic notification to non-winners
+    distinct_languages = await user_collection.distinct("language")  # or fetch dynamically
 
-        user_id = participant["user_id"]
+    for lang in distinct_languages:
 
-        if user_id in winner_user_ids:
-            continue
+        translated_title = translate_message(
+            "PARTICIPATION_NOTIFICATION_TITLE",
+            lang
+        )
 
-        await send_notification(
-            recipient_id=user_id,
-            recipient_type=NotificationRecipientType.USER,
-            notification_type=NotificationType.CONTEST_RESULT,
-            title="PARTICIPATION_NOTIFICATION_TITLE",
-            message="PARTICIPATION_NOTIFICATION_MESSAGE",
-            sender_user_id=admin_id,
-            reference={
-                "contest_id": contest_id
-            },
-            send_push=True,
-            push_data={
+        translated_message_template = translate_message(
+            "PARTICIPATION_NOTIFICATION_MESSAGE",
+            lang
+        )
+
+        translated_message = translated_message_template.format(
+            contest_name=contest_name
+        )
+
+        await send_topic_notification(
+            topic=f"contest_{contest_history_id}_participants_{lang}",
+            title=translated_title,
+            body=translated_message,
+            data={
+                "contest_id": contest_id,
                 "contest_name": contest_name
             }
         )
