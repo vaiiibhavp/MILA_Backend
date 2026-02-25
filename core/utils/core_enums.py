@@ -68,6 +68,7 @@ class NotificationType(str, Enum):
     VERIFICATION_APPROVED = "verification_approved",
     VERIFICATION_REJECTED = "verification_rejected"
     CONTEST_RESULT = "contest_result"
+    VIDEO_CALL = "video_call" 
     
 class VerificationStatusEnum(str, Enum):
     PENDING = "pending"
