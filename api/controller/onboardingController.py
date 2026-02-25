@@ -27,7 +27,7 @@ from datetime import datetime
 from core.utils.response_mixin import CustomResponseMixin
 from fastapi import UploadFile
 from api.controller.files_controller import save_file
-from config.models.user_models import Files
+from config.models.user_models import Files, get_user_token_balance
 from core.utils.helper import serialize_datetime_fields
 from services.translation import translate_message
 from core.utils.age_calculation import calculate_age
@@ -763,6 +763,7 @@ async def fetch_user_by_id(user_id: str, lang: str):
         # Profile photo
         profile_photo = None
         images = user_data.get("images", [])
+        tokens = await get_user_token_balance(str(user["_id"]))
 
         if images:
             first_image_id = images[0]
@@ -792,7 +793,7 @@ async def fetch_user_by_id(user_id: str, lang: str):
             "country": country_data, 
             "passions": user_data.get("passions"),
             "profile_photo": profile_photo,
-            "tokens":user.get("tokens"),
+            "tokens":tokens,
             "membership_type":user.get("membership_type"),
             "gender":user_data.get("gender")
         })
