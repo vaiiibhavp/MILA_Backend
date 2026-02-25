@@ -17,6 +17,10 @@ async def start_video_call_route(
     return await start_video_call(
         user_id=user_id,
         receiver_user_id=request.receiver_user_id,
+        conversation_id=request.conversation_id,
+        channel_name=request.channel_name,
+        call_request_id=request.call_request_id,
+        receiver_accepted=request.receiver_accepted,
         lang=lang
     )
 
