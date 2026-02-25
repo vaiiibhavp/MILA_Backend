@@ -25,6 +25,8 @@ from config.models.transaction_models import (store_transaction_details, get_exi
                                               get_withdraw_token_transactions)
 from config.models.user_models import get_user_details, update_user_token_balance
 from core.utils.response_mixin import CustomResponseMixin
+from config.models.user_models import get_user_token_balance
+
 response = CustomResponseMixin()
 
 
@@ -41,7 +43,8 @@ async def get_user_token_details(
             pagination=pagination,
             transaction_type=transaction_type
         )
-        available_tokens = await get_user_details(condition={"_id":ObjectId(user_id)}, fields=["tokens"])
+        # available_tokens = await get_user_details(condition={"_id":ObjectId(user_id)}, fields=["tokens"])
+        available_tokens = await get_user_token_balance(str(user_id))
         token_plans = await get_token_packages_plans(condition={"status":TokenPlanStatus.active.value,
                                                                 "$or": [
                                                                     {"deleted": {"$exists": False}},
@@ -52,7 +55,7 @@ async def get_user_token_details(
         token_plans = convert_objectid_to_str(token_plans)
         data = TokenHistoryResponse(
             history=token_history,
-            available_tokens=str(available_tokens.get("tokens", "0")),
+            available_tokens=str(available_tokens),
             token_plans=token_plans
         ).model_dump()
         data = serialize_datetime_fields(data)
