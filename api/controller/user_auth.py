@@ -265,7 +265,9 @@ async def verify_signup_otp_controller(payload, lang):
             "created_at": datetime.utcnow(),
             "updated_at": None,
             "two_factor_enabled": True,
-            "language": lang or "en"
+            "language": lang or "en",
+            "bonus_tokens":0,
+            "tokens":0
         })
 
         user_id = str(result.inserted_id)

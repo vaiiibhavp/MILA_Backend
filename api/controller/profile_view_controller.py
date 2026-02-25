@@ -270,52 +270,48 @@ async def buy_private_gallery_image(
     price = int(image.get("price", 0))
 
     # 3. FETCH FRESH VIEWER DATA
-    viewer_db = await user_collection.find_one({"_id": viewer["_id"]})
+    viewer_db = await user_collection.find_one(
+        {"_id": viewer["_id"]},
+        {"tokens": 1, "bonus_tokens": 1, "unlocked_images": 1}
+    )
 
-    available_tokens = int(viewer_db.get("tokens", 0))
     unlocked_images = viewer_db.get("unlocked_images", [])
 
     # 4. Already unlocked
     if image_id in unlocked_images:
+        current_balance = await get_user_token_balance(str(viewer["_id"]))
+
         return response.success_message(
             translate_message("IMAGE_ALREADY_UNLOCKED", lang),
             data={
                 "image_id": image_id,
-                "remaining_tokens": available_tokens,
+                "remaining_tokens": current_balance,
                 "is_unlocked": True
             }
         )
 
-    # 5. Insufficient balance
-    if available_tokens < price:
+    # 5. Use centralized debit function (BONUS FIRST LOGIC)
+    balance_after, balance_before = await debit_user_tokens(
+        user_id=str(viewer["_id"]),
+        amount=price,
+        reason=TokenTransactionReason.PRIVATE_IMAGE_UNLOCK
+    )
+
+    if balance_after is None:
         return response.error_message(
             translate_message("INSUFFICIENT_TOKENS", lang),
             status_code=400
         )
 
-    # 6. Deduct tokens
-    new_token_balance = available_tokens - price
-
+    # 6. Unlock image (same as before)
     await user_collection.update_one(
         {"_id": viewer["_id"]},
         {
-            "$set": {"tokens": new_token_balance},
             "$addToSet": {"unlocked_images": image_id}
         }
     )
 
-    # 7. Record token history
-    await create_user_token_history(
-        CreateTokenHistory(
-            user_id=str(viewer["_id"]),
-            delta=-price,
-            type=TokenTransactionType.DEBIT,
-            reason=TokenTransactionReason.PRIVATE_IMAGE_UNLOCK,
-            balance_before=str(available_tokens),
-            balance_after=str(new_token_balance)
-        )
-    )
-
+    # 7. Record purchase (same as before)
     await private_gallery_purchases_collection.insert_one({
         "buyer_id": str(viewer["_id"]),
         "owner_id": profile_user_id,
@@ -325,11 +321,13 @@ async def buy_private_gallery_image(
         "purchased_at": datetime.utcnow(),
         "is_active": True
     })
+
+    # 8. Success response (same structure as before)
     return response.success_message(
         translate_message("IMAGE_UNLOCKED_SUCCESSFULLY", lang),
         data=[{
             "image_id": image_id,
-            "remaining_tokens": new_token_balance,
+            "remaining_tokens": balance_after,
             "is_unlocked": True
         }]
     )
@@ -479,39 +477,32 @@ async def send_gift_to_profile(
 
     gift_price = int(gift["token"])
 
-    # Fetch fresh sender data
-    sender = await get_user_details(
-        condition={"_id": viewer["_id"]},
-        fields=["_id", "tokens"]
+    # Use centralized debit logic (bonus first)
+    balance_after, balance_before = await debit_user_tokens(
+        user_id=str(viewer["_id"]),
+        amount=gift_price,
+        reason=TokenTransactionReason.GIFT_SENT
     )
-    if not sender:
-        return response.error_message(
-            translate_message("USER_NOT_FOUND", lang=lang),
-            status_code=404
-        )
 
-    sender_tokens = int(sender.get("tokens", 0))
-    receiver_tokens = int(receiver.get("tokens", 0))
-
-    # Validate balance
-    if sender_tokens < gift_price:
+    if balance_after is None:
         return response.error_message(
             translate_message("INSUFFICIENT_TOKENS", lang=lang),
             status_code=400
         )
 
-    # Calculate balances
-    sender_new_balance = sender_tokens - gift_price
+    # Receiver balance (same as before)
+    receiver_tokens = int(receiver.get("tokens", 0))
     receiver_new_balance = receiver_tokens + gift_price
 
+    # Create gift transaction (same structure as before)
     gift_tx = GiftTransactionCreate(
         sender_id=str(viewer["_id"]),
         receiver_id=str(profile_user_id),
         gift_id=str(gift["_id"]),
         gift_name=gift["name"],
         gift_token_value=gift_price,
-        sender_balance_before=sender_tokens,
-        sender_balance_after=sender_new_balance,
+        sender_balance_before=balance_before,
+        sender_balance_after=balance_after,
         receiver_balance_before=receiver_tokens,
         receiver_balance_after=receiver_new_balance,
     )
@@ -522,29 +513,13 @@ async def send_gift_to_profile(
 
     gift_tx_id = str(gift_tx_result.inserted_id)
 
-    # Update users
-    await user_collection.update_one(
-        {"_id": viewer["_id"]},
-        {"$set": {"tokens": sender_new_balance}}
-    )
-
+    # Update receiver ONLY (sender already updated inside debit function)
     await user_collection.update_one(
         {"_id": ObjectId(profile_user_id)},
         {"$set": {"tokens": receiver_new_balance}}
     )
 
-    # Token history — sender
-    await create_user_token_history(
-        CreateTokenHistory(
-            user_id=str(viewer["_id"]),
-            delta=-gift_price,
-            type=TokenTransactionType.DEBIT,
-            reason=TokenTransactionReason.GIFT_SENT,
-            balance_before=str(sender_tokens),
-            balance_after=str(sender_new_balance),
-            txn_id=gift_tx_id
-        )
-    )
+    # DO NOT create sender history (already created inside debit_user_tokens)
 
     # Token history — receiver
     await create_user_token_history(
@@ -564,7 +539,7 @@ async def send_gift_to_profile(
             "gift_id": gift_id,
             "gift_name": gift["name"],
             "tokens_deducted": gift_price,
-            "sender_remaining_tokens": sender_new_balance
+            "sender_remaining_tokens": balance_after
         }]
     )
 
