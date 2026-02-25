@@ -224,11 +224,39 @@ async def start_video_call(
                 "url": url
             }
 
+
+    caller_name = caller.get("username")
+    caller_verified = caller.get("is_verified")
+
+    caller_profile_image = None
+
+    caller_onboarding = await onboarding_collection.find_one({"user_id": user_id})
+
+    if caller_onboarding and caller_onboarding.get("images"):
+        first_image_id = caller_onboarding["images"][0]
+
+        file_doc = await file_collection.find_one({
+            "_id": ObjectId(first_image_id),
+            "is_deleted": {"$ne": True}
+        })
+
+        if file_doc:
+            url = await generate_file_url(
+                storage_key=file_doc["storage_key"],
+                backend=file_doc["storage_backend"]
+            )
+
+            caller_profile_image = {
+                "file_id": first_image_id,
+                "url": url
+            }
+
     # ---------------- Send notification ----------------
     await send_notification(
         recipient_id=receiver_user_id,
         recipient_type=NotificationRecipientType.USER,
         notification_type=NotificationType.VIDEO_CALL,
+
         title="PUSH_TITLE_VIDEO_CALL",
         message="PUSH_MESSAGE_VIDEO_CALL",
         reference={
@@ -237,7 +265,11 @@ async def start_video_call(
             "recipientVerified": recipient_verified,
             "recipientProfileImage": recipient_profile_image,
 
-            "currentUserId": user_id,
+            "callerUserId": user_id,
+            "callerName": caller_name,
+            "callerVerified": caller_verified,
+            "callerProfileImage": caller_profile_image,
+
             "conversationId": conversation_id,
             "channelName": channel_name,
             "callRequestId": call_request_id,
@@ -251,8 +283,13 @@ async def start_video_call(
         },
         sender_user_id=user_id,
         send_push=True,
+
+        #  Push priority for mobile
         push_data={
-            "caller_name": caller.get("username")
+            "caller_name": caller_name,
+            "caller_id": user_id,
+            "caller_profile_image": caller_profile_image,
+            "notification_type":NotificationType.VIDEO_CALL.value
         }
     )
 
