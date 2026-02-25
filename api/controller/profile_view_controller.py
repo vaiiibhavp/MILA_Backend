@@ -44,7 +44,7 @@ async def get_profile_controller(user_id: str, viewer: dict, lang: str = "en"):
 
     is_owner = viewer and str(viewer["_id"]) == user_id
 
-    recipient_lang = user.get("lang", "en")
+    recipient_lang = user.get("language", "en")
 
     # RECORD PROFILE VIEW
     if viewer and str(viewer["_id"]) != user_id:

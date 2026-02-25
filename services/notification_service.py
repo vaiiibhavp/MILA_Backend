@@ -6,6 +6,8 @@ from core.utils.core_enums import NotificationType, NotificationRecipientType
 from config.db_config import notification_collection , user_collection , admin_collection
 from core.utils.send_mail import smtp_send_email
 from services.translation import translate_message
+import firebase_admin
+from firebase_admin import messaging
 
 async def send_notification(
     *,
@@ -87,3 +89,25 @@ async def send_notification(
             print(f"[Notification Push Failed] {e}")
 
     return True
+
+async def send_topic_notification(topic: str, title: str, body: str, data: dict):
+
+    try:
+        print(f"[TOPIC PUSH] Sending to topic: {topic}")
+        print(f"[TOPIC PUSH DATA] {data}")
+
+        message = messaging.Message(
+            notification=messaging.Notification(
+                title=title,
+                body=body
+            ),
+            topic=topic,
+            data={k: str(v) for k, v in data.items()}
+        )
+
+        response = messaging.send(message)
+
+        print(f"[TOPIC PUSH SUCCESS] Message ID: {response}")
+
+    except Exception as e:
+        print(f"[Topic Push Failed] {e}")

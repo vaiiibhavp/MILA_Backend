@@ -641,6 +641,7 @@
   "WINNER_NOTIFICATION_MESSAGE": "You secured Rank {rank} in {contest_name} and won {amount} tokens! 🏆",
 
   "PARTICIPATION_NOTIFICATION_TITLE": "Contest Results Are Out – Check Your Rank!",
-  "PARTICIPATION_NOTIFICATION_MESSAGE": "The results for {contest_name} are now live. Check your final rank in the app. 🚀"
+  "PARTICIPATION_NOTIFICATION_MESSAGE": "The results for {contest_name} are now live. Check your final rank in the app. 🚀",
 
+  "PARTICIPANTS_CANNOT_VOTE_IN_CONTEST": "Participants are not allowed to vote in this contest."
 }

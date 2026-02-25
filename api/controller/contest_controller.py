@@ -6,6 +6,8 @@ import asyncio
 from core.utils.helper import *
 from services.gallery_service import *
 from config.basic_config import settings
+import firebase_admin
+from firebase_admin import messaging
 
 response = CustomResponseMixin()
 
@@ -125,7 +127,8 @@ async def get_contest_details_controller(
         "rules_and_conditions": contest.get("rules", []),
         "allowed_photos_per_participant": contest.get("photos_per_participant"),
         "current_standings": standings,
-        "cta": cta
+        "cta": cta,
+        "vote_cost": contest.get("cost_per_vote")
     }
 
     return response.success_message(
@@ -401,6 +404,13 @@ async def participate_in_contest_controller(
         "total_votes": 0,
         "created_at": datetime.utcnow()
     })
+    
+    user_lang = current_user.get("language", "en")
+
+    await subscribe_user_to_topic(
+        user_id=user_id,
+        topic=f"contest_{contest_history_id}_participants_{user_lang}"
+    )
 
     # Increment participant count
     await increment_participant_count(contest_history_id)
@@ -529,7 +539,20 @@ async def cast_vote_controller(
             translate_message("CONTEST_NOT_ACTIVE", lang),
             status_code=400
         )
+    
+    contest_history_id = str(contest_history["_id"])
 
+    is_participant = await contest_participant_collection.find_one({
+        "contest_id": contest_id,
+        "contest_history_id": contest_history_id,
+        "user_id": user_id
+    })
+
+    if is_participant:
+        return response.error_message(
+            translate_message("PARTICIPANTS_CANNOT_VOTE_IN_CONTEST", lang),
+            status_code=403
+        )
     now = datetime.utcnow()
 
     if not await is_within_voting_period(contest_history):
@@ -550,7 +573,6 @@ async def cast_vote_controller(
             status_code=403
         )
 
-    contest_history_id = str(contest_history["_id"])
 
     participant = await get_participant_by_user(
         contest_id,
@@ -704,6 +726,6 @@ async def get_participant_details_controller(
             "username": user.get("username") if user else None,
             "profile_photo": avatar["avatar_url"] if avatar else None,
             "uploaded_images": images,
-            "total_votes": participant.get("total_votes", 0)
+            "total_votes": participant.get("total_votes", 0),
         }]
     )
