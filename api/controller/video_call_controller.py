@@ -273,7 +273,7 @@ async def start_video_call(
             "conversationId": conversation_id,
             "channelName": channel_name,
             "callRequestId": call_request_id,
-            "isIncomingCall": True,
+            "isIncomingCall": False,
 
             "call_id": call_id,
             "caller_free_seconds_remaining": caller_free_seconds_remaining,
