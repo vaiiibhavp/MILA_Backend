@@ -229,6 +229,10 @@ async def start_video_call(
         recipient_id=receiver_user_id,
         recipient_type=NotificationRecipientType.USER,
         notification_type=NotificationType.VIDEO_CALL,
+
+        #  NEW: priority
+        priority="high",
+
         title="PUSH_TITLE_VIDEO_CALL",
         message="PUSH_MESSAGE_VIDEO_CALL",
         reference={
@@ -241,7 +245,7 @@ async def start_video_call(
             "conversationId": conversation_id,
             "channelName": channel_name,
             "callRequestId": call_request_id,
-            "isIncomingCall": False,
+            "isIncomingCall": True,
 
             "call_id": call_id,
             "caller_free_seconds_remaining": caller_free_seconds_remaining,
@@ -251,8 +255,12 @@ async def start_video_call(
         },
         sender_user_id=user_id,
         send_push=True,
+
+        #  Push priority for mobile
         push_data={
-            "caller_name": caller.get("username")
+            "caller_name": caller.get("username"),
+            "type": "video_call",
+            "priority": "high"
         }
     )
 
