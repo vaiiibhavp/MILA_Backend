@@ -44,6 +44,7 @@ async def get_contest_details_controller(
     current_user: dict,
     lang: str = "en"
 ):
+    user_id = str(current_user.get("_id"))
     # Fetch contest
     contest = await fetch_contest_by_id(contest_id)
     if not contest:
@@ -72,6 +73,15 @@ async def get_contest_details_controller(
 
 
     contest_history_id = str(contest_history["_id"])
+
+    votes_casted = await get_user_vote_count(
+        contest_id,
+        contest_history_id,
+        user_id
+    )
+
+    max_votes = contest.get("max_votes_per_user", 0)
+    remaining_votes = max(max_votes - votes_casted, 0)
 
     # Parallel IO operations
     (
@@ -128,7 +138,8 @@ async def get_contest_details_controller(
         "allowed_photos_per_participant": contest.get("photos_per_participant"),
         "current_standings": standings,
         "cta": cta,
-        "vote_cost": contest.get("cost_per_vote")
+        "vote_cost": contest.get("cost_per_vote"),
+        "remaining_votes": remaining_votes
     }
 
     return response.success_message(
