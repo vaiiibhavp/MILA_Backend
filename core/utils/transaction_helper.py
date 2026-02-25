@@ -293,11 +293,15 @@ async def _update_user_membership_and_tokens(
 ) -> None:
     """
     Handles token balance, token history, and membership fields on the user document.
+    Now credits subscription tokens into bonus_tokens instead of tokens.
     """
 
     membership_status = user_details.get("membership_status", MembershipStatus.EXPIRED)
     current_tokens = int(user_details.get("tokens") or 0)
-    new_balance = current_tokens + on_subscribe_tokens
+    current_bonus_tokens = int(user_details.get("bonus_tokens") or 0)
+
+    total_before = current_tokens + current_bonus_tokens
+    total_after = total_before + on_subscribe_tokens
 
     # Record token history (always, even if already active)
     token_history_data = CreateTokenHistory(
@@ -305,17 +309,19 @@ async def _update_user_membership_and_tokens(
         delta=on_subscribe_tokens,
         type=TokenTransactionType.CREDIT.value,
         reason=TokenTransactionReason.SUBSCRIPTION.value,
-        balance_before=str(current_tokens),
-        balance_after=str(new_balance),
+        balance_before=str(total_before),
+        balance_after=str(total_after),
         txn_id=str(transaction_id),
     )
     await create_user_token_history(data=token_history_data)
 
-    # If already active, don't change membership status / type / trans_id
+    # Credit into bonus_tokens ONLY
     if membership_status == MembershipStatus.ACTIVE.value:
         await user_collection.update_one(
             {"_id": ObjectId(user_id)},
-            {"$set": {"tokens": str(new_balance)}},
+            {
+                "$inc": {"bonus_tokens": on_subscribe_tokens}
+            },
         )
         return
 
@@ -323,8 +329,8 @@ async def _update_user_membership_and_tokens(
     await user_collection.update_one(
         {"_id": ObjectId(user_id)},
         {
+            "$inc": {"bonus_tokens": on_subscribe_tokens},
             "$set": {
-                "tokens": str(new_balance),
                 "membership_type": MembershipType.PREMIUM.value,
                 "membership_status": MembershipStatus.ACTIVE.value,
                 "membership_trans_id": transaction_id,
