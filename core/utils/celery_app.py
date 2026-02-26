@@ -67,6 +67,7 @@ celery_app.conf.beat_schedule = {
 
     "declare_contest_winners_daily": {
         "task": "tasks.declare_contest_winners",
-        "schedule": crontab(hour=0, minute=20),  # Midnight UTC
+        # "schedule": crontab(hour=0, minute=20),  # Midnight UTC
+        "schedule": crontab(minute=5),  # Midnight UTC
     },
 }
