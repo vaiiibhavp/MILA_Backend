@@ -647,5 +647,8 @@
   "PUSH_TITLE_VIDEO_CALL": "Incoming Video Call",
   "PUSH_MESSAGE_VIDEO_CALL": "{caller_name} is calling you",
   "CALL_ACCEPTED":"Call accepted by receiver",
-  "CALL_ALREADY_EXISTS":"Call already ongoing"
+  "CALL_ALREADY_EXISTS":"Call already ongoing",
+  "ONLY_VERIFIED_USERS_CAN_LIKE":"Only verified users can like",
+  "ONLY_VERIFIED_USERS_CAN_ADD_TO_FAV":"Only verified users can add to favorites",
+  "ONLY_VERIFIED_USERS_CAN_PASS":"Only verified users can pass"
 }

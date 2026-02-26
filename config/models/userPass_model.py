@@ -28,6 +28,27 @@ response = CustomResponseMixin()
 
 # function help to add user to favorites collection
 async def add_to_fav(user_id: str, favorite_user_id: str, lang: str = "en"):
+
+    # ================== CHECK USER IS VERIFIED ==================
+    liker = await user_collection.find_one(
+        {"_id": ObjectId(user_id), "is_deleted": {"$ne": True}},
+        {"is_verified": 1}
+    )
+
+    if not liker:
+        return response.error_message(
+            translate_message("USER_NOT_FOUND", lang),
+            status_code=404,
+            data=[]
+        )
+
+    if not liker.get("is_verified"):
+        return response.error_message(
+            translate_message("ONLY_VERIFIED_USERS_CAN_ADD_TO_FAV", lang),
+            status_code=403,
+            data=[]
+        )
+
     user = await user_collection.find_one(
         {"_id": ObjectId(user_id)},
         {"membership_type": 1}
@@ -119,6 +140,26 @@ async def add_to_fav(user_id: str, favorite_user_id: str, lang: str = "en"):
 
 # Function to handle like of the users.
 async def like_user(user_id: str, liked_user_id: str, lang: str = "en"):
+
+# ================== CHECK USER IS VERIFIED ==================
+    liker = await user_collection.find_one(
+        {"_id": ObjectId(user_id), "is_deleted": {"$ne": True}},
+        {"is_verified": 1}
+    )
+
+    if not liker:
+        return response.error_message(
+            translate_message("USER_NOT_FOUND", lang),
+            status_code=404,
+            data=[]
+        )
+
+    if not liker.get("is_verified"):
+        return response.error_message(
+            translate_message("ONLY_VERIFIED_USERS_CAN_LIKE", lang),
+            status_code=403,
+            data=[]
+        )
 
     can_perform, total, error_key = await check_daily_action_limit(user_id)
 
@@ -298,6 +339,27 @@ async def like_user(user_id: str, liked_user_id: str, lang: str = "en"):
 
 # Function to pass the user.
 async def pass_user(user_id: str, passed_user_id: str, lang: str = "en"):
+
+
+    # ================== CHECK USER IS VERIFIED ==================
+    liker = await user_collection.find_one(
+        {"_id": ObjectId(user_id), "is_deleted": {"$ne": True}},
+        {"is_verified": 1}
+    )
+
+    if not liker:
+        return response.error_message(
+            translate_message("USER_NOT_FOUND", lang),
+            status_code=404,
+            data=[]
+        )
+
+    if not liker.get("is_verified"):
+        return response.error_message(
+            translate_message("ONLY_VERIFIED_USERS_CAN_PASS", lang),
+            status_code=403,
+            data=[]
+        )
 
     can_perform, total, error_key = await check_daily_action_limit(user_id)
 
