@@ -337,7 +337,8 @@ async def end_video_call(user_id: str, call_id: str, total_call_seconds: int, la
                     "receiver_tokens_deducted": 0,
                     "caller_free_seconds_used": 0,
                     "receiver_free_seconds_used": 0,
-                    "paid_seconds_used": 0,
+                    "caller_paid_seconds_used": 0,
+                    "receiver_paid_seconds_used": 0,
                     "end_reason": "not_accepted"
                 }
             }
@@ -381,11 +382,14 @@ async def end_video_call(user_id: str, call_id: str, total_call_seconds: int, la
     caller_free_used = min(total_call_seconds, caller_free_remaining)
     receiver_free_used = min(total_call_seconds, receiver_free_remaining)
 
-    paid_seconds = max(0, total_call_seconds - min(caller_free_used, receiver_free_used))
-    paid_minutes = math.ceil(paid_seconds / 60)
+    caller_paid_seconds = max(0, total_call_seconds - caller_free_used)
+    receiver_paid_seconds = max(0, total_call_seconds - receiver_free_used)
 
-    caller_tokens_to_deduct = paid_minutes * caller_rate
-    receiver_tokens_to_deduct = paid_minutes * receiver_rate
+    caller_paid_minutes = math.ceil(caller_paid_seconds / 60)
+    receiver_paid_minutes = math.ceil(receiver_paid_seconds / 60)
+
+    caller_tokens_to_deduct = caller_paid_minutes * caller_rate
+    receiver_tokens_to_deduct = receiver_paid_minutes * receiver_rate
 
     # Never deduct more than balance
     caller_tokens_to_deduct = min(caller_balance_before, caller_tokens_to_deduct)
@@ -436,11 +440,10 @@ async def end_video_call(user_id: str, call_id: str, total_call_seconds: int, la
                 "total_seconds": total_call_seconds,
                 "caller_free_seconds_used": caller_free_used,
                 "receiver_free_seconds_used": receiver_free_used,
-
+                "caller_paid_seconds_used": caller_paid_seconds,
+                "receiver_paid_seconds_used": receiver_paid_seconds,
                 "caller_free_seconds_remaining": new_caller_free_remaining,
                 "receiver_free_seconds_remaining": new_receiver_free_remaining,
-
-                "paid_seconds_used": paid_seconds,
                 "caller_tokens_deducted": caller_tokens_to_deduct,
                 "receiver_tokens_deducted": receiver_tokens_to_deduct
             }
@@ -454,7 +457,8 @@ async def end_video_call(user_id: str, call_id: str, total_call_seconds: int, la
             "total_call_seconds": total_call_seconds,
             "caller_free_seconds_used": caller_free_used,
             "receiver_free_seconds_used": receiver_free_used,
-            "paid_seconds_used": paid_seconds,
+            "caller_paid_seconds_used": caller_paid_seconds,
+            "receiver_paid_seconds_used": receiver_paid_seconds,
             "caller_tokens_deducted": caller_tokens_to_deduct,
             "receiver_tokens_deducted": receiver_tokens_to_deduct
         }]
@@ -523,27 +527,34 @@ async def video_call_tick(user_id: str, call_id: str, elapsed_seconds: int, lang
     caller_free_remaining = int(call.get("caller_free_seconds_remaining", 0))
     receiver_free_remaining = int(call.get("receiver_free_seconds_remaining", 0))
 
-    free_remaining = min(caller_free_remaining, receiver_free_remaining)
-
-    free_used = min(int(elapsed_seconds), free_remaining)
-    paid_seconds = max(0, int(elapsed_seconds) - free_used)
-    paid_minutes = math.ceil(paid_seconds / 60)
-
     caller_rate = int(call.get("caller_rate_per_minute", 2))
     receiver_rate = int(call.get("receiver_rate_per_minute", 2))
 
-    caller_required = paid_minutes * caller_rate
-    receiver_required = paid_minutes * receiver_rate
+    # PER USER FREE USAGE
+    caller_free_used = min(elapsed_seconds, caller_free_remaining)
+    receiver_free_used = min(elapsed_seconds, receiver_free_remaining)
 
+    caller_paid_seconds = max(0, elapsed_seconds - caller_free_used)
+    receiver_paid_seconds = max(0, elapsed_seconds - receiver_free_used)
+
+    caller_paid_minutes = math.ceil(caller_paid_seconds / 60)
+    receiver_paid_minutes = math.ceil(receiver_paid_seconds / 60)
+
+    caller_required = caller_paid_minutes * caller_rate
+    receiver_required = receiver_paid_minutes * receiver_rate
+
+    # NEW LOGIC: DO NOT END CALL, JUST INFORM FE
     if caller_required > caller_tokens or receiver_required > receiver_tokens:
-        await video_call_sessions.update_one(
-            {"_id": ObjectId(call_id)},
-            {"$set": {"status": "ended", "end_reason": "insufficient_tokens"}}
-        )
-
         return response.success_message(
-            translate_message("INSUFFICIENT_TOKENS_CALL_ENDED", lang),
-            data=[{"continue_call": False}]
+            translate_message("CALL_CAN_CONTINUE", lang),
+            data=[{
+                "continue_call": False,          # FE decides what to do
+                "billing_started": True,
+                "caller_tokens_required": caller_required,
+                "receiver_tokens_required": receiver_required,
+                "caller_available_tokens": caller_tokens,
+                "receiver_available_tokens": receiver_tokens
+            }]
         )
 
     return response.success_message(

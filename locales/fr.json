@@ -650,6 +650,9 @@
   "PUSH_TITLE_VIDEO_CALL": "Appel vidéo entrant",
   "PUSH_MESSAGE_VIDEO_CALL": "{caller_name} vous appelle",
   "CALL_ACCEPTED": "Appel accepté par le destinataire",
-  "CALL_ALREADY_EXISTS": "Un appel est déjà en cours"
+  "CALL_ALREADY_EXISTS": "Un appel est déjà en cours",
+  "ONLY_VERIFIED_USERS_CAN_LIKE": "Seuls les utilisateurs vérifiés peuvent aimer",
+  "ONLY_VERIFIED_USERS_CAN_ADD_TO_FAV": "Seuls les utilisateurs vérifiés peuvent ajouter aux favoris",
+  "ONLY_VERIFIED_USERS_CAN_PASS": "Seuls les utilisateurs vérifiés peuvent passer"
 
 }
