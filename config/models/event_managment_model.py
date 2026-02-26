@@ -845,7 +845,7 @@ class ContestModel:
         if final_start_date < today:
             return {
                 "error": True,
-                "message": translate_message("FEATURE_START_DATE_REQUIRED", lang),
+                "message": translate_message("FUTURE_START_DATE_REQUIRED", lang),
                 "status_code": 400
             }
 
