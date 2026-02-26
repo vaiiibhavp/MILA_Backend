@@ -305,9 +305,13 @@ def calculate_visibility(
 ):
     now = datetime.utcnow()
 
+    # Make end_date inclusive till next midnight
+    end_date_inclusive = end_date + timedelta(days=1)
+
     if now < start_date:
         return ContestVisibility.upcoming.value
-    elif start_date <= now <= end_date:
+
+    elif start_date <= now < end_date_inclusive:
 
         # VALIDATION CHECK
         if total_participants >= min_participant:

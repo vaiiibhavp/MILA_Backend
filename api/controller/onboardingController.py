@@ -723,7 +723,7 @@ async def fetch_user_by_id(user_id: str, lang: str):
                 "is_verified": 1,
                 "profile_photo_id": 1,
                 "login_status": 1,
-                "tokens": 1,
+                # "tokens": 1,
                 "membership_type":1
             }
         )
@@ -763,7 +763,7 @@ async def fetch_user_by_id(user_id: str, lang: str):
         # Profile photo
         profile_photo = None
         images = user_data.get("images", [])
-        tokens = await get_user_token_balance(str(user["_id"]))
+        tokens = await get_user_token_balance(user_id)
 
         if images:
             first_image_id = images[0]
