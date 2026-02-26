@@ -13,6 +13,9 @@ from schemas.contest_schema import *
 from core.utils.helper import get_user_details, get_admin_id_by_email
 from services.notification_service import send_notification, send_topic_notification
 from core.utils.helper import unsubscribe_user_from_topic
+from config.models.user_models import get_user_token_balance
+from config.models.user_token_history_model import create_user_token_history
+from schemas.user_token_history_schema import CreateTokenHistory
 
 leaderboard_redis_helper = LeaderboardRedisHelper()
 
@@ -687,27 +690,30 @@ async def auto_declare_winners(contest_id: str):
         )
 
         # Credit prize tokens to user
+        winner_user_id = participant["user_id"]
+
+        balance_before = await get_user_token_balance(winner_user_id)
+        balance_after = balance_before + prize_amount
+
+        # Credit prize into main tokens (withdrawable)
         await user_collection.update_one(
-            {"_id": ObjectId(participant["user_id"])},
-            [
-                {
-                    "$set": {
-                        "tokens": {
-                            "$add": [
-                                {
-                                    "$cond": {
-                                        "if": {"$isNumber": "$tokens"},
-                                        "then": "$tokens",
-                                        "else": 0
-                                    }
-                                },
-                                prize_amount
-                            ]
-                        },
-                        "updated_at": datetime.utcnow()
-                    }
-                }
-            ]
+            {"_id": ObjectId(winner_user_id)},
+            {
+                "$inc": {"tokens": prize_amount},
+                "$set": {"updated_at": datetime.utcnow()}
+            }
+        )
+
+        # Create token history
+        await create_user_token_history(
+            CreateTokenHistory(
+                user_id=str(winner_user_id),
+                delta=prize_amount,
+                type=TokenTransactionType.CREDIT,
+                reason=TokenTransactionReason.CONTEST_PRIZE,
+                balance_before=str(balance_before),
+                balance_after=str(balance_after)
+            )
         )
         recipient_lang = participant.get("language", "en")
         admin_id = await get_admin_id_by_email()
