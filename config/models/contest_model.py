@@ -290,7 +290,7 @@ async def fetch_active_contest_history(contest_id: str):
     )
 
 
-async def fetch_participant_avatars(contest_id, contest_history_id, limit=5):
+async def fetch_participant_avatars(contest_id, contest_history_id):
     cursor = contest_participant_collection.find(
         {
             "contest_id": contest_id,
@@ -309,9 +309,6 @@ async def fetch_participant_avatars(contest_id, contest_history_id, limit=5):
         if avatar:
             avatars.append(avatar)
             seen_users.add(p["user_id"])
-
-        if len(avatars) == limit:
-            break
 
     return avatars
 
