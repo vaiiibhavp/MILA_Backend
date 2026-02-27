@@ -46,7 +46,11 @@ async def get_user_details(
     lang: str = "en",
     admin: dict = Depends(BothPermission(allowed_roles=["admin" , "user"]))
 ):
-    return await get_admin_user_details(user_id=user_id, lang=lang)
+    return await get_admin_user_details(
+        user_id=user_id,
+        current_user=admin,
+        lang=lang
+    )
 
 
 @router.post("/users/suspend/{user_id}")
