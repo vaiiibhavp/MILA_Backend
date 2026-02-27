@@ -647,6 +647,17 @@ async def auto_declare_winners(contest_id: str):
     winner_user_ids = []
     rank = 1
 
+    await contest_participant_collection.update_many(
+        {"is_winner": True},
+        {
+            "$set": {
+                "is_winner": False,
+                "rank": None,
+                "winner_position": None 
+            }
+        }
+    )
+
     async for participant in cursor:
 
         if rank == 1:
