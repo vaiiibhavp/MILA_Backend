@@ -135,7 +135,8 @@ async def process_contest(contest: dict, now: datetime):
     if str(latest_check["_id"]) != str(latest["_id"]):
         return 
 
-    new_version = increment_version(latest["contest_version"])
+    current_version = latest.get("contest_version", "1.0.0")
+    new_version = increment_version(current_version)
 
     await create_next_history(contest, latest, next_cycle_date, new_version)
 

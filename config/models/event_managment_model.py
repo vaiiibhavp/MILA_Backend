@@ -1,5 +1,7 @@
 from datetime import datetime,timedelta
 from bson import ObjectId
+from zoneinfo import ZoneInfo
+import tzdata 
 import re
 from bson.errors import InvalidId
 from config.db_config import contest_collection, file_collection , contest_participant_collection,contest_history_collection
@@ -137,7 +139,14 @@ class ContestModel:
                 "status_code": 400
             }
 
-        today = datetime.utcnow()
+        # ---------------- TIMEZONE SETUP ----------------
+        madagascar_tz = ZoneInfo("Africa/Nairobi")
+        utc_tz = ZoneInfo("UTC")
+        print("madagascar_tz",madagascar_tz)
+        # utc_tz = pytz.utc
+
+        # Current UTC time
+        now_utc = datetime.now(tz=utc_tz)
 
         start_date_dt = parse_date_format(payload.start_date)
         end_date_dt = parse_date_format(payload.end_date)
@@ -149,11 +158,47 @@ class ContestModel:
         if not end_date_dt:
             return {"error": True, "message": translate_message("INVALID_END_DATE_FORMAT", lang), "status_code": 400}
 
-        # ---------- PAST DATE VALIDATION ----------
-        if start_date_dt < today:
+        # ---------------- ATTACH MADAGASCAR TIME ----------------
+        launch_hour, launch_minute = map(int, payload.launch_time.split(":"))
+
+        start_date_local = datetime(
+            start_date_dt.year,
+            start_date_dt.month,
+            start_date_dt.day,
+            launch_hour,
+            launch_minute,
+            0,
+            0,
+            tzinfo=madagascar_tz
+        )
+
+        end_date_local = datetime(
+            end_date_dt.year,
+            end_date_dt.month,
+            end_date_dt.day,
+            launch_hour,
+            launch_minute,
+            0,
+            0,
+            tzinfo=madagascar_tz
+        )
+
+        # ---------------- CONVERT TO UTC FOR STORAGE ----------------
+        start_date_utc = start_date_local.astimezone(utc_tz)
+        print("start_date_utc",start_date_utc)
+
+    
+        end_date_utc = end_date_local.astimezone(utc_tz)
+        print("end_date_utc",end_date_utc)
+
+        if not end_date_utc:
+            return
+
+        # ---------------- PAST DATE VALIDATION ----------------
+        if start_date_utc < now_utc:
             return {"error": True, "message": translate_message("FUTURE_START_DATE_REQUIRED", lang), "status_code": 400}
 
-        if end_date_dt < today:
+        if end_date_utc < now_utc:
             return {"error": True, "message": translate_message("FUTURE_END_DATE_REQUIRED", lang), "status_code": 400}
 
 
@@ -310,8 +355,8 @@ class ContestModel:
             "total_participants": 0,
             "total_votes": 0,
 
-            "start_date": start_date_dt,
-            "end_date": end_date_dt,
+            "start_date": start_date_utc,
+            "end_date": end_date_utc,
             "judging_criteria": payload.judging_criteria or [],
 
             "is_active": True,
