@@ -798,3 +798,13 @@ async def auto_declare_winners(contest_id: str):
                 "contest_name": contest_name
             }
         )
+    await contest_collection.update_one(
+        {"_id": ObjectId(contest_id)},
+        {
+            "$set": {
+                "total_participants": 0,
+                "total_votes": 0,
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
