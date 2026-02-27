@@ -109,17 +109,23 @@ async def start_video_call(
             status_code=400
         )
 
-    # ---------------- Token validation ----------------
+    # ---------------- Token validation (BONUS FIRST) ----------------
     caller_tokens = int(caller.get("tokens", 0))
-    receiver_tokens = int(receiver.get("tokens", 0))
+    caller_bonus_tokens = int(caller.get("bonus_tokens", 0))
 
-    if caller_tokens <= 0:
+    receiver_tokens = int(receiver.get("tokens", 0))
+    receiver_bonus_tokens = int(receiver.get("bonus_tokens", 0))
+
+    caller_total_balance = caller_tokens + caller_bonus_tokens
+    receiver_total_balance = receiver_tokens + receiver_bonus_tokens
+
+    if caller_total_balance <= 0:
         return response.error_message(
             translate_message("CALLER_INSUFFICIENT_TOKENS", lang),
             status_code=400
         )
 
-    if receiver_tokens <= 0:
+    if receiver_total_balance <= 0:
         return response.error_message(
             translate_message("RECEIVER_INSUFFICIENT_TOKENS", lang),
             status_code=400
@@ -304,8 +310,8 @@ async def start_video_call(
             "receiver_free_seconds_remaining": receiver_free_seconds_remaining,
             "caller_rate": caller_rate,
             "receiver_rate": receiver_rate,
-            "caller_tokens": caller_tokens,
-            "receiver_tokens": receiver_tokens
+            "caller_tokens": caller_total_balance,
+            "receiver_tokens": receiver_total_balance
         }]
     )
 
@@ -375,8 +381,14 @@ async def end_video_call(user_id: str, call_id: str, total_call_seconds: int, la
     caller_rate = int(call.get("caller_rate_per_minute", 2))
     receiver_rate = int(call.get("receiver_rate_per_minute", 2))
 
-    caller_balance_before = int(caller.get("tokens", 0))
-    receiver_balance_before = int(receiver.get("tokens", 0))
+    caller_tokens_balance = int(caller.get("tokens", 0))
+    caller_bonus_balance = int(caller.get("bonus_tokens", 0))
+
+    receiver_tokens_balance = int(receiver.get("tokens", 0))
+    receiver_bonus_balance = int(receiver.get("bonus_tokens", 0))
+
+    caller_balance_before = caller_tokens_balance + caller_bonus_balance
+    receiver_balance_before = receiver_tokens_balance + receiver_bonus_balance
 
     # Free usage
     caller_free_used = min(total_call_seconds, caller_free_remaining)
@@ -395,17 +407,36 @@ async def end_video_call(user_id: str, call_id: str, total_call_seconds: int, la
     caller_tokens_to_deduct = min(caller_balance_before, caller_tokens_to_deduct)
     receiver_tokens_to_deduct = min(receiver_balance_before, receiver_tokens_to_deduct)
 
-    new_caller_balance = caller_balance_before - caller_tokens_to_deduct
-    new_receiver_balance = receiver_balance_before - receiver_tokens_to_deduct
+    # ================= BONUS TOKEN PRIORITY LOGIC =================
+
+    # Caller
+    caller_bonus_deduct = min(caller_bonus_balance, caller_tokens_to_deduct)
+    caller_token_deduct = caller_tokens_to_deduct - caller_bonus_deduct
+
+    new_caller_bonus_balance = caller_bonus_balance - caller_bonus_deduct
+    new_caller_token_balance = caller_tokens_balance - caller_token_deduct
+
+    # Receiver
+    receiver_bonus_deduct = min(receiver_bonus_balance, receiver_tokens_to_deduct)
+    receiver_token_deduct = receiver_tokens_to_deduct - receiver_bonus_deduct
+
+    new_receiver_bonus_balance = receiver_bonus_balance - receiver_bonus_deduct
+    new_receiver_token_balance = receiver_tokens_balance - receiver_token_deduct
 
     await user_collection.update_one(
         {"_id": caller["_id"]},
-        {"$set": {"tokens": new_caller_balance}}
+        {"$set": {
+            "tokens": new_caller_token_balance,
+            "bonus_tokens": new_caller_bonus_balance
+        }}
     )
 
     await user_collection.update_one(
         {"_id": receiver["_id"]},
-        {"$set": {"tokens": new_receiver_balance}}
+        {"$set": {
+            "tokens": new_receiver_token_balance,
+            "bonus_tokens": new_receiver_bonus_balance
+        }}
     )
 
     # Token history - caller
@@ -415,7 +446,7 @@ async def end_video_call(user_id: str, call_id: str, total_call_seconds: int, la
         type=TokenTransactionType.DEBIT,
         reason=TokenTransactionReason.VIDEO_CALL,
         balance_before=str(caller_balance_before),
-        balance_after=str(new_caller_balance)
+        balance_after=str(new_caller_token_balance + new_caller_bonus_balance)
     ))
 
     # Token history - receiver
@@ -425,7 +456,7 @@ async def end_video_call(user_id: str, call_id: str, total_call_seconds: int, la
         type=TokenTransactionType.DEBIT,
         reason=TokenTransactionReason.VIDEO_CALL,
         balance_before=str(receiver_balance_before),
-        balance_after=str(new_receiver_balance)
+        balance_after=str(new_receiver_token_balance + new_receiver_bonus_balance)
     ))
 
     new_caller_free_remaining = max(0, caller_free_remaining - caller_free_used)
@@ -484,8 +515,14 @@ async def video_call_tick(user_id: str, call_id: str, elapsed_seconds: int, lang
             status_code=404
         )
 
+    # USE BONUS + TOKENS
     caller_tokens = int(caller.get("tokens", 0))
+    caller_bonus = int(caller.get("bonus_tokens", 0))
+    caller_total_balance = caller_tokens + caller_bonus
+
     receiver_tokens = int(receiver.get("tokens", 0))
+    receiver_bonus = int(receiver.get("bonus_tokens", 0))
+    receiver_total_balance = receiver_tokens + receiver_bonus
 
     # Block only if already ended
     if call_status == "ended":
@@ -503,8 +540,8 @@ async def video_call_tick(user_id: str, call_id: str, elapsed_seconds: int, lang
                 "billing_started": False,
                 "caller_tokens_required": 0,
                 "receiver_tokens_required": 0,
-                "caller_available_tokens": caller_tokens,
-                "receiver_available_tokens": receiver_tokens
+                "caller_available_tokens": caller_total_balance,
+                "receiver_available_tokens": receiver_total_balance
             }]
         )
 
@@ -517,8 +554,8 @@ async def video_call_tick(user_id: str, call_id: str, elapsed_seconds: int, lang
                 "billing_started": False,
                 "caller_tokens_required": 0,
                 "receiver_tokens_required": 0,
-                "caller_available_tokens": caller_tokens,
-                "receiver_available_tokens": receiver_tokens
+                "caller_available_tokens": caller_total_balance,
+                "receiver_available_tokens": receiver_total_balance
             }]
         )
 
@@ -543,17 +580,17 @@ async def video_call_tick(user_id: str, call_id: str, elapsed_seconds: int, lang
     caller_required = caller_paid_minutes * caller_rate
     receiver_required = receiver_paid_minutes * receiver_rate
 
-    # NEW LOGIC: DO NOT END CALL, JUST INFORM FE
-    if caller_required > caller_tokens or receiver_required > receiver_tokens:
+    #  Compare with TOTAL (bonus + tokens)
+    if caller_required > caller_total_balance or receiver_required > receiver_total_balance:
         return response.success_message(
             translate_message("CALL_CAN_CONTINUE", lang),
             data=[{
-                "continue_call": False,          # FE decides what to do
+                "continue_call": False,
                 "billing_started": True,
                 "caller_tokens_required": caller_required,
                 "receiver_tokens_required": receiver_required,
-                "caller_available_tokens": caller_tokens,
-                "receiver_available_tokens": receiver_tokens
+                "caller_available_tokens": caller_total_balance,
+                "receiver_available_tokens": receiver_total_balance
             }]
         )
 
@@ -564,7 +601,7 @@ async def video_call_tick(user_id: str, call_id: str, elapsed_seconds: int, lang
             "billing_started": True,
             "caller_tokens_required": caller_required,
             "receiver_tokens_required": receiver_required,
-            "caller_available_tokens": caller_tokens,
-            "receiver_available_tokens": receiver_tokens
+            "caller_available_tokens": caller_total_balance,
+            "receiver_available_tokens": receiver_total_balance
         }]
     )

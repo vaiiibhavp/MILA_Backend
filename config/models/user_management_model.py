@@ -262,18 +262,24 @@ class UserManagementModel:
 
     # ---------------- BLOCKED FLAG ----------------
     @staticmethod
-    async def is_user_blocked(user_id: str) -> bool:
+    async def is_user_blocked(blocker_id: str, blocked_id: str) -> bool:
         data = await blocked_users_collection.find_one(
-            {"blocked_id": user_id}
+            {
+                "blocker_id": blocker_id,
+                "blocked_id": blocked_id
+            }
         )
         return True if data else False
 
 
     # ---------------- REPORTED FLAG ----------------
     @staticmethod
-    async def is_user_reported(user_id: str) -> bool:
+    async def is_user_reported(reporter_id: str, reported_id: str) -> bool:
         data = await reported_users_collection.find_one(
-            {"reported_id": user_id}
+            {
+                "reporter_id": reporter_id,
+                "reported_id": reported_id
+            }
         )
         return True if data else False
 

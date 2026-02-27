@@ -60,7 +60,11 @@ async def get_admin_users(
         )
 
 # Get complete user details (View)
-async def get_admin_user_details(user_id: str, lang: str = "en"):
+async def get_admin_user_details(
+    user_id: str,
+    current_user: dict,
+    lang: str = "en"
+):
     try:
         # ---------------- USER ----------------
         user = await UserManagementModel.get_user(user_id)
@@ -91,8 +95,22 @@ async def get_admin_user_details(user_id: str, lang: str = "en"):
             onboarding.get("images") if onboarding else []
         )
 
-        is_blocked = await UserManagementModel.is_user_blocked(user_id)
-        is_reported = await UserManagementModel.is_user_reported(user_id)
+        is_blocked = False
+        is_reported = False
+
+        viewer_id = str(current_user.get("user_id") or current_user.get("_id"))
+
+        # Prevent self-check
+        if viewer_id and viewer_id != user_id:
+            is_blocked = await UserManagementModel.is_user_blocked(
+                blocker_id=viewer_id,
+                blocked_id=user_id
+            )
+
+            is_reported = await UserManagementModel.is_user_reported(
+                reporter_id=viewer_id,
+                reported_id=user_id
+            )
 
         # ---------------- RESPONSE ----------------
         result = {
