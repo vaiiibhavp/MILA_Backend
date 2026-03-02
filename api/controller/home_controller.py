@@ -6,6 +6,8 @@ from config.db_config import (
     user_like_history,
     favorite_collection,
     deleted_account_collection,
+    blocked_users_collection,
+    reported_users_collection
 )
 from core.utils.response_mixin import CustomResponseMixin
 from services.translation import translate_message
@@ -53,6 +55,42 @@ async def _get_excluded_user_ids(user_id: str) -> set:
     async for doc in deleted_users_cursor:
         excluded.add(doc["user_id"])
 
+    # ================== BLOCKED USERS ==================
+
+    # Users I blocked
+    blocked_cursor = blocked_users_collection.find(
+        {"blocker_id": user_id},
+        {"blocked_id": 1}
+    )
+    async for doc in blocked_cursor:
+        excluded.add(doc["blocked_id"])
+
+    # Users who blocked me
+    blocked_by_cursor = blocked_users_collection.find(
+        {"blocked_id": user_id},
+        {"blocker_id": 1}
+    )
+    async for doc in blocked_by_cursor:
+        excluded.add(doc["blocker_id"])
+
+    # ================== REPORTED USERS ==================
+
+    # Users I reported
+    reported_cursor = reported_users_collection.find(
+        {"reporter_id": user_id},
+        {"reported_id": 1}
+    )
+    async for doc in reported_cursor:
+        excluded.add(doc["reported_id"])
+
+    # Users who reported me (optional but safer)
+    reported_by_cursor = reported_users_collection.find(
+        {"reported_id": user_id},
+        {"reporter_id": 1}
+    )
+    async for doc in reported_by_cursor:
+        excluded.add(doc["reporter_id"])
+        
     return excluded
 
 async def _get_liked_user_ids(user_id: str) -> set:
