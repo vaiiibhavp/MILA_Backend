@@ -30,7 +30,7 @@ async def get_edit_profile_controller(current_user: dict, lang: str = "en"):
             status_code=404
         )
 
-    data = await build_edit_profile_response(user, onboarding)
+    data = await build_edit_profile_response(user, onboarding, lang)
 
     data = serialize_datetime_fields(convert_objectid_to_str(data))
 

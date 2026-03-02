@@ -650,5 +650,12 @@
   "CALL_ALREADY_EXISTS":"Call already ongoing",
   "ONLY_VERIFIED_USERS_CAN_LIKE":"Only verified users can like",
   "ONLY_VERIFIED_USERS_CAN_ADD_TO_FAV":"Only verified users can add to favorites",
-  "ONLY_VERIFIED_USERS_CAN_PASS":"Only verified users can pass"
+  "ONLY_VERIFIED_USERS_CAN_PASS":"Only verified users can pass",
+
+  "MALE": "Male",
+  "FEMALE": "Female",
+  "TRANSGENDER": "Transgender",
+  "SINGLE": "Single",
+  "MARRIED": "Married",
+  "STRAIGHT": "STraight",
 }
