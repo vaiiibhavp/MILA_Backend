@@ -61,22 +61,27 @@ async def build_basic_profile_response(user: dict, onboarding: dict, profile_pho
         }
     }
 
-def build_selectable_options(all_options: list, selected_values):
+def build_selectable_options(all_options: list, selected_values, lang: str):
     if not selected_values:
         selected_values = []
 
     if not isinstance(selected_values, list):
         selected_values = [selected_values]
 
-    return [
-        {
-            "key": option,
-            "selected": option in selected_values
-        }
-        for option in all_options
-    ]
+    result = []
 
-async def build_edit_profile_response(user: dict, onboarding: dict):
+    for option in all_options:
+        translated_label = translate_message(option.upper(), lang)
+
+        result.append({
+            "key": option,              # stable value (for backend)
+            "label": translated_label,  # translated display text
+            "selected": option in selected_values
+        })
+
+    return result
+
+async def build_edit_profile_response(user: dict, onboarding: dict, lang):
     onboarding = onboarding or {}
     is_premium = user.get("membership_type") == MembershipType.PREMIUM
 
@@ -115,35 +120,41 @@ async def build_edit_profile_response(user: dict, onboarding: dict):
             "country_id": onboarding.get("country"),
             "gender": build_selectable_options(
                 enum_values(GenderEnum),
-                onboarding.get("gender")
+                onboarding.get("gender"),
+                lang
             ),
             "age": age,
             "sexual_orientation": build_selectable_options(
                 enum_values(SexualOrientationEnum),
-                onboarding.get("sexual_orientation")
+                onboarding.get("sexual_orientation"),
+                lang
             ),
 
             "marital_status": build_selectable_options(
                 enum_values(MaritalStatusEnum),
-                onboarding.get("marital_status")
+                onboarding.get("marital_status"),
+                lang
             )
         },
 
         "interests": {
             "passions": build_selectable_options(
                 onboarding.get("passions", []),   # passions are free-text / config-based
-                onboarding.get("passions", [])
+                onboarding.get("passions", []),
+                lang
             ),
 
             "interested_in": build_selectable_options(
                 enum_values(InterestedInEnum),
-                onboarding.get("interested_in", [])
+                onboarding.get("interested_in", []),
+                lang
             ),
 
             # SHOW FOR ALL USERS
             "sexual_preferences": build_selectable_options(
                 enum_values(SexualPreferenceEnum),
-                onboarding.get("sexual_preferences", [])
+                onboarding.get("sexual_preferences", []),
+                lang
             ),
 
             "preferred_country": preferred_countries
