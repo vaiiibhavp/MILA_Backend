@@ -263,10 +263,8 @@ async def start_video_call(
         recipient_type=NotificationRecipientType.USER,
         notification_type=NotificationType.VIDEO_CALL,
 
-        # store message keys
         title="PUSH_TITLE_VIDEO_CALL",
         message="PUSH_MESSAGE_VIDEO_CALL",
-
         reference={
             "recipientUserId": receiver_user_id,
             "recipientName": recipient_name,
