@@ -691,6 +691,9 @@
   "PUSH_TITLE_WITHDRAWAL_COMPLETED": "Demande de retrait approuvée",
   "PUSH_MESSAGE_WITHDRAWAL_COMPLETED": "Votre retrait a été effectué avec succès. Les fonds ont été envoyés sur votre portefeuille.",
 
+  "PUSH_TITLE_WITHDRAWAL_REQUEST_REJECTED": "Demande de retrait rejetée",
+  "PUSH_MESSAGE_WITHDRAWAL_REQUEST_REJECTED": "Votre demande de retrait a été refusée. Veuillez contacter le service client pour plus d'informations.",
+
   "CONTEST_ALREADY_EXISTS_ON_THIS_DATE": "Un concours existe déjà à cette date",
   "Friendship": "Amitié",
   "Serious Dating": "Relation Sérieuse",
@@ -713,4 +716,5 @@
   "Relationship & Connection": "Relation et Connexion",
   "Lifestyle & Exploration": "Mode de vie et exploration",
   "Community & Personal Growth": "Communauté et développement personnel"
+
 }
