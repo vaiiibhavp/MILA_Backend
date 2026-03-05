@@ -667,14 +667,21 @@ async def intrest_and_categories(lang: str = "en"):
 
         data = await cursor.to_list(length=None)
 
-        results = [
-            {
+        results = []
+
+        for item in data:
+            category = item.get("category")
+
+            translated_options = [
+                translate_message(opt, lang)
+                for opt in item.get("options", [])
+            ]
+
+            results.append({
                 "id": str(item["_id"]),
-                "category": item.get("category"),
-                "options": item.get("options", [])
-            }
-            for item in data
-        ]
+                "category": translate_message(category, lang),
+                "options": translated_options
+            })
 
         return response.success_message(
             translate_message("INTEREST_CATEGORIES_FETCHED", lang),

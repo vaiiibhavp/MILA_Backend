@@ -686,5 +686,28 @@
   "GIFT_RECEIVED": "Cadeau reçu",
   "PRIVATE_IMAGE_UNLOCK": "Déverrouillage d'image privée",
   "VIDEO_CALL": "Appel vidéo",
-  "CONTEST_PRIZE": "Prix du concours"
+  "CONTEST_PRIZE": "Prix du concours",
+
+  "CONTEST_ALREADY_EXISTS_ON_THIS_DATE": "Un concours existe déjà à cette date",
+  "Friendship": "Amitié",
+  "Serious Dating": "Relation Sérieuse",
+  "Marriage": "Mariage",
+
+  "Swinger": "Échangisme",
+  "Fun": "Amusement",
+  "Adventure": "Aventure",
+  "Travel": "Voyage",
+  "Nightlife": "Vie nocturne",
+
+  "Competitions": "Compétitions",
+  "Fitness & Sports": "Fitness et sports",
+  "Art & Creativity": "Art et créativité",
+  "Music & Dance": "Musique et danse",
+  "Food & Cooking": "Cuisine",
+  "Gaming": "Jeux vidéo",
+  "Fashion & Beauty": "Mode et beauté",
+
+  "Relationship & Connection": "Relation et Connexion",
+  "Lifestyle & Exploration": "Mode de vie et exploration",
+  "Community & Personal Growth": "Communauté et développement personnel"
 }

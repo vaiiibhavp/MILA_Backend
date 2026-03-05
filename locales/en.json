@@ -657,7 +657,7 @@
   "TRANSGENDER": "Transgender",
   "SINGLE": "Single",
   "MARRIED": "Married",
-  "STRAIGHT": "STraight",
+  "STRAIGHT": "Straight",
 
   "Token_Withdrawal": "Token Withdrawal",
   "Token_Withdrawal_Rejected": "Token Withdrawal Rejected",
@@ -665,5 +665,29 @@
   "GIFT_RECEIVED": "Gift Received",
   "PRIVATE_IMAGE_UNLOCK": "Private Image Unlock",
   "VIDEO_CALL": "Video Call",
-  "CONTEST_PRIZE": "Contest Prize"
+  "CONTEST_PRIZE": "Contest Prize",
+
+  "CONTEST_ALREADY_EXISTS_ON_THIS_DATE":"contest already exists on this date",
+  "Friendship": "Friendship",
+  "Serious Dating": "Serious Dating",
+  "Marriage": "Marriage",
+
+  "Swinger": "Swinger",
+  "Fun": "Fun",
+  "Adventure": "Adventure",
+  "Travel": "Travel",
+  "Nightlife": "Nightlife",
+
+  "Competitions": "Competitions",
+  "Fitness & Sports": "Fitness & Sports",
+  "Art & Creativity": "Art & Creativity",
+  "Music & Dance": "Music & Dance",
+  "Food & Cooking": "Food & Cooking",
+  "Gaming": "Gaming",
+  "Fashion & Beauty": "Fashion & Beauty",
+
+  "Relationship & Connection": "Relationship & Connection",
+  "Lifestyle & Exploration": "Lifestyle & Exploration",
+  "Community & Personal Growth": "Community & Personal Growth"
+
 }

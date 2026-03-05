@@ -103,6 +103,24 @@ async def create_next_history(contest, latest, start_date, new_version):
         "updated_at": datetime.now(timezone.utc),
     })
 
+    # -----------------------------
+    # 3 Update main contest document
+    # -----------------------------
+    await contest_collection.update_one(
+        {"_id": contest["_id"]},
+        {
+            "$set": {
+                "start_date": start_date,
+                "end_date": voting_end,
+                "registration_until": registration_end,
+                "voting_start": voting_start,
+                "voting_end": voting_end,
+                "voting_until": voting_end,
+                "updated_at": datetime.now(timezone.utc)
+            }
+        }
+    )
+
 async def process_contest(contest: dict, now: datetime):
     frequency = contest.get("frequency")
 
