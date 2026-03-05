@@ -112,7 +112,7 @@ async def get_withdraw_token_transactions(user_id: str, pagination:StandardResul
 
     return transactions
 
-async def get_subscription_transactions(user_id: str, pagination:StandardResultsSetPagination) -> List[Dict[str, Any]]:
+async def get_subscription_transactions(user_id: str, pagination:StandardResultsSetPagination, lang:str) -> List[Dict[str, Any]]:
     """
         Get all subscription transactions for a user,
         sorted by latest created_at.
@@ -147,14 +147,19 @@ async def get_subscription_transactions(user_id: str, pagination:StandardResults
     transactions: list[dict] = []
     for doc in docs:
         doc = serialize_datetime_fields(doc)
+
+        plan_details = doc.get("plan_details", {})
+
+        if lang == "fr":
+            plan_title = plan_details.get("title_fr") or plan_details.get("title")
+        else:
+            plan_title = plan_details.get("title")
+
         transactions.append({
             "id": convert_objectid_to_str(doc["_id"]),
             "user_id": user_id,
             "plan_id": convert_objectid_to_str(doc["plan_id"]),
-            "plan_title": (
-                doc["plan_details"]["title"]
-                if doc.get("plan_details") else None
-            ),
+            "plan_title": plan_title,
             "amount": doc["plan_amount"],
             "paid_amount": doc["paid_amount"],
             "remaining_amount": doc["remaining_amount"],
@@ -165,7 +170,7 @@ async def get_subscription_transactions(user_id: str, pagination:StandardResults
 
     return transactions
 
-async def get_user_transaction_details(trans_id:str, user_id:str) -> Optional[List[UserSubscribedDetailsModel]]:
+async def get_user_transaction_details(trans_id:str, user_id:str, lang:str) -> Optional[List[UserSubscribedDetailsModel]]:
     """
         Fetch a single subscription transaction for a user along with
         its associated subscription plan details.
@@ -210,14 +215,18 @@ async def get_user_transaction_details(trans_id:str, user_id:str) -> Optional[Li
     doc = docs[0]
 
     expires_at = doc.get("expires_at",None)
+
+    plan_details = doc.get("plan_details", {})
+
+    if lang == "fr":
+        plan_title = plan_details.get("title_fr") or plan_details.get("title")
+    else:
+        plan_title = plan_details.get("title")
     doc = UserSubscribedDetailsModel(
         trans_id=convert_objectid_to_str(doc["_id"]),
         user_id=user_id,
         plan_id=convert_objectid_to_str(doc["plan_id"]),
-        plan_name=(
-                doc["plan_details"]["title"]
-                if doc.get("plan_details") else None
-            ),
+        plan_name=plan_title,
         plan_amount=doc["plan_amount"],
         expires_at=doc.get("expires_at",None),
         status=get_subscription_status(expires_at)
