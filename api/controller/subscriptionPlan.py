@@ -174,7 +174,7 @@ async def fetch_subscription_transactions(
              or an error response if the operation fails.
     """
     try:
-        subscription_trans_history = await get_subscription_transactions(user_id=user_id,pagination=pagination)
+        subscription_trans_history = await get_subscription_transactions(user_id=user_id,pagination=pagination, lang=lang)
         return response.success_message(
             translate_message("SUBSCRIPTION_TRANSACTIONS_FETCHED", lang=lang),
             data=subscription_trans_history
@@ -202,7 +202,7 @@ async def fetch_user_subscription_details(
                 data = []
             )
 
-        plan_details = await get_user_transaction_details(trans_id, user_id)
+        plan_details = await get_user_transaction_details(trans_id, user_id, lang)
 
         return response.success_message(
             translate_message("USER_SUBSCRIPTION_DETAILS_FETCHED", lang=lang),

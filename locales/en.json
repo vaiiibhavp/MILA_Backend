@@ -657,5 +657,13 @@
   "TRANSGENDER": "Transgender",
   "SINGLE": "Single",
   "MARRIED": "Married",
-  "STRAIGHT": "STraight"
+  "STRAIGHT": "STraight",
+
+  "Token_Withdrawal": "Token Withdrawal",
+  "Token_Withdrawal_Rejected": "Token Withdrawal Rejected",
+  "GIFT_SENT": "Gift Sent",
+  "GIFT_RECEIVED": "Gift Received",
+  "PRIVATE_IMAGE_UNLOCK": "Private Image Unlock",
+  "VIDEO_CALL": "Video Call",
+  "CONTEST_PRIZE": "Contest Prize"
 }

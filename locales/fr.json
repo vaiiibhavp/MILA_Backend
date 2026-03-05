@@ -673,10 +673,18 @@
   "COMPETITIONS": "Compétitions",
 
   "HETEROSEXUAL": "Hétérosexuel",
-  "HOMOSEXUAL": "Homosexuel",
+  "HOMOSEXUAL": "Homosexuelle",
   "LIBERTINE": "Libertin",
-  "CURIOUS": "Curieux",
+  "CURIOUS": "Curieuse",
   "DOMINATRIX": "Dominatrice",
-  "SUBMISSIVE": "Soumis",
-  "FETISHIST": "Fétichiste"
+  "SUBMISSIVE": "Soumise",
+  "FETISHIST": "Fétichiste",
+
+  "Token_Withdrawal": "Retrait de jetons",
+  "Token_Withdrawal_Rejected": "Retrait de jetons refusé",
+  "GIFT_SENT": "Cadeau envoyé",
+  "GIFT_RECEIVED": "Cadeau reçu",
+  "PRIVATE_IMAGE_UNLOCK": "Déverrouillage d'image privée",
+  "VIDEO_CALL": "Appel vidéo",
+  "CONTEST_PRIZE": "Prix du concours"
 }
