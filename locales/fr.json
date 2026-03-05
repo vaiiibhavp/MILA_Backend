@@ -686,5 +686,8 @@
   "GIFT_RECEIVED": "Cadeau reçu",
   "PRIVATE_IMAGE_UNLOCK": "Déverrouillage d'image privée",
   "VIDEO_CALL": "Appel vidéo",
-  "CONTEST_PRIZE": "Prix du concours"
+  "CONTEST_PRIZE": "Prix du concours",
+
+  "PUSH_TITLE_WITHDRAWAL_COMPLETED": "Demande de retrait approuvée",
+  "PUSH_MESSAGE_WITHDRAWAL_COMPLETED": "Votre retrait a été effectué avec succès. Les fonds ont été envoyés sur votre portefeuille."
 }
