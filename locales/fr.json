@@ -689,5 +689,9 @@
   "CONTEST_PRIZE": "Prix du concours",
 
   "PUSH_TITLE_WITHDRAWAL_COMPLETED": "Demande de retrait approuvée",
-  "PUSH_MESSAGE_WITHDRAWAL_COMPLETED": "Votre retrait a été effectué avec succès. Les fonds ont été envoyés sur votre portefeuille."
+  "PUSH_MESSAGE_WITHDRAWAL_COMPLETED": "Votre retrait a été effectué avec succès. Les fonds ont été envoyés sur votre portefeuille.",
+
+  "PUSH_TITLE_WITHDRAWAL_REQUEST_REJECTED": "Demande de retrait rejetée",
+  "PUSH_MESSAGE_WITHDRAWAL_REQUEST_REJECTED": "Votre demande de retrait a été refusée. Veuillez contacter le service client pour plus d'informations."
+
 }
