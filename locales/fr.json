@@ -688,6 +688,9 @@
   "VIDEO_CALL": "Appel vidéo",
   "CONTEST_PRIZE": "Prix du concours",
 
+  "PUSH_TITLE_WITHDRAWAL_COMPLETED": "Demande de retrait approuvée",
+  "PUSH_MESSAGE_WITHDRAWAL_COMPLETED": "Votre retrait a été effectué avec succès. Les fonds ont été envoyés sur votre portefeuille.",
+
   "CONTEST_ALREADY_EXISTS_ON_THIS_DATE": "Un concours existe déjà à cette date",
   "Friendship": "Amitié",
   "Serious Dating": "Relation Sérieuse",
