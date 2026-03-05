@@ -257,35 +257,16 @@ async def start_video_call(
                 "url": url
             }
 
-    receiver_user = await user_collection.find_one(
-        {"_id": ObjectId(receiver_user_id)},
-        {"language": 1}
-    )
-
-    recipient_lang = receiver_user.get("language", "en") if receiver_user else "en"
-
-    translated_title = translate_message(
-        "PUSH_TITLE_VIDEO_CALL",
-        recipient_lang
-    )
-
-    translated_message_template = translate_message(
-        "PUSH_MESSAGE_VIDEO_CALL",
-        recipient_lang
-    )
-
-    translated_message = translated_message_template.format(
-        caller_name=caller_name
-    )
-
     # ---------------- Send notification ----------------
     await send_notification(
         recipient_id=receiver_user_id,
         recipient_type=NotificationRecipientType.USER,
         notification_type=NotificationType.VIDEO_CALL,
 
-        title=translated_title,
-        message=translated_message,
+        # store message keys
+        title="PUSH_TITLE_VIDEO_CALL",
+        message="PUSH_MESSAGE_VIDEO_CALL",
+
         reference={
             "recipientUserId": receiver_user_id,
             "recipientName": recipient_name,
