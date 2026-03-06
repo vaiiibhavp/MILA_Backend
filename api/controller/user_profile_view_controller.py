@@ -356,8 +356,26 @@ async def get_notifications_controller(current_user,lang: str = "en"):
         title_key = n.get("title")
         message_key = n.get("message")
 
+        # Translate title
         n["title"] = translate_message(title_key, lang)
-        n["message"] = translate_message(message_key, lang)
+
+        # Translate message template
+        message_template = translate_message(message_key, lang)
+
+        reference = n.get("reference", {}) or {}
+
+        # Map keys for formatting
+        format_data = {
+            "caller_name": reference.get("callerName"),
+            "contest_name": reference.get("contest_name"),
+            "amount": reference.get("amount"),
+            "rank": reference.get("rank")
+        }
+
+        try:
+            n["message"] = message_template.format(**format_data)
+        except Exception:
+            n["message"] = message_template
 
         formatted_notification = format_notification(n)
 

@@ -185,11 +185,21 @@ class ContestModel:
 
         # ---------------- CONVERT TO UTC FOR STORAGE ----------------
         start_date_utc = start_date_local.astimezone(utc_tz)
-        print("start_date_utc",start_date_utc)
 
     
         end_date_utc = end_date_local.astimezone(utc_tz)
-        print("end_date_utc",end_date_utc)
+
+        existing_same_start_date = await contest_collection.find_one({
+            "is_deleted": {"$ne": True},
+            "start_date": start_date_utc
+        })
+
+        if existing_same_start_date:
+            return {
+                "error": True,
+                "message": translate_message("CONTEST_ALREADY_EXISTS_ON_THIS_DATE", lang),
+                "status_code": 400
+            }
 
         if not end_date_utc:
             return
