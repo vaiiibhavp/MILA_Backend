@@ -5,25 +5,27 @@ from core.utils.core_enums import MembershipType
 from core.utils.helper import *
 from api.controller.files_controller import *
 
-async def build_basic_profile_response(user: dict, onboarding: dict, profile_photo: str):
+async def build_basic_profile_response(user: dict, onboarding: dict, profile_photo: str, lang: str = "en"):
     birthdate = onboarding.get("birthdate") if onboarding else None
     age = calculate_age(birthdate) if birthdate else None
 
-    country_name = await get_country_name_by_id(onboarding.get("country"), countries_collection)
+    country_name = await get_country_name_by_id(onboarding.get("country"), countries_collection, lang)
     preferred_countries = []
 
     for cid in onboarding.get("preferred_country", []):
         if not cid:
             continue
 
-        country = await countries_collection.find_one(
-            {"_id": ObjectId(cid)},
-            {"name": 1, "code": 1}
+        country_name = await get_country_name_by_id(
+            cid,
+            countries_collection,
+            lang
         )
-        if country:
+
+        if country_name:
             preferred_countries.append({
-                "id": str(country["_id"]),
-                "name": country["name"],
+                "id": str(cid),
+                "name": country_name
             })
 
     return {
@@ -87,7 +89,8 @@ async def build_edit_profile_response(user: dict, onboarding: dict, lang):
 
     country_name = await get_country_name_by_id(
         onboarding.get("country"),
-        countries_collection
+        countries_collection,
+        lang
     )
 
     preferred_countries = []
@@ -96,14 +99,16 @@ async def build_edit_profile_response(user: dict, onboarding: dict, lang):
         if not cid:
             continue
 
-        country = await countries_collection.find_one(
-            {"_id": ObjectId(cid)},
-            {"name": 1, "code": 1}
+        country_name = await get_country_name_by_id(
+            cid,
+            countries_collection,
+            lang
         )
-        if country:
+
+        if country_name:
             preferred_countries.append({
-                "id": str(country["_id"]),
-                "name": country["name"],
+                "id": str(cid),
+                "name": country_name
             })
 
     birthdate = onboarding.get("birthdate") if onboarding else None

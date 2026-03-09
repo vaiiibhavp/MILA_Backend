@@ -18,7 +18,7 @@ from config.db_config import (
 )
 from core.utils.response_mixin import CustomResponseMixin
 from core.utils.core_enums import MembershipType
-from core.utils.helper import serialize_datetime_fields
+from core.utils.helper import serialize_datetime_fields, get_country_name_by_id
 from api.controller.files_controller import generate_file_url
 from core.utils.helper import convert_objectid_to_str
 from fastapi import HTTPException , status
@@ -465,15 +465,16 @@ async def get_basic_user_profile(user_id: str, lang: str = "en") -> Dict[str, An
         country_id = onboarding_data.get("country")
 
         if country_id and ObjectId.is_valid(country_id):
-            country_doc = await countries_collection.find_one(
-                {"_id": ObjectId(country_id)},
-                {"_id": 1, "name": 1}
+            country_name = await get_country_name_by_id(
+                country_id,
+                countries_collection,
+                lang
             )
 
-            if country_doc:
+            if country_name:
                 country_out = {
-                    "id": str(country_doc["_id"]),
-                    "name": country_doc.get("name"),
+                    "id": country_id,
+                    "name": country_name
                 }
 
         profile = {
@@ -555,32 +556,33 @@ async def get_onboarding_steps_by_user_id(user_id: str, lang: str = "en"):
     country_id = formatted.get("country")
 
     if country_id:
-        try:
-            country_doc = await countries_collection.find_one(
-                {"_id": ObjectId(country_id)}
-            )
-        except Exception:
-            country_doc = None
+        country_name = await get_country_name_by_id(
+            country_id,
+            countries_collection,
+            lang
+        )
 
-        if country_doc:
+        if country_name:
             country_out = {
-                "id": str(country_doc["_id"]),
-                "name": country_doc.get("name")
+                "id": country_id,
+                "name": country_name
             }
 
     preferred_country_out = []
     preferred_ids = formatted.get("preferred_country", [])
 
-    if preferred_ids:
-        cursor = countries_collection.find(
-            {"_id": {"$in": [ObjectId(cid) for cid in preferred_ids if ObjectId.is_valid(cid)]}}
+    for cid in preferred_ids:
+        country_name = await get_country_name_by_id(
+            cid,
+            countries_collection,
+            lang
         )
-        async for doc in cursor:
-            preferred_country_out.append({
-                "id": str(doc["_id"]),
-                "name": doc.get("name")
-            })
 
+        if country_name:
+            preferred_country_out.append({
+                "id": cid,
+                "name": country_name
+            })
     def serialize(value):
         return value.isoformat() if hasattr(value, "isoformat") else value
 
@@ -612,7 +614,6 @@ async def get_onboarding_steps_by_user_id(user_id: str, lang: str = "en"):
         }]
     )
 
-
 async def list_of_country(lang: str = "en"):
     try:
         total = await countries_collection.count_documents({})
@@ -628,19 +629,24 @@ async def list_of_country(lang: str = "en"):
 
         cursor = countries_collection.find(
             {},
-            {"name": 1, "code": 1}
-        ).sort("name", 1)
+            {"translations": 1, "code": 1}
+        )
 
         countries = await cursor.to_list(length=None)
 
         results = [
             {
                 "id": str(c["_id"]),
-                "name": c.get("name"),
+                "name": (
+                    c.get("translations", {}).get(lang)
+                    or c.get("translations", {}).get("en")
+                ),
                 "code": c.get("code")
             }
             for c in countries
         ]
+
+        results = sorted(results, key=lambda x: (x["name"] or "").lower())
 
         return response.success_message(
             translate_message("COUNTRY_LIST_FETCHED", lang),
@@ -656,7 +662,6 @@ async def list_of_country(lang: str = "en"):
             data=str(e),
             status_code=500
         )
-
  
 async def intrest_and_categories(lang: str = "en"):
     try:
@@ -756,15 +761,16 @@ async def fetch_user_by_id(user_id: str, lang: str):
         country_id = user_data.get("country")
 
         if country_id:
-            country_doc = await countries_collection.find_one(
-                {"_id": ObjectId(country_id)},
-                {"name": 1}
+            country_name = await get_country_name_by_id(
+                country_id,
+                countries_collection,
+                lang
             )
 
-            if country_doc:
+            if country_name:
                 country_data = {
-                    "id": str(country_doc["_id"]),
-                    "name": country_doc.get("name")
+                    "id": str(country_id),
+                    "name": country_name
                 }
         
         # Profile photo

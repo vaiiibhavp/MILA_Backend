@@ -375,7 +375,8 @@ async def get_basic_profile_details_controller(
     data = await build_basic_profile_response(
         user=user,
         onboarding=onboarding,
-        profile_photo=profile_photo
+        profile_photo=profile_photo,
+        lang=lang
     )
 
     return response.success_message(

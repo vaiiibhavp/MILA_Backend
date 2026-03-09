@@ -5,7 +5,8 @@ from core.utils.response_mixin import CustomResponseMixin
 from core.utils.pagination import StandardResultsSetPagination ,pagination_params ,build_paginated_response
 from services.translation import translate_message
 from config.models.user_management_model import UserManagementModel
-from core.utils.helper import serialize_datetime_fields
+from core.utils.helper import serialize_datetime_fields, get_country_name_by_id
+from config.db_config import countries_collection
 
 response = CustomResponseMixin()
 
@@ -32,7 +33,8 @@ async def get_admin_users(
             membership,
             date_from,
             date_to,
-            pagination
+            pagination,
+            lang
         )
 
         for user in users:
@@ -79,10 +81,20 @@ async def get_admin_user_details(
         onboarding = await UserManagementModel.get_onboarding(user_id)
 
         # ---------------- COUNTRY ----------------
-        country = (
-            await UserManagementModel.get_country(onboarding["country"])
-            if onboarding and onboarding.get("country") else None
-        )
+        country = None
+
+        if onboarding and onboarding.get("country"):
+            country_name = await get_country_name_by_id(
+                onboarding["country"],
+                countries_collection,
+                lang
+            )
+
+            if country_name:
+                country = {
+                    "id": onboarding["country"],
+                    "name": country_name
+                }
 
         # ---------------- VERIFICATION ----------------
         verification_status = await UserManagementModel.get_latest_verification_status(user_id)

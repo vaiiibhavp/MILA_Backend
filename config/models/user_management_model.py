@@ -32,7 +32,8 @@ class UserManagementModel:
         membership: Optional[str],
         date_from: Optional[datetime],
         date_to: Optional[datetime],
-        pagination
+        pagination,
+        lang: str = "en"
     ):
         try:
             if not pagination:
@@ -213,7 +214,12 @@ class UserManagementModel:
                     "relationship_status": "$onboarding.marital_status",
                     "country": {
                         "id": {"$toString": "$country._id"},
-                        "name": "$country.name"
+                        "name": {
+                            "$ifNull": [
+                                f"$country.translations.{lang}",
+                                "$country.translations.en"
+                            ]
+                        }
                     },
                     "match_count": 1,
                     "registration_date": "$created_at"

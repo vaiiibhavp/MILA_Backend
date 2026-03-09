@@ -64,7 +64,8 @@ async def get_users_who_liked_me_for_premium(
             profile_photo_from_onboarding(onboarding),
             get_country_name_by_id(
                 onboarding.get("country"),
-                countries_collection
+                countries_collection,
+                lang=lang
             )
         )
 
@@ -187,7 +188,7 @@ async def get_users_who_visited_my_profile(
 
         birthdate = onboarding.get("birthdate") if onboarding else None
         age = calculate_age(birthdate) if birthdate else None
-        country_name = await get_country_name_by_id(onboarding.get("country"), countries_collection)
+        country_name = await get_country_name_by_id(onboarding.get("country"), countries_collection, lang)
 
         results.append({
             "user_id": viewer_id,
