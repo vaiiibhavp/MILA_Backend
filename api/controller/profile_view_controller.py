@@ -101,7 +101,7 @@ async def get_profile_controller(user_id: str, viewer: dict, lang: str = "en"):
 
     profile_photo_url = await profile_photo_from_onboarding(onboarding)
 
-    country_name = await get_country_name_by_id(onboarding.get("country"), countries_collection)
+    country_name = await get_country_name_by_id(onboarding.get("country"), countries_collection, lang)
 
     gifts = []
 
@@ -631,7 +631,8 @@ async def search_profiles_controller(
         age = calculate_age(birthdate) if birthdate else None
         country_name = await get_country_name_by_id(
             onboarding.get("country"),
-            countries_collection
+            countries_collection,
+            lang
         )
         profile_photo = await profile_photo_from_onboarding(onboarding)
 

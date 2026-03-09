@@ -216,7 +216,8 @@ def get_subscription_status(expires_at) -> str:
 
 async def get_country_name_by_id(
     country_id: str | ObjectId,
-    countries_collection
+    countries_collection,
+    lang: str = "en"
 ) -> Optional[str]:
     """
     Fetch country name using country ObjectId
@@ -228,7 +229,14 @@ async def get_country_name_by_id(
         country_doc = await countries_collection.find_one(
             {"_id": ObjectId(country_id)}
         )
-        return country_doc.get("name") if country_doc else None
+        if not country_doc:
+            return None
+
+        return (
+            country_doc.get("translations", {}).get(lang)
+            or country_doc.get("translations", {}).get("en")
+            or country_doc.get("name")
+        )
     except Exception:
         return None
 
