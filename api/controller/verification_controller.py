@@ -111,6 +111,12 @@ async def get_verification_user_details_controller(
 
         user_data = result[0]
 
+        # TRANSLATE STATUS
+        if user_data.get("verification_status"):
+            user_data["verification_status"] = translate_message(
+                user_data["verification_status"].upper(),
+                lang
+            )
         # ---------------- FILE URL RESOLUTION ----------------
         file_ids = set(user_data.get("submitted_photos", []))
         if isinstance(user_data.get("live_selfie"), str):
@@ -554,6 +560,12 @@ async def get_pending_verification_users_controller(
 
             if r.get("registration_date"):
                 r["registration_date"] = r["registration_date"].isoformat()
+
+            if r.get("verification_status"):
+                r["verification_status"] = translate_message(
+                    r["verification_status"].upper(),
+                    lang
+                )
 
         # ---------------- PAGINATION RESPONSE ----------------
         page = pagination.page or 1

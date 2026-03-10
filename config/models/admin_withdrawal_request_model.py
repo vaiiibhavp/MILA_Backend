@@ -17,7 +17,7 @@ from services.translation import translate_message
 
 response = CustomResponseMixin()
 
-async def list_withdrawal_requests(search: str, pagination, status: Optional[str], date_from: Optional[str], date_to: Optional[str]):
+async def list_withdrawal_requests(search: str, pagination, status: Optional[str], date_from: Optional[str], date_to: Optional[str], lang: str = "en"):
     """
         Fetch withdrawal requests with global search and user details.
         """
@@ -180,7 +180,7 @@ async def list_withdrawal_requests(search: str, pagination, status: Optional[str
             "request_amount": doc["request_amount"],
             "paid_amount": doc["paid_amount"],
             "remaining_amount": doc["remaining_amount"],
-            "status": doc["status"],
+            "status": translate_message(doc["status"].upper(), lang),
             "wallet_address": doc["wallet_address"],
             "platform_fee": doc["platform_fee"],
             "tron_fee": doc["tron_fee"],

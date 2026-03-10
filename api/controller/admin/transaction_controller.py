@@ -29,7 +29,22 @@ async def fetch_all_transactions_controller(
 
         records = result.get("data", [])
         total_records = result.get("total", 0)
+        # ---------------- TRANSLATE STATUS ----------------
+        for r in records:
 
+            # Subscription tab (Success / Partial)
+            if r.get("status"):
+                r["status"] = translate_message(
+                    r["status"].upper(),
+                    lang
+                )
+
+            # If payment_status exists
+            if r.get("payment_status"):
+                r["payment_status"] = translate_message(
+                    r["payment_status"].upper(),
+                    lang
+                )
         # ---------------- COMMON PAGINATION RESPONSE ----------------
         page = pagination.page if pagination and pagination.page else 1
         page_size = (

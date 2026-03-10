@@ -25,6 +25,11 @@ async def get_reported_users_controller(
             if report.get("reported_at"):
                 report["reported_at"] = report["reported_at"].isoformat()
 
+            if report.get("status"):
+                report["status"] = translate_message(
+                    report["status"].upper(),
+                    lang
+                )
         paginated_response = build_paginated_response(
             records=reports,
             page=pagination.page or 1,
@@ -88,6 +93,11 @@ async def get_report_details_controller(report_id: str, lang: str = "en"):
         if report.get("reported_at"):
             report["reported_at"] = report["reported_at"].isoformat()
 
+        if report.get("status"):
+            report["status"] = translate_message(
+                report["status"].upper(),
+                lang
+            )
         return response.success_message(
             translate_message("REPORT_DETAILS_FETCHED_SUCCESSFULLY", lang),
             report,

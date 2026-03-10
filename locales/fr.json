@@ -714,6 +714,26 @@
 
   "Relationship & Connection": "Relation et Connexion",
   "Lifestyle & Exploration": "Style de vie et exploration",
-  "Community & Personal Growth": "Communauté et croissance personnelle"
+  "Community & Personal Growth": "Communauté et croissance personnelle",
+  "ACTIVE": "Active",
+  "FREE": "Gratuite",
+  "PENDING": "En attente",
+  "PREMIUM": "Prime",
+  "SUSPENDED": "suspendue",
+  "BLOCKED": "bloquée",
 
+  "SUCCESS": "Succès",
+  "PARTIAL": "Partiel",
+  "COMPLETED": "Terminé",
+  "REJECTED": "Rejeté",
+  "APPROVED": "Approuvée",
+  "DELETED": "Supprimé",
+  "IN_PROGRESS": "En cours",
+  "UPCOMING": "prochaine",
+
+  "NON_RECURRING": "non récurrent",
+  "WEEKLY": "hebdomadaire",
+  "BI_WEEKLY": "bi-hebdomadaire",
+  "MONTHLY": "mensuelle",
+  "THREE_MONTHS": "trois_mois"
 }
