@@ -1,7 +1,7 @@
 #profile_view_controller.py:
 
 from bson import ObjectId
-from config.db_config import contest_winner_collection, gift_transaction_collection, contest_participant_collection, countries_collection, private_gallery_purchases_collection, profile_view_history, user_collection, onboarding_collection, file_collection, gift_collection
+from config.db_config import contest_history_collection, contest_winner_collection, gift_transaction_collection, contest_participant_collection, countries_collection, private_gallery_purchases_collection, profile_view_history, user_collection, onboarding_collection, file_collection, gift_collection
 from core.utils.response_mixin import CustomResponseMixin
 from core.utils.age_calculation import calculate_age
 from api.controller.files_controller import get_profile_photo_url, generate_file_url, profile_photo_from_onboarding
@@ -28,6 +28,14 @@ async def get_profile_controller(user_id: str, viewer: dict, lang: str = "en"):
     """
     Fetch profile using User + Onboarding data
     """
+
+    latest_contest_history = await contest_history_collection.find_one(
+        {},
+        sort=[("voting_end", -1)]
+    )
+
+    latest_history_id = str(latest_contest_history["_id"]) if latest_contest_history else None
+
     user = await user_collection.find_one(
         {"_id": ObjectId(user_id)}
     )
@@ -68,8 +76,8 @@ async def get_profile_controller(user_id: str, viewer: dict, lang: str = "en"):
                 recipient_id=user_id,
                 recipient_type=NotificationRecipientType.USER,
                 notification_type=NotificationType.PROFILE_VIEW,
-                title=translate_message("SOMEONE_VIEWED_YOUR_PROFILE", recipient_lang),
-                message=translate_message("A_USER_JUST_VIEWED_YOUR_PROFILE", recipient_lang),
+                title="SOMEONE_VIEWED_YOUR_PROFILE",
+                message="A_USER_JUST_VIEWED_YOUR_PROFILE",
                 reference={
                     "entity": "profile_viewers",
                     "entity_id": None
@@ -136,17 +144,19 @@ async def get_profile_controller(user_id: str, viewer: dict, lang: str = "en"):
     # Fetch latest contest winner badge (if any)
     winner_badges = []
 
-    winner_cursor = contest_winner_collection.find(
-        {
-            "user_id": user_id
-        }
-    ).sort("declared_at", -1)
+    if latest_history_id:
+        winner_cursor = contest_winner_collection.find(
+            {
+                "user_id": user_id,
+                "contest_history_id": latest_history_id
+            }
+        )
 
-    async for winner in winner_cursor:
-        position = winner.get("rank")
+        async for winner in winner_cursor:
+            position = winner.get("rank")
 
-        if position in [1, 2, 3]:
-            winner_badges.append(resolve_badge(position))
+            if position in [1, 2, 3]:
+                winner_badges.append(resolve_badge(position))
 
     profile_data = [{
         "name": user.get("username"),
