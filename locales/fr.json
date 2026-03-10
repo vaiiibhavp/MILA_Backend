@@ -694,27 +694,26 @@
   "PUSH_TITLE_WITHDRAWAL_REQUEST_REJECTED": "Demande de retrait rejetée",
   "PUSH_MESSAGE_WITHDRAWAL_REQUEST_REJECTED": "Votre demande de retrait a été refusée. Veuillez contacter le service client pour plus d'informations.",
 
-  "CONTEST_ALREADY_EXISTS_ON_THIS_DATE": "Un concours existe déjà à cette date",
   "Friendship": "Amitié",
-  "Serious Dating": "Relation Sérieuse",
+  "Serious Dating": "Relation sérieuse",
   "Marriage": "Mariage",
 
-  "Swinger": "Échangisme",
+  "Swinger": "Libertin",
   "Fun": "Amusement",
   "Adventure": "Aventure",
   "Travel": "Voyage",
   "Nightlife": "Vie nocturne",
 
   "Competitions": "Compétitions",
-  "Fitness & Sports": "Fitness et sports",
+  "Fitness & Sports": "Remise en forme et sport",
   "Art & Creativity": "Art et créativité",
   "Music & Dance": "Musique et danse",
-  "Food & Cooking": "Cuisine",
-  "Gaming": "Jeux vidéo",
+  "Food & Cooking": "Alimentation et cuisine",
+  "Gaming": "Jeux",
   "Fashion & Beauty": "Mode et beauté",
 
   "Relationship & Connection": "Relation et Connexion",
-  "Lifestyle & Exploration": "Mode de vie et exploration",
-  "Community & Personal Growth": "Communauté et développement personnel"
+  "Lifestyle & Exploration": "Style de vie et exploration",
+  "Community & Personal Growth": "Communauté et croissance personnelle"
 
 }

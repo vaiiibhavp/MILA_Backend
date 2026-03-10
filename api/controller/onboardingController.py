@@ -248,6 +248,16 @@ async def save_onboarding_step(
 
         payload["selfie_image"] = fid
 
+        await user_collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {
+            "$set": {
+                "login_status": "active",
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+
     doc = await onboarding_collection.find_one_and_update(
         {"user_id": user_id},
         {
