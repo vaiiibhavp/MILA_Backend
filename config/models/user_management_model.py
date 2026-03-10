@@ -45,10 +45,10 @@ class UserManagementModel:
             user_match = {"is_deleted": {"$ne": True}}
 
             if status:
-                user_match["login_status"] = translate_message(status.upper(), lang)
+                user_match["login_status"] = status
 
             if membership:
-                user_match["membership_type"] = translate_message(membership.upper(), lang)
+                user_match["membership_type"] = membership
 
             if date_from or date_to:
                 user_match["created_at"] = {}

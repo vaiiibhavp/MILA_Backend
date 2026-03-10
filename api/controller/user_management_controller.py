@@ -68,6 +68,18 @@ async def get_admin_users(
                     lang
                 )
 
+            if user.get("account_status"):
+                user["account_status"] = translate_message(
+                    user["account_status"].upper(),
+                    lang
+                )
+
+            if user.get("subscription"):
+                user["subscription"] = translate_message(
+                    user["subscription"].upper(),
+                    lang
+                )   
+                             
         paginated_response = build_paginated_response(
             records=users,
             page=pagination.page or 1,

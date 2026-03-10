@@ -545,10 +545,6 @@ class ContestModel:
                 contest.get("total_participants", 0),
                 contest.get("min_participant", 0),
             )
-            contest["visibility"] = translate_message(
-                contest["visibility"].upper(),
-                lang
-            )
         # ---------------- APPLY VISIBILITY FILTER ----------------
         if visibility:
             contests = [
@@ -556,6 +552,11 @@ class ContestModel:
                 if contest["visibility"] == visibility.value
             ]
 
+        for contest in contests:
+            contest["visibility"] = translate_message(
+                contest["visibility"].upper(),
+                lang
+            )
         # ---------------- TOTAL COUNT ----------------
         total_count = len(contests)
 
