@@ -189,17 +189,6 @@ class ContestModel:
     
         end_date_utc = end_date_local.astimezone(utc_tz)
 
-        existing_same_start_date = await contest_collection.find_one({
-            "is_deleted": {"$ne": True},
-            "start_date": start_date_utc
-        })
-
-        if existing_same_start_date:
-            return {
-                "error": True,
-                "message": translate_message("CONTEST_ALREADY_EXISTS_ON_THIS_DATE", lang),
-                "status_code": 400
-            }
 
         if not end_date_utc:
             return
@@ -243,22 +232,11 @@ class ContestModel:
             "is_deleted": {"$ne": True}
         })
 
-        if existing:
-            return {
-                "error": True,
-                "message": translate_message("CONTEST_TITLE_ALREADY_EXISTS", lang),
-                "status_code": 400
-            }
-
         # ---------------- DATE RANGE OVERLAP ----------------
         overlapping_contest = await contest_collection.find_one({
             "is_deleted": {"$ne": True},
-            "$expr": {
-                "$and": [
-                    {"$lte": [payload.start_date, "$end_date"]},
-                    {"$gte": [payload.end_date, "$start_date"]}
-                ]
-            }
+            "start_date": {"$lte": end_date_utc},
+            "end_date": {"$gte": start_date_utc}
         })
 
         if overlapping_contest:
