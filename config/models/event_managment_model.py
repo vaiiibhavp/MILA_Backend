@@ -545,7 +545,6 @@ class ContestModel:
                 contest.get("total_participants", 0),
                 contest.get("min_participant", 0),
             )
-
         # ---------------- APPLY VISIBILITY FILTER ----------------
         if visibility:
             contests = [
@@ -553,6 +552,11 @@ class ContestModel:
                 if contest["visibility"] == visibility.value
             ]
 
+        for contest in contests:
+            contest["visibility"] = translate_message(
+                contest["visibility"].upper(),
+                lang
+            )
         # ---------------- TOTAL COUNT ----------------
         total_count = len(contests)
 
@@ -619,13 +623,18 @@ class ContestModel:
             contest["start_date"],
             contest["end_date"]
         )
-
+        contest_visibility = translate_message(
+            visibility.upper(),
+            lang
+        )
+        
+        frequency = translate_message(contest.get("frequency").upper(), lang)
         # ---------------- RESPONSE STRUCTURE ----------------
         result = {
             "contest_id": str(contest["_id"]),
             "title": contest.get("title"),
             "badge":contest.get("badge"),
-            "visibility": visibility,
+            "visibility": contest_visibility,
 
             "banner_image": banner,
 
@@ -643,7 +652,7 @@ class ContestModel:
             "start_date": contest.get("start_date"),
             "end_date": contest.get("end_date"),
             "launch_time": contest.get("launch_time"),
-            "frequency": contest.get("frequency"),
+            "frequency": frequency,
             "registration_until":contest.get("registration_until"),
             "voting_start":contest.get("voting_start"),
             "voting_end":contest.get("voting_end"),

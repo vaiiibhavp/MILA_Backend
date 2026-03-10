@@ -41,6 +41,45 @@ async def get_admin_users(
             if user.get("registration_date"):
                 user["registration_date"] = user["registration_date"].isoformat()
 
+            if user.get("gender"):
+                user["gender"] = translate_message(user["gender"].upper(), lang)
+
+            if user.get("sexual_orientation"):
+                user["sexual_orientation"] = translate_message(
+                    user["sexual_orientation"].upper(),
+                    lang
+                )
+
+            if user.get("subscription"):
+                user["subscription"] = translate_message(
+                    user["subscription"].upper(),
+                    lang
+                )
+
+            if user.get("verification_status"):
+                user["verification_status"] = translate_message(
+                    user["verification_status"].upper(),
+                    lang
+                )
+
+            if user.get("relationship_status"):
+                user["relationship_status"] = translate_message(
+                    user["relationship_status"].upper(),
+                    lang
+                )
+
+            if user.get("account_status"):
+                user["account_status"] = translate_message(
+                    user["account_status"].upper(),
+                    lang
+                )
+
+            if user.get("subscription"):
+                user["subscription"] = translate_message(
+                    user["subscription"].upper(),
+                    lang
+                )   
+                             
         paginated_response = build_paginated_response(
             records=users,
             page=pagination.page or 1,

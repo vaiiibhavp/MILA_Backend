@@ -39,7 +39,7 @@ class TransactionModel:
             match_stage["trans_type"] = TransactionType.TOKEN_TRANSACTION.value
 
         if status:
-            match_stage["status"] = {"$regex": f"^{status}$", "$options": "i"}
+            match_stage["status"] = {"$regex": status.lower(), "$options": "i"}
 
         if date_from or date_to:
             match_stage["updated_at"] = {}

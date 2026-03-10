@@ -687,6 +687,26 @@
 
   "Relationship & Connection": "Relationship & Connection",
   "Lifestyle & Exploration": "Lifestyle & Exploration",
-  "Community & Personal Growth": "Community & Personal Growth"
+  "Community & Personal Growth": "Community & Personal Growth",
+  "ACTIVE": "Active",
+  "FREE": "Free",
+  "PENDING": "Pending",
+  "PREMIUM": "Premium",
+  "SUSPENDED": "Suspended",
+  "BLOCKED": "Blocked",
+  "SUCCESS": "Success",
+  "PARTIAL": "Partial",
+  "COMPLETED": "Completed",
+  "REJECTED": "Rejected",
+  "APPROVED": "Approved",
+  "DELETED": "Deleted",
 
+  "UPCOMING": "Upcoming",
+  "IN_PROGRESS": "In Progress",
+
+  "NON_RECURRING": "non recurring",
+  "WEEKLY": "weekly",
+  "BI_WEEKLY": "bi_weekly",
+  "MONTHLY": "monthly",
+  "THREE_MONTHS": "three_months"
 }
