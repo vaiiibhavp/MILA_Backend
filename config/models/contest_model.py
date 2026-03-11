@@ -732,34 +732,24 @@ async def auto_declare_winners(contest_id: str):
                 status_code=404
             )
         # Send WINNER notification
-        translated_title = translate_message(
-            "WINNER_NOTIFICATION_TITLE",
-            recipient_lang
-        )
-
-        translated_message_template = translate_message(
-            "WINNER_NOTIFICATION_MESSAGE",
-            recipient_lang
-        )
-
-        translated_message = translated_message_template.format(
-            rank=rank,
-            contest_name=contest_name,
-            amount=prize_amount
-        )
 
         await send_notification(
             recipient_id=participant["user_id"],
             recipient_type=NotificationRecipientType.USER,
             notification_type=NotificationType.CONTEST_RESULT,
-            title=translated_title,
-            message=translated_message,
+            title="WINNER_NOTIFICATION_TITLE",
+            message="WINNER_NOTIFICATION_MESSAGE",
             sender_user_id=admin_id,
             reference={
                 "contest_id": contest_id,
                 "rank": rank
             },
-            send_push=True
+            send_push=True,
+            push_data={
+                "rank": rank,
+                "contest_name": contest_name,
+                "amount": prize_amount
+            }
         )
         rank += 1
 
