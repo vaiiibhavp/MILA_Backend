@@ -15,14 +15,25 @@ async def notify_expiring_subscriptions(days_before: int):
         email = sub.get("email",None)
         email_data = subscription_expiry_template(lang=lang, username=sub.get("username",None))
         await send_notification(
-            recipient_id=str(sub['_id']),
+            recipient_id=str(sub["_id"]),
             recipient_type=NotificationRecipientType.USER,
             notification_type=NotificationType.SUBSCRIPTION_EXPIRY,
             title="PUSH_TITLE_SUBSCRIPTION_EXPIRING_SOON",
             message="PUSH_MESSAGE_SUBSCRIPTION_EXPIRING_SOON",
             send_push=True,
         )
-        await smtp_send_email(to_email=email, subject=email_data["title"], body=email_data["body"])
+
+        smtp_send_email(
+            to_email=email,
+            subject=email_data["title"],
+            body=email_data["body"]
+        )
+
+        # mark notification sent
+        await transaction_collection.update_one(
+            {"_id": sub["active_subscription"][0]["_id"]},
+            {"$set": {"expiry_notified_at": datetime.now(timezone.utc)}}
+        )
 
 async def expire_and_activate_subscriptions_job():
     """
