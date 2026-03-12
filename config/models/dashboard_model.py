@@ -159,16 +159,13 @@ class DashboardModel:
             for item in monthly_data:
                 year = item["_id"]["year"]
                 month = item["_id"]["month"]
-                revenue = item["revenue"]
+                revenue = round(item["revenue"], 2)
 
-                withdraw_amount = withdraw_map.get((year, month), 0)
-                net_revenue = round(revenue - withdraw_amount, 2)
-
-                total_revenue += net_revenue
+                total_revenue += revenue
 
                 revenue_summary.append({
                     "month": month_map[month],
-                    "revenue": net_revenue
+                    "revenue": revenue
                 })
 
             total_revenue = round(total_revenue, 2)

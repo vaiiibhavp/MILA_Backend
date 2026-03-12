@@ -542,9 +542,15 @@ class ContestModel:
             contest["visibility"] = calculate_visibility(
                 contest.get("start_date"),
                 contest.get("end_date"),
-                contest.get("total_participants", 0),
-                contest.get("min_participant", 0),
             )
+
+        # ---------------- SORT: IN_PROGRESS FIRST ----------------
+        contests.sort(
+            key=lambda x: (
+                x["visibility"] != "in_progress",  # False comes first → in_progress first
+                -x["start_date"].timestamp() if x.get("start_date") else 0
+            )
+        )
         # ---------------- APPLY VISIBILITY FILTER ----------------
         if visibility:
             contests = [
