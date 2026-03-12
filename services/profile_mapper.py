@@ -27,6 +27,15 @@ async def build_basic_profile_response(user: dict, onboarding: dict, profile_pho
                 "id": str(cid),
                 "name": country_name
             })
+        gender = onboarding.get("gender") if onboarding else None
+        marital_status = onboarding.get("marital_status") if onboarding else None
+        orientation = onboarding.get("sexual_orientation") if onboarding else None
+        interested_in = onboarding.get("interested_in") if onboarding else None
+
+        gender_translated = translate_message(gender.upper(), lang) if gender else None
+        marital_translated = translate_message(marital_status.upper(), lang) if marital_status else None
+        orientation_translated = translate_message(orientation.upper(), lang) if orientation else None
+        interest_translated = translate_message(interested_in.upper(), lang) if interested_in else None
 
     return {
         "header": {
@@ -40,12 +49,12 @@ async def build_basic_profile_response(user: dict, onboarding: dict, profile_pho
         "personal_info": {
             "bio": onboarding.get("bio") if onboarding else None,
             "email": user.get("email"),
-            "gender": onboarding.get("gender") if onboarding else None,
+            "gender": gender_translated,
             "dob": birthdate,
             "country": country_name,
-            "interested_in": onboarding.get("interested_in") if onboarding else None,
-            "sexual_orientation": onboarding.get("sexual_orientation") if onboarding else None,
-            "marital_status": onboarding.get("marital_status") if onboarding else None
+            "interested_in": interest_translated,
+            "sexual_orientation": orientation_translated,
+            "marital_status": marital_translated
         },
 
         "payment_info": {

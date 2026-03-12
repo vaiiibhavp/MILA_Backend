@@ -30,7 +30,7 @@ async def get_profile_controller(user_id: str, viewer: dict, lang: str = "en"):
     """
 
     latest_contest_history = await contest_history_collection.find_one(
-        {},
+        {"voting_end": {"$lt": datetime.utcnow()}},
         sort=[("voting_end", -1)]
     )
 
@@ -145,18 +145,18 @@ async def get_profile_controller(user_id: str, viewer: dict, lang: str = "en"):
     winner_badges = []
 
     if latest_history_id:
-        winner_cursor = contest_winner_collection.find(
+        winner = await contest_winner_collection.find_one(
             {
                 "user_id": user_id,
                 "contest_history_id": latest_history_id
             }
         )
 
-        async for winner in winner_cursor:
+        if winner:
             position = winner.get("rank")
-
-            if position in [1, 2, 3]:
-                winner_badges.append(resolve_badge(position))
+            badge = resolve_badge(position)
+            if badge:
+                winner_badges.append(badge)
 
     profile_data = [{
         "name": user.get("username"),
