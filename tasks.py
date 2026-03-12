@@ -79,7 +79,13 @@ def send_password_reset_email_task(to_email: str, subject: str, body: str):
 @celery_app.task(name="tasks.subscription_expiry_notifier")
 def subscription_expiry_notifier():
     try:
-        asyncio.run(notify_expiring_subscriptions(3))
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        loop.run_until_complete(notify_expiring_subscriptions(3))
+
+        loop.close()
+
         return {"status": "success", "message": "subscription_expiry_notifier marked"}
     except Exception as e:
         print(f"Error marking subscription_expiry_notifier: {e}")
