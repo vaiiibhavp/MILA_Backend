@@ -17,6 +17,8 @@ class ContestCardResponse(BaseModel):
     voting_ends: Optional[datetime] = None
     registration_started: Optional[bool] = None
     voting_started: Optional[bool] = None
+    max_participant: Optional[int] = None
+    min_participant: Optional[int] = None
     
 class PrizeItem(BaseModel):
     position: int        # 1, 2, 3
