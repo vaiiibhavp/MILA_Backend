@@ -132,7 +132,8 @@ async def get_contest_details_controller(
             "avatars": avatars,
             "can_view_all": True
         },
-
+        "min_participant":contest.get("min_participant"),
+        "max_participant":contest.get("max_participant"),
         "judging_criteria": contest.get("judging_criteria", []),
         "rules_and_conditions": contest.get("rules", []),
         "allowed_photos_per_participant": contest.get("photos_per_participant"),
