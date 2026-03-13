@@ -272,7 +272,7 @@ async def get_contests_paginated(
             registration_until=history.get("registration_end"),
             voting_ends=history.get("voting_end"),
             registration_started=registration_started,
-            voting_started=voting_started,
+            voting_started=history.get("voting_start"),
             min_participant=contest.get("min_participant"),
             max_participant=contest.get("max_participant"),
             registration_start=history.get("registration_start"),
