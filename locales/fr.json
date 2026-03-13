@@ -496,7 +496,7 @@
   "VERIFICATION_NOT_ALLOWED": "La vérification n’est pas autorisée",
   "DAILY_LIMIT_REACHED": "Vous avez atteint la limite quotidienne de 10 actions. Passez à Premium pour continuer.",
   "PUSH_TITLE_MATCHED": "C’est un match",
-  "PUSH_MESSAGE_MATCHED": "Vous et cet utilisateur vous êtes aimés mutuellement. Commencez à discuter maintenant",
+  "PUSH_MESSAGE_MATCHED": "Un utilisateur a aimé votre profil. Commencez à discuter maintenant.",
   "PUSH_TITLE_USER_REPORTED": "Utilisateur signalé",
   "PUSH_MESSAGE_USER_REPORTED": "Un utilisateur a été signalé. Veuillez examiner le signalement.",
   "ADMIN_CRED": "Identifiants administrateur introuvables",
@@ -710,7 +710,7 @@
   "FASHION & BEAUTY": "Mode & Beauté",
   "GAME": "Jeu",
   "PAINTING": "Peinture",
-  
+
   "RELATIONSHIP & CONNECTION": "Relation et Connexion",
   "LIFESTYLE & EXPLORATION": "Style de vie et exploration",
   "COMMUNITY & PERSONAL GROWTH": "Communauté et croissance personnelle",

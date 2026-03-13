@@ -493,7 +493,7 @@
   "VERIFICATION_NOT_ALLOWED": "Verification not allowed",
   "DAILY_LIMIT_REACHED":"You’ve reached today’s limit of 10 actions. Upgrade to Premium to continue.",
   "PUSH_TITLE_MATCHED": "It’s a Match",
-  "PUSH_MESSAGE_MATCHED": "You and this user liked each other. Start chatting now",
+  "PUSH_MESSAGE_MATCHED": "A user has liked you back. Start chatting now.",
   "PUSH_TITLE_USER_REPORTED":"User Reported",
   "PUSH_MESSAGE_USER_REPORTED": "A user has been reported. Please review the report.",
   "ADMIN_CRED":"Admin credentials not found.",
