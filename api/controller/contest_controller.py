@@ -119,7 +119,7 @@ async def get_contest_details_controller(
             "voting_start": contest_history["voting_start"],
             "voting_end": contest_history["voting_end"]
         },
-
+        "launch_time": contest.get("launch_time"),
         "registration_started": registration_started,
         "voting_started": voting_started,
         
