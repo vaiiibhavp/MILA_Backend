@@ -96,7 +96,9 @@ async def get_verification_user_details_controller(
                 "submitted_photos": "$images",
                 "live_selfie": "$selfie_image",
                 "verification_status": 1,
-                "Registration_Date": "$created_at"
+                "Registration_Date": {
+                    "$ifNull": ["$user.created_at", "$created_at"]
+                }
             }
         })
 

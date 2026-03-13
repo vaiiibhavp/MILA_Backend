@@ -161,25 +161,19 @@ class ContestModel:
         # ---------------- ATTACH MADAGASCAR TIME ----------------
         launch_hour, launch_minute = map(int, payload.launch_time.split(":"))
 
-        start_date_local = datetime(
-            start_date_dt.year,
-            start_date_dt.month,
-            start_date_dt.day,
-            launch_hour,
-            launch_minute,
-            0,
-            0,
+        start_date_local = start_date_dt.replace(
+            hour=launch_hour,
+            minute=launch_minute,
+            second=0,
+            microsecond=0,
             tzinfo=madagascar_tz
         )
 
-        end_date_local = datetime(
-            end_date_dt.year,
-            end_date_dt.month,
-            end_date_dt.day,
-            launch_hour,
-            launch_minute,
-            0,
-            0,
+        end_date_local = end_date_dt.replace(
+            hour=launch_hour,
+            minute=launch_minute,
+            second=0,
+            microsecond=0,
             tzinfo=madagascar_tz
         )
 
@@ -285,25 +279,17 @@ class ContestModel:
         launch_hour, launch_minute = map(int, payload.launch_time.split(":"))
 
         # Registration ends at (start_date + 3 days) AT launch time
-        registration_until_dt = (
-            start_date_dt + timedelta(days=3)
-        ).replace(
-            hour=launch_hour,
-            minute=launch_minute,
-            second=0,
-            microsecond=0
-        )
+        registration_until_dt = start_date_local + timedelta(days=3)
 
         # Voting starts exactly when registration ends
         voting_date_dt = registration_until_dt
 
         # Voting ends on contest end date at launch time
-        voting_until_dt = end_date_dt.replace(
-            hour=launch_hour,
-            minute=launch_minute,
-            second=0,
-            microsecond=0
-        )
+        voting_until_dt = end_date_local
+
+        registration_until_dt = registration_until_dt.astimezone(utc_tz)
+        voting_date_dt = voting_date_dt.astimezone(utc_tz)
+        voting_until_dt = voting_until_dt.astimezone(utc_tz)
     
         # ---------------- CREATE CONTEST ----------------
         now = datetime.utcnow()
@@ -930,7 +916,7 @@ class ContestModel:
         # ---------------- RECALCULATE DERIVED DATES ----------------
         if payload.start_date or payload.end_date or payload.launch_time:
             registration_until_dt = (
-                final_start_date + timedelta(days=3)
+                new_start_date + timedelta(days=3)
             ).replace(
                 hour=launch_hour,
                 minute=launch_minute,
