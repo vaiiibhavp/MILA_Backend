@@ -274,7 +274,9 @@ async def get_contests_paginated(
             registration_started=registration_started,
             voting_started=voting_started,
             min_participant=contest.get("min_participant"),
-            max_participant=contest.get("max_participant")
+            max_participant=contest.get("max_participant"),
+            registration_start=history.get("registration_start"),
+            voting_end=history.get("voting_end")
         )
 
         results.append(card.dict())
